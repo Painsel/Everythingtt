@@ -18,11 +18,57 @@
         .panel { display: none; }
         .active-panel { display: block; }
         
-        .card { background: #2d2d2d; padding: 30px; border-radius: 10px; max-width: 600px; }
-        .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4CAF50; object-fit: cover; margin-bottom: 15px; }
+        .card { background: #2d2d2d; border-radius: 10px; max-width: 600px; overflow: hidden; padding-bottom: 30px; }
         
-        input { width: 100%; padding: 10px; margin: 5px 0 20px 0; background: #333; border: 1px solid #555; color: white; border-radius: 5px; box-sizing: border-box; }
-        label { color: #aaa; font-size: 0.9em; display: block; margin-top: 10px; }
+        /* VISUAL PROFILE PREVIEW */
+        .banner-preview {
+            height: 150px;
+            background-color: #444;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .profile-header {
+            text-align: center;
+            margin-top: -50px; /* Pulls profile pic up into banner */
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .profile-img { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
+            border: 4px solid #2d2d2d; 
+            object-fit: cover; 
+            background-color: #333;
+        }
+        .pronouns-badge {
+            background: #444;
+            color: #ccc;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        /* FORMS */
+        .form-content { padding: 0 30px; }
+        
+        input, textarea { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 5px 0 15px 0; 
+            background: #333; 
+            border: 1px solid #555; 
+            color: white; 
+            border-radius: 5px; 
+            box-sizing: border-box; 
+            font-family: inherit;
+        }
+        textarea { height: 80px; resize: vertical; }
+        
+        label { color: #aaa; font-size: 0.9em; display: block; margin-top: 5px; }
         .readonly { background: #222; color: #777; border-color: #333; cursor: not-allowed; }
         
         .btn-save { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px;}
@@ -34,7 +80,7 @@
     <!-- LEFT MENU -->
     <div class="sidebar">
         <h2>EverythingTT</h2>
-        <button class="menu-btn active-btn" onclick="showPanel('account', this)">My Account</button>
+        <button class="menu-btn active-btn" onclick="showPanel('account', this)">My Profile</button>
         <button class="menu-btn" onclick="showPanel('pages', this)">Pages</button>
         <div style="flex:1"></div>
         <button class="menu-btn" onclick="logout()" style="color:#ff5555">Log Out</button>
@@ -45,44 +91,56 @@
         
         <!-- PANEL: MY ACCOUNT -->
         <div id="account" class="panel active-panel">
-            <h1>Settings</h1>
+            <h1 style="margin-top:0;">Edit Profile</h1>
+            
             <div class="card">
+                <!-- Visual Preview Area -->
+                <div id="display-banner" class="banner-preview"></div>
                 
-                <!-- PUBLIC PROFILE SECTION -->
-                <div style="text-align: center;">
-                    <img id="display-pfp" src="" class="profile-img">
+                <div class="profile-header">
+                    <img id="display-pfp" src="" class="profile-img"><br>
+                    <span id="display-nick-text" style="font-size: 1.2em; font-weight: bold;"></span><br>
+                    <span id="display-pronouns" class="pronouns-badge"></span>
                 </div>
 
-                <label>Community Nickname (Visible to others)</label>
-                <input type="text" id="edit-nickname" placeholder="How you want to be seen">
+                <div class="form-content">
+                    <label>Nickname</label>
+                    <input type="text" id="edit-nickname" placeholder="Community Name">
 
-                <label>Profile Picture URL</label>
-                <input type="text" id="edit-pfp-url" placeholder="Paste image link">
+                    <label>Pronouns</label>
+                    <input type="text" id="edit-pronouns" placeholder="e.g. He/Him, They/Them">
 
-                <button class="btn-save" onclick="updateProfile()">Save Public Profile</button>
-                
-                <hr style="border-color:#444; margin: 30px 0;">
-                
-                <!-- PRIVATE LOGIN SECTION -->
-                <h3 style="margin-top:0; color:#888;">Login Details</h3>
-                
-                <label>Account Name (Locked)</label>
-                <input type="text" id="display-name" class="readonly" readonly>
-                
-                <label>Password (Locked)</label>
-                <input type="text" id="display-pass" class="readonly" readonly>
+                    <label>Bio</label>
+                    <textarea id="edit-bio" placeholder="Tell the community about yourself..."></textarea>
+
+                    <label>Profile Picture URL</label>
+                    <input type="text" id="edit-pfp-url" placeholder="Image Link (e.g. Imgur, Discord)">
+                    
+                    <label>Banner Image URL</label>
+                    <input type="text" id="edit-banner-url" placeholder="Wide Image Link for top banner">
+
+                    <button class="btn-save" onclick="updateProfile()">Save Changes</button>
+                    
+                    <hr style="border-color:#444; margin: 30px 0;">
+                    
+                    <h3 style="margin-top:0; color:#888;">Private Login Data</h3>
+                    <label>Login Name</label>
+                    <input type="text" id="login-name" class="readonly" readonly>
+                    
+                    <label>Login Password</label>
+                    <input type="text" id="login-pass" class="readonly" readonly>
+                </div>
             </div>
         </div>
 
         <!-- PANEL: PAGES -->
         <div id="pages" class="panel">
             <h1>Public Pages</h1>
-            <div class="card">
+            <div class="card" style="padding: 30px;">
                 <h3>Directory</h3>
                 <ul style="color: #aaa; line-height: 2;">
-                    <li>Territorial.io Strategy Guide <span style="color:#4CAF50; font-size:0.8em; border:1px solid #4CAF50; padding:2px 5px; border-radius:4px; float:right">COMING SOON</span></li>
-                    <li>Clan List & Rankings <span style="color:#4CAF50; font-size:0.8em; border:1px solid #4CAF50; padding:2px 5px; border-radius:4px; float:right">COMING SOON</span></li>
-                    <li>Interactive Map <span style="color:#4CAF50; font-size:0.8em; border:1px solid #4CAF50; padding:2px 5px; border-radius:4px; float:right">COMING SOON</span></li>
+                    <li>Territorial.io Strategy Guide <span style="color:#4CAF50; float:right">COMING SOON</span></li>
+                    <li>Clan List & Rankings <span style="color:#4CAF50; float:right">COMING SOON</span></li>
                 </ul>
             </div>
         </div>
@@ -95,40 +153,66 @@
             window.location.href = 'login.html';
         }
 
-        // --- Load Data from Storage ---
-        const user = localStorage.getItem('tt_user');      // The login name
-        const pass = localStorage.getItem('tt_pass');      // The password
-        const pfp = localStorage.getItem('tt_pfp');        // Profile Picture
-        const nickname = localStorage.getItem('tt_nickname'); // New Nickname
-
-        // Fill inputs
-        document.getElementById('display-name').value = user;
-        document.getElementById('display-pass').value = pass;
+        // --- Load All Data ---
+        const user = localStorage.getItem('tt_user');
+        const pass = localStorage.getItem('tt_pass');
+        const pfp = localStorage.getItem('tt_pfp');
         
-        // If nickname exists, show it. If not, default to the username.
-        document.getElementById('edit-nickname').value = nickname ? nickname : user;
+        const nickname = localStorage.getItem('tt_nickname') || user;
+        const pronouns = localStorage.getItem('tt_pronouns') || "";
+        const bio = localStorage.getItem('tt_bio') || "";
+        const banner = localStorage.getItem('tt_banner') || ""; // Default blank
 
-        document.getElementById('display-pfp').src = pfp;
+        // Populate Forms
+        document.getElementById('login-name').value = user;
+        document.getElementById('login-pass').value = pass;
+        
+        document.getElementById('edit-nickname').value = nickname;
+        document.getElementById('edit-pronouns').value = pronouns;
+        document.getElementById('edit-bio').value = bio;
         document.getElementById('edit-pfp-url').value = pfp;
+        document.getElementById('edit-banner-url').value = banner;
 
-        // --- Save Function ---
+        // Update Visual Preview on Load
+        updatePreview(nickname, pronouns, pfp, banner);
+
         function updateProfile() {
-            const newPfp = document.getElementById('edit-pfp-url').value;
+            // Get values
             const newNick = document.getElementById('edit-nickname').value;
+            const newPronouns = document.getElementById('edit-pronouns').value;
+            const newBio = document.getElementById('edit-bio').value;
+            const newPfp = document.getElementById('edit-pfp-url').value;
+            const newBanner = document.getElementById('edit-banner-url').value;
 
-            if(newPfp) {
-                localStorage.setItem('tt_pfp', newPfp);
-                document.getElementById('display-pfp').src = newPfp;
-            }
-            
-            if(newNick) {
-                localStorage.setItem('tt_nickname', newNick);
-            }
+            // Save to Storage
+            if(newNick) localStorage.setItem('tt_nickname', newNick);
+            localStorage.setItem('tt_pronouns', newPronouns);
+            localStorage.setItem('tt_bio', newBio);
+            if(newPfp) localStorage.setItem('tt_pfp', newPfp);
+            localStorage.setItem('tt_banner', newBanner);
 
-            alert("Public profile updated successfully!");
+            // Update Preview immediately
+            updatePreview(newNick, newPronouns, newPfp, newBanner);
+
+            alert("Profile updated!");
         }
 
-        // --- Navigation Functions ---
+        function updatePreview(nick, pro, pic, ban) {
+            document.getElementById('display-nick-text').innerText = nick;
+            document.getElementById('display-pronouns').innerText = pro || "No pronouns";
+            
+            // Handle Images (fallbacks could be added here)
+            if(pic) document.getElementById('display-pfp').src = pic;
+            
+            const bannerEl = document.getElementById('display-banner');
+            if(ban) {
+                bannerEl.style.backgroundImage = `url('${ban}')`;
+            } else {
+                bannerEl.style.backgroundImage = 'none';
+            }
+        }
+
+        // --- Navigation ---
         function showPanel(panelId, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
             document.getElementById(panelId).classList.add('active-panel');
@@ -142,4 +226,4 @@
         }
     </script>
 </body>
-</html>
+    </html>
