@@ -3,81 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EverythingTT - Territorial.io Guide</title>
+    <title>EverythingTT - Home</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a; /* Dark background like territorial.io */
-            color: #ffffff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            text-align: center;
-        }
-        .container {
-            max-width: 800px;
-            padding: 20px;
-            background-color: #2d2d2d;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
-        h1 {
-            color: #4CAF50; /* A nice game-like green */
-            font-size: 3em;
-            margin-bottom: 10px;
-        }
-        .intro-text {
-            font-size: 1.2em;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            background-color: #4CAF50;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
-            transition: background 0.3s;
-            margin-top: 10px;
-        }
-        .btn:hover {
-            background-color: #45a049;
-        }
-        .viktor-note {
-            margin-top: 50px;
-            font-style: italic;
-            color: #aaa;
-            font-size: 0.9em;
-            border-top: 1px solid #444;
-            padding-top: 20px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #1a1a1a; color: white; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; }
+        h1 { color: #4CAF50; font-size: 3em; margin-bottom: 10px; }
+        .intro { font-size: 1.2em; max-width: 600px; line-height: 1.5; color: #ddd; margin-bottom: 40px; }
+        .btn-group { display: flex; gap: 20px; }
+        .btn { padding: 15px 40px; background: #4CAF50; color: white; text-decoration: none; border-radius: 30px; font-weight: bold; transition: 0.3s; font-size: 1.1em; }
+        .btn:hover { background: #3e8e41; transform: scale(1.05); }
+        .btn-outline { background: transparent; border: 2px solid #4CAF50; }
+        .btn-outline:hover { background: #4CAF50; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>EverythingTT</h1>
-        
-        <p class="intro-text">
-            Hello! This is painsel, and this is definitely not AI generated. 
-            Thank you so much for using EverythingTT!!! Here, you'll find 
-            EVERYTHING about the indie .io game territorial.io! This is still 
-            under development, but i promise I'll do my best :&gt;
-        </p>
+    <h1>EverythingTT</h1>
+    
+    <p class="intro">
+        Hello! This is painsel. Welcome to the ultimate resource for Territorial.io.<br>
+        Create an account to track your progress and access exclusive tools.<br>
+        <i>This is definitely not AI generated :></i>
+    </p>
 
-        <!-- Link to your future directory -->
-        <a href="pages/" class="btn">Enter the Guide</a>
-
-        <div class="viktor-note">
-            looking forward for your contributions, viktor &lt;3
-        </div>
+    <div class="btn-group">
+        <a href="guidelines.html" class="btn">Sign Up</a>
+        <a href="login.html" class="btn btn-outline">Log In</a>
     </div>
 
+    <footer style="margin-top: 50px; font-size: 0.8em; color: #555;">
+        looking forward for your contributions, viktor <3
+    </footer>
+
 </body>
-  </html>
+</html>
