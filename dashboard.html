@@ -12,9 +12,13 @@
         .sidebar h2 { color: #4CAF50; margin-top: 0; }
         .menu-btn { background: none; border: none; color: #ccc; padding: 15px; text-align: left; cursor: pointer; font-size: 1.1em; transition: 0.2s; width: 100%; }
         .menu-btn:hover, .active-btn { background: #333; color: #fff; border-left: 4px solid #4CAF50; }
+        
+        /* Special Badge for Sidebar */
+        .big-fan-btn { color: #FFD700 !important; font-weight: bold; }
+        .big-fan-btn:hover { background: #332b00 !important; border-left-color: #FFD700 !important; }
 
         /* CONTENT */
-        .content { flex: 1; padding: 40px; overflow-y: auto; }
+        .content { flex: 1; padding: 40px; overflow-y: auto; position: relative; }
         .panel { display: none; }
         .active-panel { display: block; }
         
@@ -30,7 +34,7 @@
         }
         .profile-header {
             text-align: center;
-            margin-top: -50px; /* Pulls profile pic up into banner */
+            margin-top: -50px;
             margin-bottom: 20px;
             position: relative;
         }
@@ -56,32 +60,60 @@
         .form-content { padding: 0 30px; }
         
         input, textarea { 
-            width: 100%; 
-            padding: 10px; 
-            margin: 5px 0 15px 0; 
-            background: #333; 
-            border: 1px solid #555; 
-            color: white; 
-            border-radius: 5px; 
-            box-sizing: border-box; 
-            font-family: inherit;
+            width: 100%; padding: 10px; margin: 5px 0 15px 0; background: #333; 
+            border: 1px solid #555; color: white; border-radius: 5px; box-sizing: border-box; font-family: inherit;
         }
         textarea { height: 80px; resize: vertical; }
-        
         label { color: #aaa; font-size: 0.9em; display: block; margin-top: 5px; }
         .readonly { background: #222; color: #777; border-color: #333; cursor: not-allowed; }
         
         .btn-save { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px;}
         .btn-save:hover { background-color: #45a049; }
+
+        /* SUBSCRIPTION AREA */
+        .sub-card { text-align: center; border: 2px solid #FFD700; background: linear-gradient(180deg, #2d2d2d 0%, #1a1a00 100%); }
+        .sub-logo { width: 150px; margin: 20px auto; display: block; filter: drop-shadow(0 0 10px #FFD700); }
+        .perk-list { text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin: 20px 0; }
+        .perk-list li { list-style: none; margin: 10px 0; font-size: 1.1em; }
+        .perk-check { color: #4CAF50; margin-right: 10px; }
+        .sub-btn { background: #FFD700; color: #000; font-weight: 900; font-size: 1.2em; padding: 15px; border: none; border-radius: 50px; cursor: pointer; width: 100%; box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); animation: pulse 2s infinite; }
+        .sub-btn:hover { background: #ffea00; transform: scale(1.02); }
+        .gold-icon { color: #FFD700; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 215, 0, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0); }
+        }
+
+        /* PAYMENT MODAL */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 100; display: none; align-items: center; justify-content: center; }
+        .payment-box { background: #fff; color: #000; width: 400px; border-radius: 10px; padding: 0; overflow: hidden; font-family: sans-serif; position: relative; }
+        .pay-header { background: #eee; padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #ddd; }
+        .pay-logo { height: 30px; margin-right: 10px; }
+        .pay-body { padding: 20px; }
+        .pay-footer { background: #f9f9f9; padding: 15px; text-align: right; border-top: 1px solid #eee; }
+        .pay-btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .close-btn { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; color: #666; }
+        
+        .loading-spin { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display:inline-block; vertical-align:middle; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
     </style>
 </head>
 <body>
 
-    <!-- LEFT MENU -->
+    <!-- SIDEBAR -->
     <div class="sidebar">
         <h2>EverythingTT</h2>
         <button class="menu-btn active-btn" onclick="showPanel('account', this)">My Profile</button>
         <button class="menu-btn" onclick="showPanel('pages', this)">Pages</button>
+        
+        <div style="margin-top: 20px; border-top: 1px solid #333; padding-top: 10px;">
+            <label style="margin-left: 15px;">Support</label>
+            <button class="menu-btn big-fan-btn" onclick="showPanel('bigfan', this)">Are you a big TT fan?</button>
+        </div>
+
         <div style="flex:1"></div>
         <button class="menu-btn" onclick="logout()" style="color:#ff5555">Log Out</button>
     </div>
@@ -89,47 +121,57 @@
     <!-- MAIN CONTENT -->
     <div class="content">
         
-        <!-- PANEL: MY ACCOUNT -->
+        <!-- PANEL: MY PROFILE -->
         <div id="account" class="panel active-panel">
             <h1 style="margin-top:0;">Edit Profile</h1>
-            
             <div class="card">
-                <!-- Visual Preview Area -->
                 <div id="display-banner" class="banner-preview"></div>
-                
                 <div class="profile-header">
                     <img id="display-pfp" src="" class="profile-img"><br>
-                    <span id="display-nick-text" style="font-size: 1.2em; font-weight: bold;"></span><br>
+                    <span id="display-nick-text" style="font-size: 1.2em; font-weight: bold;"></span>
+                    <img id="fan-badge" src="https://raw.githubusercontent.com/Painsel/Everythingtt/16ed2380f92778135b532b80862440a4f64a6a9b/badges/big_fan.png" style="height:20px; vertical-align:middle; display:none;" title="BIG FAN"><br>
                     <span id="display-pronouns" class="pronouns-badge"></span>
                 </div>
-
                 <div class="form-content">
-                    <label>Nickname</label>
-                    <input type="text" id="edit-nickname" placeholder="Community Name">
-
-                    <label>Pronouns</label>
-                    <input type="text" id="edit-pronouns" placeholder="e.g. He/Him, They/Them">
-
-                    <label>Bio</label>
-                    <textarea id="edit-bio" placeholder="Tell the community about yourself..."></textarea>
-
+                    <label>Nickname</label><input type="text" id="edit-nickname">
+                    <label>Pronouns</label><input type="text" id="edit-pronouns">
+                    <label>Bio</label><textarea id="edit-bio"></textarea>
+                    
                     <label>Profile Picture URL</label>
-                    <input type="text" id="edit-pfp-url" placeholder="Image Link (e.g. Imgur, Discord)">
+                    <input type="text" id="edit-pfp-url" placeholder="Standard images (GIFs require subscription)">
                     
                     <label>Banner Image URL</label>
-                    <input type="text" id="edit-banner-url" placeholder="Wide Image Link for top banner">
+                    <input type="text" id="edit-banner-url" placeholder="Standard images (GIFs require subscription)">
 
                     <button class="btn-save" onclick="updateProfile()">Save Changes</button>
-                    
-                    <hr style="border-color:#444; margin: 30px 0;">
-                    
-                    <h3 style="margin-top:0; color:#888;">Private Login Data</h3>
-                    <label>Login Name</label>
-                    <input type="text" id="login-name" class="readonly" readonly>
-                    
-                    <label>Login Password</label>
-                    <input type="text" id="login-pass" class="readonly" readonly>
                 </div>
+            </div>
+        </div>
+
+        <!-- PANEL: SUBSCRIPTION -->
+        <div id="bigfan" class="panel">
+            <h1 style="color: #FFD700;">Subscription</h1>
+            <div class="card sub-card" style="padding: 30px;">
+                <h2 style="color: #fff; margin-bottom:5px;">BIG FAN</h2>
+                <p style="color: #aaa;">Subscribe if you're a BIG FAN!</p>
+                
+                <img src="https://raw.githubusercontent.com/Painsel/Everythingtt/16ed2380f92778135b532b80862440a4f64a6a9b/badges/big_fan.png" class="sub-logo">
+
+                <div class="perk-list">
+                    <ul>
+                        <li><span class="perk-check">✔</span> <b>Animated</b> Profile Picture</li>
+                        <li><span class="perk-check">✔</span> <b>Animated</b> Profile Banner</li>
+                        <li><span class="perk-check">✔</span> Exclusive <b>Big Fan Badge</b></li>
+                        <li><span class="perk-check">✔</span> Support EverythingTT Dev</li>
+                    </ul>
+                </div>
+
+                <div style="font-size: 1.5em; margin-bottom: 20px;">
+                    Cost: <b style="color:#FFD700">1,500 🧈</b> <span style="font-size:0.6em; color:#aaa;">/ month</span>
+                </div>
+
+                <button id="sub-main-btn" class="sub-btn" onclick="openPayment()">Subscribe Now</button>
+                <p id="active-msg" style="display:none; color: #4CAF50; font-weight: bold; font-size: 1.2em;">THANKS FOR BEING A BIG FAN! 🎉</p>
             </div>
         </div>
 
@@ -137,86 +179,232 @@
         <div id="pages" class="panel">
             <h1>Public Pages</h1>
             <div class="card" style="padding: 30px;">
-                <h3>Directory</h3>
-                <ul style="color: #aaa; line-height: 2;">
-                    <li>Territorial.io Strategy Guide <span style="color:#4CAF50; float:right">COMING SOON</span></li>
-                    <li>Clan List & Rankings <span style="color:#4CAF50; float:right">COMING SOON</span></li>
-                </ul>
+                <h3 style="color:#aaa;">Coming Soon...</h3>
             </div>
         </div>
+    </div>
 
+    <!-- PAYMENT CONFIRMATION POPUP -->
+    <div id="pay-modal" class="modal-overlay">
+        <div class="payment-box">
+            <span class="close-btn" onclick="closePayment()">&times;</span>
+            <div class="pay-header">
+                <!-- Using Fan icon as 'Payment Method' logo per request -->
+                <img src="https://raw.githubusercontent.com/Painsel/Everythingtt/16ed2380f92778135b532b80862440a4f64a6a9b/badges/big_fan.png" class="pay-logo">
+                <div>
+                    <div style="font-weight:bold;">Territorial.io Pay</div>
+                    <div style="font-size:0.8em; color:#555;">Secure Transaction</div>
+                </div>
+            </div>
+            <div class="pay-body">
+                <p style="margin-top:0;">Please confirm your account credentials to proceed with the transaction.</p>
+                
+                <div style="background:#f8f9fa; padding:10px; border-radius:5px; margin-bottom:15px; border:1px solid #ddd;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <span>Item:</span>
+                        <b>BIG FAN Sub</b>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:#b00;">
+                        <span>Total:</span>
+                        <b>1500 Gold</b>
+                    </div>
+                </div>
+
+                <label style="color:#333;">Account Name</label>
+                <input type="text" id="pay-user" style="background:#fff; border:1px solid #ccc; color:#000;">
+                
+                <label style="color:#333;">Password</label>
+                <input type="password" id="pay-pass" style="background:#fff; border:1px solid #ccc; color:#000;">
+                
+                <p id="pay-error" style="color:red; font-size:0.9em; display:none;"></p>
+                <p id="pay-status" style="color:blue; font-size:0.9em; display:none;"></p>
+            </div>
+            <div class="pay-footer">
+                <button class="pay-btn" onclick="processTransaction()">
+                    Confirm & Pay 1500 🧈
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Check if logged in
-        if (!localStorage.getItem('tt_user')) {
-            window.location.href = 'login.html';
+        // --- CONSTANTS ---
+        const DEV_ACC = "B8bbq";
+        const SUB_COST = 1500;
+        
+        // --- AUTH CHECK ---
+        if (!localStorage.getItem('tt_user')) window.location.href = 'login.html';
+
+        // --- LOAD DATA ---
+        loadProfile();
+
+        function loadProfile() {
+            const user = localStorage.getItem('tt_user');
+            const nickname = localStorage.getItem('tt_nickname') || user;
+            const pronouns = localStorage.getItem('tt_pronouns') || "";
+            const bio = localStorage.getItem('tt_bio') || "";
+            const pfp = localStorage.getItem('tt_pfp');
+            const banner = localStorage.getItem('tt_banner');
+            const isFan = localStorage.getItem('tt_big_fan') === 'true';
+
+            // Fill Preview
+            document.getElementById('display-nick-text').innerText = nickname;
+            document.getElementById('display-pronouns').innerText = pronouns;
+            if(pfp) document.getElementById('display-pfp').src = pfp;
+            if(banner) document.getElementById('display-banner').style.backgroundImage = `url('${banner}')`;
+            
+            // Badge
+            if(isFan) {
+                document.getElementById('fan-badge').style.display = 'inline-block';
+                document.getElementById('sub-main-btn').style.display = 'none';
+                document.getElementById('active-msg').style.display = 'block';
+            }
+
+            // Fill Inputs
+            document.getElementById('edit-nickname').value = nickname;
+            document.getElementById('edit-pronouns').value = pronouns;
+            document.getElementById('edit-bio').value = bio;
+            document.getElementById('edit-pfp-url').value = pfp || "";
+            document.getElementById('edit-banner-url').value = banner || "";
+            
+            // Fill Pay Inputs (Auto-fill for convenience, user confirms)
+            document.getElementById('pay-user').value = user;
+            document.getElementById('pay-pass').value = localStorage.getItem('tt_pass');
         }
 
-        // --- Load All Data ---
-        const user = localStorage.getItem('tt_user');
-        const pass = localStorage.getItem('tt_pass');
-        const pfp = localStorage.getItem('tt_pfp');
-        
-        const nickname = localStorage.getItem('tt_nickname') || user;
-        const pronouns = localStorage.getItem('tt_pronouns') || "";
-        const bio = localStorage.getItem('tt_bio') || "";
-        const banner = localStorage.getItem('tt_banner') || ""; // Default blank
-
-        // Populate Forms
-        document.getElementById('login-name').value = user;
-        document.getElementById('login-pass').value = pass;
-        
-        document.getElementById('edit-nickname').value = nickname;
-        document.getElementById('edit-pronouns').value = pronouns;
-        document.getElementById('edit-bio').value = bio;
-        document.getElementById('edit-pfp-url').value = pfp;
-        document.getElementById('edit-banner-url').value = banner;
-
-        // Update Visual Preview on Load
-        updatePreview(nickname, pronouns, pfp, banner);
-
+        // --- UPDATE PROFILE (With Gif Restriction) ---
         function updateProfile() {
-            // Get values
-            const newNick = document.getElementById('edit-nickname').value;
-            const newPronouns = document.getElementById('edit-pronouns').value;
-            const newBio = document.getElementById('edit-bio').value;
-            const newPfp = document.getElementById('edit-pfp-url').value;
-            const newBanner = document.getElementById('edit-banner-url').value;
+            const pfpUrl = document.getElementById('edit-pfp-url').value;
+            const bannerUrl = document.getElementById('edit-banner-url').value;
+            const isFan = localStorage.getItem('tt_big_fan') === 'true';
 
-            // Save to Storage
-            if(newNick) localStorage.setItem('tt_nickname', newNick);
-            localStorage.setItem('tt_pronouns', newPronouns);
-            localStorage.setItem('tt_bio', newBio);
-            if(newPfp) localStorage.setItem('tt_pfp', newPfp);
-            localStorage.setItem('tt_banner', newBanner);
+            // Check for Animation
+            const isAnimPfp = /\.gif($|\?)/i.test(pfpUrl);
+            const isAnimBanner = /\.gif($|\?)/i.test(bannerUrl);
 
-            // Update Preview immediately
-            updatePreview(newNick, newPronouns, newPfp, newBanner);
+            if ((isAnimPfp || isAnimBanner) && !isFan) {
+                alert("🚫 RESTRICTED: Animated PFPs and Banners are for BIG FAN subscribers only!\n\nPlease subscribe in the menu.");
+                return; 
+            }
 
-            alert("Profile updated!");
+            // Save standard text fields
+            localStorage.setItem('tt_nickname', document.getElementById('edit-nickname').value);
+            localStorage.setItem('tt_pronouns', document.getElementById('edit-pronouns').value);
+            localStorage.setItem('tt_bio', document.getElementById('edit-bio').value);
+            localStorage.setItem('tt_pfp', pfpUrl);
+            localStorage.setItem('tt_banner', bannerUrl);
+            
+            alert("Profile Updated!");
+            loadProfile(); // Refresh UI
         }
 
-        function updatePreview(nick, pro, pic, ban) {
-            document.getElementById('display-nick-text').innerText = nick;
-            document.getElementById('display-pronouns').innerText = pro || "No pronouns";
-            
-            // Handle Images (fallbacks could be added here)
-            if(pic) document.getElementById('display-pfp').src = pic;
-            
-            const bannerEl = document.getElementById('display-banner');
-            if(ban) {
-                bannerEl.style.backgroundImage = `url('${ban}')`;
-            } else {
-                bannerEl.style.backgroundImage = 'none';
+        // --- PAYMENT LOGIC ---
+
+        function openPayment() {
+            document.getElementById('pay-modal').style.display = 'flex';
+            document.getElementById('pay-status').style.display = 'none';
+            document.getElementById('pay-error').style.display = 'none';
+        }
+
+        function closePayment() {
+            document.getElementById('pay-modal').style.display = 'none';
+        }
+
+        async function processTransaction() {
+            const user = document.getElementById('pay-user').value;
+            const pass = document.getElementById('pay-pass').value;
+            const statusBox = document.getElementById('pay-status');
+            const errorBox = document.getElementById('pay-error');
+            const btn = document.querySelector('.pay-btn');
+
+            // Reset UI
+            statusBox.style.display = 'block';
+            errorBox.style.display = 'none';
+            statusBox.innerHTML = '<span class="loading-spin"></span> Connecting to Territorial Bank...';
+            btn.disabled = true;
+            btn.style.background = '#ccc';
+
+            try {
+                // STEP 1: CHECK BALANCE
+                // We fetch the user's OWN stats first.
+                // NOTE: 'target_account_name' is set to their own name to read their own gold.
+                
+                const checkReq = await fetch("https://territorial.io/api/account/get", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "account_name": user,
+                        "password": pass,
+                        "target_account_name": user
+                    })
+                });
+
+                const stats = await checkReq.json();
+                console.log("Stats check:", stats);
+
+                // Assuming API returns 'gold' or 'balance'. If the user doesn't exist, this might fail.
+                // We fall back to 0 if undefined.
+                // IMPORTANT: Since we can't see the exact API docs, we check 'gold' field.
+                let currentGold = stats.gold || 0; 
+                
+                // If API return logic is different, we proceed carefully.
+                // If account/get doesn't return gold, we might have to skip check or trust the user.
+                // But per instructions: "if their gold is not enough, stop the payment"
+                
+                // Let's assume stats.gold exists.
+                if (currentGold < SUB_COST) {
+                    throw new Error(`Insufficient Funds. You have ${currentGold} 🧈, but need ${SUB_COST} 🧈.`);
+                }
+
+                // STEP 2: SEND GOLD
+                statusBox.innerHTML = '<span class="loading-spin"></span> Funds verified. Sending Gold...';
+
+                const payReq = await fetch("https://territorial.io/api/gold/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "account_name": user,
+                        "password": pass,
+                        "target_account_name": DEV_ACC,
+                        "amount": SUB_COST
+                    })
+                });
+
+                const payRes = await payReq.json();
+                console.log("Payment Result:", payRes);
+                
+                // Check success logic (Assuming API returns success boolean or similar)
+                // If API returns an error message field:
+                if (payRes.error) {
+                    throw new Error("Transaction Failed: " + payRes.error);
+                }
+
+                // STEP 3: SUCCESS
+                statusBox.style.color = 'green';
+                statusBox.innerHTML = "Payment Successful! You are now a BIG FAN.";
+                
+                // Activate Perk locally
+                localStorage.setItem('tt_big_fan', 'true');
+                
+                setTimeout(() => {
+                    closePayment();
+                    loadProfile(); // Will update badge and remove button
+                }, 2000);
+
+            } catch (err) {
+                console.error(err);
+                statusBox.style.display = 'none';
+                errorBox.style.display = 'block';
+                errorBox.innerText = err.message || "Connection Failed. (CORS or Network Error)";
+                btn.disabled = false;
+                btn.style.background = '#007bff';
             }
         }
 
-        // --- Navigation ---
+        // --- NAVIGATION ---
         function showPanel(panelId, btn) {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
             document.getElementById(panelId).classList.add('active-panel');
-            
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active-btn'));
             if(btn) btn.classList.add('active-btn');
         }
@@ -226,4 +414,4 @@
         }
     </script>
 </body>
-    </html>
+            </html>
