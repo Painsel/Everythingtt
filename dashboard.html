@@ -21,11 +21,12 @@
         .card { background: #2d2d2d; padding: 30px; border-radius: 10px; max-width: 600px; }
         .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4CAF50; object-fit: cover; margin-bottom: 15px; }
         
-        input { width: 100%; padding: 10px; margin: 5px 0 20px 0; background: #333; border: 1px solid #555; color: white; border-radius: 5px; }
-        label { color: #aaa; font-size: 0.9em; }
+        input { width: 100%; padding: 10px; margin: 5px 0 20px 0; background: #333; border: 1px solid #555; color: white; border-radius: 5px; box-sizing: border-box; }
+        label { color: #aaa; font-size: 0.9em; display: block; margin-top: 10px; }
         .readonly { background: #222; color: #777; border-color: #333; cursor: not-allowed; }
         
-        .btn-save { background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        .btn-save { background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px;}
+        .btn-save:hover { background-color: #45a049; }
     </style>
 </head>
 <body>
@@ -46,21 +47,30 @@
         <div id="account" class="panel active-panel">
             <h1>Settings</h1>
             <div class="card">
+                
+                <!-- PUBLIC PROFILE SECTION -->
                 <div style="text-align: center;">
-                    <img id="display-pfp" src="" class="profile-img"><br>
-                    <label>Profile Picture URL</label>
-                    <input type="text" id="edit-pfp-url" placeholder="Paste new image link here">
-                    <button class="btn-save" onclick="updatePfp()">Update Picture</button>
+                    <img id="display-pfp" src="" class="profile-img">
                 </div>
+
+                <label>Community Nickname (Visible to others)</label>
+                <input type="text" id="edit-nickname" placeholder="How you want to be seen">
+
+                <label>Profile Picture URL</label>
+                <input type="text" id="edit-pfp-url" placeholder="Paste image link">
+
+                <button class="btn-save" onclick="updateProfile()">Save Public Profile</button>
+                
                 <hr style="border-color:#444; margin: 30px 0;">
+                
+                <!-- PRIVATE LOGIN SECTION -->
+                <h3 style="margin-top:0; color:#888;">Login Details</h3>
                 
                 <label>Account Name (Locked)</label>
                 <input type="text" id="display-name" class="readonly" readonly>
                 
                 <label>Password (Locked)</label>
                 <input type="text" id="display-pass" class="readonly" readonly>
-                
-                <p style="font-size:0.8em; color:#666;">Note: Account details cannot be changed in Beta.</p>
             </div>
         </div>
 
@@ -85,39 +95,49 @@
             window.location.href = 'login.html';
         }
 
-        // Load User Data
-        const user = localStorage.getItem('tt_user');
-        const pass = localStorage.getItem('tt_pass');
-        const pfp = localStorage.getItem('tt_pfp');
+        // --- Load Data from Storage ---
+        const user = localStorage.getItem('tt_user');      // The login name
+        const pass = localStorage.getItem('tt_pass');      // The password
+        const pfp = localStorage.getItem('tt_pfp');        // Profile Picture
+        const nickname = localStorage.getItem('tt_nickname'); // New Nickname
 
+        // Fill inputs
         document.getElementById('display-name').value = user;
         document.getElementById('display-pass').value = pass;
+        
+        // If nickname exists, show it. If not, default to the username.
+        document.getElementById('edit-nickname').value = nickname ? nickname : user;
+
         document.getElementById('display-pfp').src = pfp;
         document.getElementById('edit-pfp-url').value = pfp;
 
-        function updatePfp() {
-            const newUrl = document.getElementById('edit-pfp-url').value;
-            if(newUrl) {
-                localStorage.setItem('tt_pfp', newUrl);
-                document.getElementById('display-pfp').src = newUrl;
-                alert("Profile Picture Updated!");
+        // --- Save Function ---
+        function updateProfile() {
+            const newPfp = document.getElementById('edit-pfp-url').value;
+            const newNick = document.getElementById('edit-nickname').value;
+
+            if(newPfp) {
+                localStorage.setItem('tt_pfp', newPfp);
+                document.getElementById('display-pfp').src = newPfp;
             }
+            
+            if(newNick) {
+                localStorage.setItem('tt_nickname', newNick);
+            }
+
+            alert("Public profile updated successfully!");
         }
 
+        // --- Navigation Functions ---
         function showPanel(panelId, btn) {
-            // Hide all panels
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
-            // Show target
             document.getElementById(panelId).classList.add('active-panel');
             
-            // Update sidebar buttons
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active-btn'));
             if(btn) btn.classList.add('active-btn');
         }
 
         function logout() {
-            // Note: We don't delete localStorage so the "account" persists on the device,
-            // we just redirect them. To "Forget", you'd use removeItem.
             window.location.href = 'index.html';
         }
     </script>
