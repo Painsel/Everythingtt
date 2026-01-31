@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - EverythingTT</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #2d2d2d; padding: 30px; border-radius: 10px; width: 350px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { color: #4CAF50; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
+        label { display: block; text-align: left; color: #aaa; margin-top: 10px; font-size: 0.9em; }
+        .btn { width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .btn:hover { background: #45a049; }
+        #error-msg { color: #ff5555; display: none; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container" id="signup-box">
+        <h2>Create Account</h2>
+        <input type="text" id="username" placeholder="Territorial.io Name" required>
+        <input type="password" id="password" placeholder="Create Password" required>
+        <input type="text" id="pfp" placeholder="Profile Picture Link (URL)">
+        
+        <label>Date of Birth:</label>
+        <input type="date" id="dob" required>
+
+        <p id="error-msg"></p>
+        <button class="btn" onclick="register()">Sign Up</button>
+        <br><br>
+        <a href="login.html" style="color:#aaa;">Already have an account? Log In</a>
+    </div>
+
+    <script>
+        // Check if user is currently blocked
+        const blockedUntil = localStorage.getItem('tt_blocked_until');
+        if (blockedUntil && Date.now() < parseInt(blockedUntil)) {
+            document.body.innerHTML = "<h1 style='color:red; text-align:center;'>Access Denied</h1><p style='text-align:center;'>You must be older than 12 to use this site. Try again in 24 hours.</p>";
+        }
+
+        // Check if guidelines were read
+        if(!localStorage.getItem('tt_guidelines_read')) {
+            alert("You must read the guidelines first.");
+            window.location.href = 'guidelines.html';
+        }
+
+        function register() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const pfp = document.getElementById('pfp').value || "https://ui-avatars.com/api/?name=" + user; // Default avatar
+            const dobInput = document.getElementById('dob').value;
+            const error = document.getElementById('error-msg');
+
+            if (!user || !pass || !dobInput) {
+                error.style.display = 'block';
+                error.innerText = "Please fill in all required fields.";
+                return;
+            }
+
+            // AGE CALCULATION
+            const dob = new Date(dobInput);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+
+            if (age <= 12) {
+                // BLOCK USER FOR 24 HOURS
+                const banTime = Date.now() + (24 * 60 * 60 * 1000); 
+                localStorage.setItem('tt_blocked_until', banTime);
+                alert("Sorry, you must be 13 or older.");
+                location.reload(); // Reload triggers the block screen above
+                return;
+            }
+
+            // Save Credentials
+            localStorage.setItem('tt_user', user);
+            localStorage.setItem('tt_pass', pass);
+            localStorage.setItem('tt_pfp', pfp);
+
+            alert("Account Created!");
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>
