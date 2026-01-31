@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - EverythingTT</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background: #2d2d2d; padding: 30px; border-radius: 10px; width: 300px; text-align: center; }
+        h2 { color: #4CAF50; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #444; background: #333; color: white; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Log In</h2>
+        <input type="text" id="lUser" placeholder="Username">
+        <input type="password" id="lPass" placeholder="Password">
+        <button class="btn" onclick="login()">Log In</button>
+        <br><br>
+        <a href="signup.html" style="color:#aaa;">No account? Sign Up</a>
+    </div>
+
+    <script>
+        function login() {
+            const enteredUser = document.getElementById('lUser').value;
+            const enteredPass = document.getElementById('lPass').value;
+
+            const storedUser = localStorage.getItem('tt_user');
+            const storedPass = localStorage.getItem('tt_pass');
+
+            if (enteredUser === storedUser && enteredPass === storedPass) {
+                window.location.href = 'dashboard.html';
+            } else {
+                alert("Incorrect username or password.");
+            }
+        }
+    </script>
+</body>
+</html>
