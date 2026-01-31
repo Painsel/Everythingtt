@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - EverythingTT</title>
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; height: 100vh; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 250px; background: #222; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #333; }
+        .sidebar h2 { color: #4CAF50; margin-top: 0; }
+        .menu-btn { background: none; border: none; color: #ccc; padding: 15px; text-align: left; cursor: pointer; font-size: 1.1em; transition: 0.2s; width: 100%; }
+        .menu-btn:hover, .active-btn { background: #333; color: #fff; border-left: 4px solid #4CAF50; }
+
+        /* CONTENT */
+        .content { flex: 1; padding: 40px; overflow-y: auto; }
+        .panel { display: none; }
+        .active-panel { display: block; }
+        
+        .card { background: #2d2d2d; padding: 30px; border-radius: 10px; max-width: 600px; }
+        .profile-img { width: 100px; height: 100px; border-radius: 50%; border: 3px solid #4CAF50; object-fit: cover; margin-bottom: 15px; }
+        
+        input { width: 100%; padding: 10px; margin: 5px 0 20px 0; background: #333; border: 1px solid #555; color: white; border-radius: 5px; }
+        label { color: #aaa; font-size: 0.9em; }
+        .readonly { background: #222; color: #777; border-color: #333; cursor: not-allowed; }
+        
+        .btn-save { background: #4CAF50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- LEFT MENU -->
+    <div class="sidebar">
+        <h2>EverythingTT</h2>
+        <button class="menu-btn active-btn" onclick="showPanel('account', this)">My Account</button>
+        <button class="menu-btn" onclick="showPanel('pages', this)">Pages</button>
+        <div style="flex:1"></div>
+        <button class="menu-btn" onclick="logout()" style="color:#ff5555">Log Out</button>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content">
+        
+        <!-- PANEL: MY ACCOUNT -->
+        <div id="account" class="panel active-panel">
+            <h1>Settings</h1>
+            <div class="card">
+                <div style="text-align: center;">
+                    <img id="display-pfp" src="" class="profile-img"><br>
+                    <label>Profile Picture URL</label>
+                    <input type="text" id="edit-pfp-url" placeholder="Paste new image link here">
+                    <button class="btn-save" onclick="updatePfp()">Update Picture</button>
+                </div>
+                <hr style="border-color:#444; margin: 30px 0;">
+                
+                <label>Account Name (Locked)</label>
+                <input type="text" id="display-name" class="readonly" readonly>
+                
+                <label>Password (Locked)</label>
+                <input type="text" id="display-pass" class="readonly" readonly>
+                
+                <p style="font-size:0.8em; color:#666;">Note: Account details cannot be changed in Beta.</p>
+            </div>
+        </div>
+
+        <!-- PANEL: PAGES -->
+        <div id="pages" class="panel">
+            <h1>Public Pages</h1>
+            <div class="card">
+                <h3>Directory</h3>
+                <ul style="color: #aaa; line-height: 2;">
+                    <li>Territorial.io Strategy Guide <span style="color:#4CAF50; font-size:0.8em; border:1px solid #4CAF50; padding:2px 5px; border-radius:4px; float:right">COMING SOON</span></li>
+                    <li>Clan List & Rankings <span style="color:#4CAF50; font-size:0.8em; border:1px solid #4CAF50; padding:2px 5px; border-radius:4px; float:right">COMING SOON</span></li>
+                    <li>Interactive Map <span style="color:#4CAF50; font-size:0.8em; border:1px solid #4CAF50; padding:2px 5px; border-radius:4px; float:right">COMING SOON</span></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Check if logged in
+        if (!localStorage.getItem('tt_user')) {
+            window.location.href = 'login.html';
+        }
+
+        // Load User Data
+        const user = localStorage.getItem('tt_user');
+        const pass = localStorage.getItem('tt_pass');
+        const pfp = localStorage.getItem('tt_pfp');
+
+        document.getElementById('display-name').value = user;
+        document.getElementById('display-pass').value = pass;
+        document.getElementById('display-pfp').src = pfp;
+        document.getElementById('edit-pfp-url').value = pfp;
+
+        function updatePfp() {
+            const newUrl = document.getElementById('edit-pfp-url').value;
+            if(newUrl) {
+                localStorage.setItem('tt_pfp', newUrl);
+                document.getElementById('display-pfp').src = newUrl;
+                alert("Profile Picture Updated!");
+            }
+        }
+
+        function showPanel(panelId, btn) {
+            // Hide all panels
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+            // Show target
+            document.getElementById(panelId).classList.add('active-panel');
+            
+            // Update sidebar buttons
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active-btn'));
+            if(btn) btn.classList.add('active-btn');
+        }
+
+        function logout() {
+            // Note: We don't delete localStorage so the "account" persists on the device,
+            // we just redirect them. To "Forget", you'd use removeItem.
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
