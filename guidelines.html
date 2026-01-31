@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Guidelines - EverythingTT</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; margin: 0; }
+        .box { background: #2d2d2d; padding: 40px; border-radius: 10px; max-width: 500px; border: 1px solid #444; }
+        h1 { color: #4CAF50; }
+        .text-area { background: #111; padding: 20px; border-radius: 5px; margin: 20px 0; font-family: monospace; color: #ccc; }
+        button { background: #4CAF50; color: white; border: none; padding: 15px 30px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 1.1em; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>Community Guidelines</h1>
+        <p>Please read our rules before joining the community.</p>
+        
+        <div class="text-area">
+            No Guidelines yet. Enjoy the beta experience.
+        </div>
+
+        <button onclick="accept()">I Have Read & Agree</button>
+        <br><br>
+        <a href="index.html" style="color: #666; text-decoration: none;">Decline (Go Home)</a>
+    </div>
+
+    <script>
+        function accept() {
+            localStorage.setItem('tt_guidelines_read', 'true');
+            window.location.href = 'signup.html';
+        }
+    </script>
+</body>
+</html>
