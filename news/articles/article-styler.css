@@ -437,9 +437,164 @@
     padding: 10px;
     resize: none;
     font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.comment-input-area textarea:focus {
+.comment-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.attachment-btn {
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #b9bbbe;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.attachment-btn:hover {
+    background: #40444b;
+    color: #fff;
+}
+
+.attachment-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.preview-item {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #40444b;
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.remove-attachment {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comment-attachment {
+    margin-top: 8px;
+    max-width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.comment-attachment img {
+    max-width: 100%;
+    max-height: 300px;
+    display: block;
+    cursor: pointer;
+}
+
+/* Replies */
+.replies-container {
+    margin-left: 40px;
+    border-left: 2px solid #40444b;
+    padding-left: 15px;
+    margin-top: 10px;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 8px;
+}
+
+.action-link {
+    font-size: 0.8rem;
+    color: #72767d;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.action-link:hover {
+    color: #dcddde;
+    text-decoration: underline;
+}
+
+.replying-to-info {
+    background: #2f3136;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #b9bbbe;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cancel-reply {
+    cursor: pointer;
+    color: #ed4245;
+    font-weight: bold;
+}
+
+/* Pinned Comment */
+.comment-item.pinned {
+    border: 1px solid #f1c40f;
+    background: rgba(241, 196, 15, 0.05);
+}
+
+.pinned-badge {
+    color: #f1c40f;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 5px;
+}
+
+.pin-btn {
+    color: #72767d;
+}
+
+.pin-btn.active {
+    color: #f1c40f;
+}
+
+.mention {
+    color: #5865f2;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mention:hover {
+    text-decoration: underline;
+}
+
+.comment-input-area button {
     outline: none;
     border-color: #5865f2;
 }

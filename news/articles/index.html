@@ -56,8 +56,15 @@
                 <!-- Comments will be loaded here -->
             </div>
             <div class="comment-input-area">
+                <div id="attachment-preview" class="attachment-preview hidden"></div>
                 <textarea id="new-comment-text" placeholder="Write a comment..." rows="2"></textarea>
-                <button id="btn-submit-comment">Post</button>
+                <div class="comment-controls">
+                    <label for="comment-file-upload" class="attachment-btn" title="Attach image">
+                        📎
+                        <input type="file" id="comment-file-upload" accept="image/*" hidden>
+                    </label>
+                    <button id="btn-submit-comment">Post</button>
+                </div>
             </div>
         </div>
     </div>

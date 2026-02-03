@@ -12,9 +12,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeCommentsModal = document.querySelector('.close-comments-modal');
     const commentInput = document.getElementById('new-comment-text');
     const btnSubmitComment = document.getElementById('btn-submit-comment');
+    const commentFileUpload = document.getElementById('comment-file-upload');
+    const attachmentPreview = document.getElementById('attachment-preview');
     
     let currentArticleIdForComments = null;
     let commentsSHA = null;
+    let currentReplyToId = null;
+    let currentAttachmentBase64 = null;
 
     const REACTION_EMOJIS = ["🔥", "✨", "👍", "🎉", "🤣", "😂", "😃", "🤔", "🥵", "🥶", "🤡", "🤖", "💀"];
     let articleSHAs = {}; // Store SHAs for updates
@@ -429,11 +433,65 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Close modals
     if (closeModal) closeModal.onclick = () => profileModal.classList.add('hidden');
-    if (closeCommentsModal) closeCommentsModal.onclick = () => commentsModal.classList.add('hidden');
+    if (closeCommentsModal) closeCommentsModal.onclick = () => {
+        commentsModal.classList.add('hidden');
+        resetCommentInput();
+    };
     window.onclick = (event) => {
         if (profileModal && event.target == profileModal) profileModal.classList.add('hidden');
-        if (commentsModal && event.target == commentsModal) commentsModal.classList.add('hidden');
+        if (commentsModal && event.target == commentsModal) {
+            commentsModal.classList.add('hidden');
+            resetCommentInput();
+        }
     };
+
+    function resetCommentInput() {
+        commentInput.value = '';
+        currentReplyToId = null;
+        currentAttachmentBase64 = null;
+        attachmentPreview.innerHTML = '';
+        attachmentPreview.classList.add('hidden');
+        const replyInfo = document.querySelector('.replying-to-info');
+        if (replyInfo) replyInfo.remove();
+    }
+
+    // Attachment handling
+    commentFileUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            // Re-use optimizeImage if available or simple base64
+            const base64 = await fileToBase64(file);
+            currentAttachmentBase64 = base64;
+            
+            attachmentPreview.innerHTML = `
+                <div class="preview-item">
+                    <img src="${base64}" alt="Attachment preview">
+                    <button class="remove-attachment">&times;</button>
+                </div>
+            `;
+            attachmentPreview.classList.remove('hidden');
+            
+            attachmentPreview.querySelector('.remove-attachment').onclick = () => {
+                currentAttachmentBase64 = null;
+                attachmentPreview.innerHTML = '';
+                attachmentPreview.classList.add('hidden');
+                commentFileUpload.value = '';
+            };
+        } catch (err) {
+            alert('Error loading image');
+        }
+    });
+
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
 
     async function openComments(articleId, title) {
         currentArticleIdForComments = articleId;
@@ -457,29 +515,164 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function formatCommentText(text) {
+        if (!text) return '';
+        
+        // Escape HTML
+        let formatted = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+        // User Mentions: @username
+        formatted = formatted.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention" onclick="findAndShowUser(\'$1\')">@$1</span>');
+
+        return formatted.replace(/\n/g, '<br>');
+    }
+
+    window.findAndShowUser = async function(username) {
+        // This is a bit expensive, but we need to find the ID by username
+        try {
+            const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+            for (const file of files) {
+                if (!file.name.endsWith('.json')) continue;
+                const data = await GitHubAPI.getFile(file.path);
+                const account = JSON.parse(data.content);
+                if (account.username.toLowerCase() === username.toLowerCase()) {
+                    window.showAuthorProfile(account.id);
+                    return;
+                }
+            }
+            alert('User not found');
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     function renderComments(comments) {
         if (!comments || comments.length === 0) {
             commentsList.innerHTML = '<p class="status-msg">No comments yet. Be the first to say something!</p>';
             return;
         }
 
-        commentsList.innerHTML = comments.map(c => `
-            <div class="comment-item">
-                <div class="comment-header" onclick="window.showAuthorProfile('${c.authorId}')">
-                    <img src="${c.authorPfp}" alt="${c.authorName}" class="comment-pfp">
-                    <div class="comment-author-info">
-                        <span class="comment-author-name">${c.authorName}</span>
-                        <span class="comment-timestamp">${new Date(c.timestamp).toLocaleString()}</span>
+        const article = articleData[currentArticleIdForComments];
+        const isAuthor = user && article && article.authorId === user.id;
+
+        // Separate pinned and unpinned, and organize into threads
+        const pinnedComments = comments.filter(c => c.pinned).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const unpinnedComments = comments.filter(c => !c.pinned && !c.replyToId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        const getReplies = (commentId) => comments.filter(c => c.replyToId === commentId).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+        const renderCommentHtml = (c, isReply = false) => {
+            const replies = !isReply ? getReplies(c.id) : [];
+            return `
+                <div class="comment-thread">
+                    <div class="comment-item ${c.pinned ? 'pinned' : ''}" id="comment-${c.id}">
+                        ${c.pinned ? '<div class="pinned-badge">📌 Pinned by author</div>' : ''}
+                        <div class="comment-header">
+                            <img src="${c.authorPfp}" alt="${c.authorName}" class="comment-pfp" onclick="window.showAuthorProfile('${c.authorId}')">
+                            <div class="comment-author-info">
+                                <span class="comment-author-name" onclick="window.showAuthorProfile('${c.authorId}')">${c.authorName}</span>
+                                <span class="comment-timestamp">${new Date(c.timestamp).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="comment-body">
+                            ${formatCommentText(c.text)}
+                            ${c.attachment ? `
+                                <div class="comment-attachment">
+                                    <img src="${c.attachment}" alt="Attachment" onclick="window.open('${c.attachment}', '_blank')">
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="comment-actions">
+                            <span class="action-link" onclick="setupReply('${c.id}', '${c.authorName}')">Reply</span>
+                            ${isAuthor ? `
+                                <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="togglePinComment('${c.id}')">
+                                    ${c.pinned ? 'Unpin' : 'Pin'}
+                                </span>
+                            ` : ''}
+                        </div>
                     </div>
+                    ${replies.length > 0 ? `
+                        <div class="replies-container">
+                            ${replies.map(r => renderCommentHtml(r, true)).join('')}
+                        </div>
+                    ` : ''}
                 </div>
-                <div class="comment-body">${c.text.replace(/\n/g, '<br>')}</div>
-            </div>
-        `).join('');
+            `;
+        };
+
+        commentsList.innerHTML = [
+            ...pinnedComments.map(c => renderCommentHtml(c)),
+            ...unpinnedComments.map(c => renderCommentHtml(c))
+        ].join('');
     }
+
+    window.setupReply = function(commentId, authorName) {
+        currentReplyToId = commentId;
+        
+        // Show visual indicator
+        const existingInfo = document.querySelector('.replying-to-info');
+        if (existingInfo) existingInfo.remove();
+        
+        const info = document.createElement('div');
+        info.className = 'replying-to-info';
+        info.innerHTML = `
+            <span>Replying to <strong>@${authorName}</strong></span>
+            <span class="cancel-reply" onclick="cancelReply()">Cancel</span>
+        `;
+        
+        commentInput.parentNode.insertBefore(info, commentInput);
+        commentInput.focus();
+        
+        // Auto-mention the user
+        if (!commentInput.value.includes(`@${authorName}`)) {
+            commentInput.value = `@${authorName} ` + commentInput.value;
+        }
+    };
+
+    window.cancelReply = function() {
+        currentReplyToId = null;
+        const info = document.querySelector('.replying-to-info');
+        if (info) info.remove();
+    };
+
+    window.togglePinComment = async function(commentId) {
+        try {
+            const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+            if (!data) return;
+            
+            let comments = JSON.parse(data.content);
+            const comment = comments.find(c => c.id === commentId);
+            if (!comment) return;
+            
+            // Unpin others if we are pinning this one (Discord style - only one pinned comment usually, but we can allow multiple if we want. Let's do one for simplicity)
+            const isCurrentlyPinned = comment.pinned;
+            if (!isCurrentlyPinned) {
+                comments.forEach(c => c.pinned = false);
+            }
+            
+            comment.pinned = !isCurrentlyPinned;
+            
+            await GitHubAPI.updateFile(
+                `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                JSON.stringify(comments),
+                `${comment.pinned ? 'Pin' : 'Unpin'} comment ${commentId}`,
+                data.sha
+            );
+            
+            renderComments(comments);
+        } catch (e) {
+            alert('Failed to pin comment: ' + e.message);
+        }
+    };
 
     btnSubmitComment.addEventListener('click', async () => {
         const text = commentInput.value.trim();
-        if (!text) return;
+        if (!text && !currentAttachmentBase64) return;
         if (!user) return alert('You must be logged in to comment');
 
         btnSubmitComment.disabled = true;
@@ -487,15 +680,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             let comments = [];
+            let sha = null;
             try {
                 const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
                 if (data) {
                     comments = JSON.parse(data.content);
-                    commentsSHA = data.sha;
+                    sha = data.sha;
                 }
-            } catch (e) {
-                // Folder or file might not exist yet
-            }
+            } catch (e) {}
 
             const newComment = {
                 id: GitHubAPI.generateID().toString(),
@@ -503,7 +695,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 authorName: user.username,
                 authorPfp: user.pfp,
                 text: text,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                replyToId: currentReplyToId,
+                attachment: currentAttachmentBase64,
+                pinned: false
             };
 
             comments.push(newComment);
@@ -512,11 +707,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `news/article-comments-storage/${currentArticleIdForComments}.json`,
                 JSON.stringify(comments),
                 `New comment on article ${currentArticleIdForComments}`,
-                commentsSHA
+                sha
             );
 
             commentsSHA = res.content.sha;
-            commentInput.value = '';
+            resetCommentInput();
             renderComments(comments);
         } catch (e) {
             alert('Failed to post comment: ' + e.message);
