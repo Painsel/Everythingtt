@@ -25,12 +25,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     let articleData = {}; // Store local data for polling comparisons
 
     // Show logged in user in sidebar if exists
-    const user = JSON.parse(localStorage.getItem('current_user'));
+    let user = JSON.parse(localStorage.getItem('current_user'));
+    let userSHA = null;
+
     if (user) {
         const loggedInDiv = document.getElementById('logged-in-user');
         loggedInDiv.classList.remove('hidden');
         document.getElementById('side-pfp').src = user.pfp;
         document.getElementById('side-username').innerText = user.username;
+        pollUserProfile(); // Initial fetch
+    }
+
+    async function pollUserProfile() {
+        if (!user) return;
+        try {
+            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+            if (data && data.sha !== userSHA) {
+                userSHA = data.sha;
+                const remoteUser = JSON.parse(data.content);
+                
+                // Update localStorage and UI if changed
+                const localUser = JSON.parse(localStorage.getItem('current_user'));
+                if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {
+                    localStorage.setItem('current_user', JSON.stringify(remoteUser));
+                    
+                    // Update sidebar UI
+                    document.getElementById('side-pfp').src = remoteUser.pfp;
+                    document.getElementById('side-username').innerText = remoteUser.username;
+                    
+                    // Update local user reference properties
+                    Object.assign(user, remoteUser);
+                    console.log('Profile updated from remote');
+                }
+            }
+        } catch (e) {
+            console.error('Profile polling failed:', e);
+        }
     }
 
     // Load articles
@@ -105,6 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Start real-time polling
             if (!window.pollingInterval) {
                 window.pollingInterval = setInterval(pollReactions, 15000);
+                window.profilePollingInterval = setInterval(pollUserProfile, 30000); // Check profile every 30s
             }
         } catch (e) {
             articlesList.innerHTML = `<p>Error loading articles: ${e.message}. Make sure you have set your PAT in the Dashboard.</p>`;
