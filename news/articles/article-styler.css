@@ -5,6 +5,44 @@
     margin-top: 1rem;
 }
 
+.back-btn {
+    background: #4f545c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.back-btn:hover {
+    background: #5865f2;
+}
+
+#single-article-header.hidden {
+    display: none;
+}
+
+.single-article-view .articles-grid {
+    grid-template-columns: 1fr;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.single-article-view .article-card {
+    cursor: default;
+    transform: none !important;
+}
+
+.single-article-view .article-banner {
+    height: 300px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .articles-grid {

@@ -1,5 +1,8 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const articlesList = document.getElementById('articles-list');
+    const singleArticleHeader = document.getElementById('single-article-header');
+    const exploreTitle = document.getElementById('explore-title');
+    const btnBackToFeed = document.getElementById('btn-back-to-feed');
     const profileModal = document.getElementById('profile-modal');
     const modalContent = document.getElementById('modal-profile-content');
     const closeModal = document.querySelector('.close-modal');
@@ -27,44 +30,93 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Load articles
-    try {
-        articlesList.innerHTML = '<p class="status-msg">Loading articles...</p>';
-        const files = await GitHubAPI.listFiles('news/created-articles-storage');
+    async function loadArticles() {
+        const hash = window.location.hash;
+        const singleArticleId = hash.startsWith('#article-') ? hash.replace('#article-', '') : null;
         
-        if (!files || files.length === 0) {
-            articlesList.innerHTML = '<p class="status-msg">No articles found. Be the first to publish!</p>';
-            return;
-        }
-
-        articlesList.innerHTML = ''; // Clear loading message
-        for (const file of files) {
-            if (file.type !== 'file' || !file.name.endsWith('.json')) continue;
+        try {
+            articlesList.innerHTML = '<p class="status-msg">Loading articles...</p>';
             
-            const data = await GitHubAPI.getFile(file.path);
-            if (!data) continue;
-            
-            try {
+            if (singleArticleId) {
+                // Single article view
+                document.body.classList.add('single-article-view');
+                singleArticleHeader.classList.remove('hidden');
+                exploreTitle.classList.add('hidden');
+                
+                const data = await GitHubAPI.getFile(`news/created-articles-storage/${singleArticleId}.json`);
+                if (!data) {
+                    articlesList.innerHTML = '<p class="status-msg">Article not found.</p>';
+                    return;
+                }
+                
                 const article = JSON.parse(data.content);
                 articleSHAs[article.id] = data.sha;
                 articleData[article.id] = article;
-                renderArticleCard(article);
-            } catch (e) {
-                console.warn(`Skipping invalid article JSON: ${file.path}`);
+                articlesList.innerHTML = '';
+                renderArticleCard(article, true); // true for full view
+            } else {
+                // Feed view
+                document.body.classList.remove('single-article-view');
+                singleArticleHeader.classList.add('hidden');
+                exploreTitle.classList.remove('hidden');
+                
+                const files = await GitHubAPI.listFiles('news/created-articles-storage');
+                
+                if (!files || files.length === 0) {
+                    articlesList.innerHTML = '<p class="status-msg">No articles found. Be the first to publish!</p>';
+                    return;
+                }
+
+                articlesList.innerHTML = ''; // Clear loading message
+                // Sort by timestamp descending
+                const articleFiles = files.filter(f => f.type === 'file' && f.name.endsWith('.json'));
+                
+                // Fetch all articles
+                const articles = await Promise.all(articleFiles.map(async (file) => {
+                    const data = await GitHubAPI.getFile(file.path);
+                    if (!data) return null;
+                    try {
+                        const article = JSON.parse(data.content);
+                        article.sha = data.sha;
+                        return article;
+                    } catch (e) { return null; }
+                }));
+
+                const validArticles = articles.filter(a => a !== null).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                for (const article of validArticles) {
+                    articleSHAs[article.id] = article.sha;
+                    articleData[article.id] = article;
+                    renderArticleCard(article, false);
+                }
             }
+
+            // Global click handler to close emoji pickers
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.add-reaction') && !e.target.closest('.emoji-picker')) {
+                    document.querySelectorAll('.emoji-picker').forEach(p => p.classList.add('hidden'));
+                }
+            });
+
+            // Start real-time polling
+            if (!window.pollingInterval) {
+                window.pollingInterval = setInterval(pollReactions, 15000);
+            }
+        } catch (e) {
+            articlesList.innerHTML = `<p>Error loading articles: ${e.message}. Make sure you have set your PAT in the Dashboard.</p>`;
         }
-
-        // Global click handler to close emoji pickers
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.add-reaction') && !e.target.closest('.emoji-picker')) {
-                document.querySelectorAll('.emoji-picker').forEach(p => p.classList.add('hidden'));
-            }
-        });
-
-        // Start real-time polling
-        setInterval(pollReactions, 15000); // Poll every 15 seconds
-    } catch (e) {
-        articlesList.innerHTML = `<p>Error loading articles: ${e.message}. Make sure you have set your PAT in the Dashboard.</p>`;
     }
+
+    // Initial load
+    loadArticles();
+
+    // Listen for hash changes to switch between single and feed view
+    window.addEventListener('hashchange', loadArticles);
+
+    // Back to feed button
+    btnBackToFeed.addEventListener('click', () => {
+        window.location.hash = '';
+    });
 
     function formatArticleContent(text) {
         if (!text) return '';
@@ -113,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return formatted;
     }
 
-    function renderArticleCard(article) {
+    function renderArticleCard(article, isFullView = false) {
         const card = document.createElement('div');
         card.className = 'article-card';
         card.id = `article-${article.id}`;
@@ -128,7 +180,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isLong = article.content.length > READ_MORE_LIMIT;
         
         let displayContent;
-        if (isLong) {
+        if (isFullView) {
+            displayContent = formatArticleContent(article.content);
+        } else if (isLong) {
             // Find a good place to cut (end of a paragraph or sentence near limit)
             let cutIndex = article.content.indexOf('\n', READ_MORE_LIMIT);
             if (cutIndex === -1 || cutIndex > READ_MORE_LIMIT + 100) {
@@ -154,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 <div class="article-content-container">
                     <div class="article-text">${displayContent}</div>
-                    ${isLong ? `<button class="read-more-btn" data-article-id="${article.id}">Read More</button>` : ''}
+                    ${(isLong && !isFullView) ? `<button class="read-more-btn" data-article-id="${article.id}">Read More</button>` : ''}
                 </div>
                 
                 <div class="reactions-wrapper">
@@ -187,7 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             commentBtn.addEventListener('click', () => openComments(article.id, article.title));
         }
 
-        if (isLong) {
+        if (isLong && !isFullView) {
             const btn = card.querySelector('.read-more-btn');
             const textContainer = card.querySelector('.article-text');
             btn.addEventListener('click', () => {
@@ -234,6 +288,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         articlesList.appendChild(card);
+        
+        // Auto-open comments if requested via hash (optional improvement)
+        if (isFullView && window.location.hash.includes('?comments=true')) {
+            openComments(article.id, article.title);
+        }
     }
 
     async function handleReaction(articleId, emoji) {
