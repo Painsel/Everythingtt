@@ -632,6 +632,155 @@
     color: #fff;
 }
 
+/* Notifications */
+.notification-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.notification-badge {
+    background-color: #ed4245;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 15px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.notifications-modal-content {
+    max-width: 450px;
+    padding: 1.5rem;
+}
+
+.notifications-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-top: 1rem;
+}
+
+.notification-item {
+    padding: 12px;
+    border-bottom: 1px solid #40444b;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.notification-item:hover {
+    background: #36393f;
+}
+
+.notification-pfp {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.notification-item.unread {
+    background: rgba(88, 101, 242, 0.1);
+}
+
+.notification-icon {
+    font-size: 1.2rem;
+    min-width: 30px;
+    text-align: center;
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-text {
+    font-size: 0.9rem;
+    color: #dcddde;
+    margin-bottom: 4px;
+}
+
+.notification-text strong {
+    color: #fff;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #72767d;
+}
+
+.close-notifications-modal {
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #b9bbbe;
+    cursor: pointer;
+}
+
+.close-notifications-modal:hover {
+    color: #fff;
+}
+
+/* Highlight Animation */
+@keyframes highlight-blue {
+    0% { background-color: rgba(88, 101, 242, 0.5); }
+    100% { background-color: transparent; }
+}
+
+.highlight-comment {
+    animation: highlight-blue 2s ease-out;
+}
+
+/* Comment Votes */
+.comment-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.comment-votes {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.vote-btn {
+    background: none;
+    border: none;
+    color: #72767d;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.vote-btn:hover {
+    background: #40444b;
+    color: #dcddde;
+}
+
+.vote-btn.upvoted {
+    color: #3ba55c;
+}
+
+.vote-btn.downvoted {
+    color: #ed4245;
+}
+
+.vote-count {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
 .status-msg {
     text-align: center;
     color: #72767d;

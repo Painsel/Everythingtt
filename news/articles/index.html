@@ -23,6 +23,10 @@
             <nav>
                 <a href="../" class="nav-item">Dashboard</a>
                 <a href="../create-article/" class="nav-item">Create Article</a>
+                <div class="nav-item notification-nav" id="btn-notifications">
+                    Notifications
+                    <span id="notification-badge" class="notification-badge hidden">0</span>
+                </div>
             </nav>
         </aside>
 
@@ -35,6 +39,17 @@
                 <!-- Articles will be loaded here -->
             </div>
         </main>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notifications-modal" class="modal hidden">
+        <div class="modal-content notifications-modal-content">
+            <span class="close-notifications-modal">&times;</span>
+            <h3>Notifications</h3>
+            <div id="notifications-list" class="notifications-list">
+                <!-- Notifications will be loaded here -->
+            </div>
+        </div>
     </div>
 
     <!-- Profile Modal -->

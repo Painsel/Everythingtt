@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let commentsSHA = null;
     let currentReplyToId = null;
     let currentAttachmentBase64 = null;
+    let notifications = [];
+    let notificationsSHA = null;
 
     const REACTION_EMOJIS = ["🔥", "✨", "👍", "🎉", "🤣", "😂", "😃", "🤔", "🥵", "🥶", "🤡", "🤖", "💀"];
     let articleSHAs = {}; // Store SHAs for updates
@@ -34,6 +36,166 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('side-pfp').src = user.pfp;
         document.getElementById('side-username').innerText = user.username;
         pollUserProfile(); // Initial fetch
+        pollNotifications(); // Initial notifications fetch
+    }
+
+    async function addNotification(targetUserId, type, data) {
+        if (!targetUserId || (user && targetUserId === user.id)) return; // Don't notify self
+
+        try {
+            let remoteNotifications = [];
+            let sha = null;
+            try {
+                const res = await GitHubAPI.getFile(`news/notifications-storage/${targetUserId}.json`);
+                if (res) {
+                    remoteNotifications = JSON.parse(res.content);
+                    sha = res.sha;
+                }
+            } catch (e) {}
+
+            const newNotif = {
+                id: GitHubAPI.generateID().toString(),
+                type: type,
+                fromUser: {
+                    id: user.id,
+                    username: user.username,
+                    pfp: user.pfp
+                },
+                articleId: data.articleId,
+                articleTitle: data.articleTitle,
+                commentId: data.commentId || null,
+                text: data.text || "",
+                timestamp: new Date().toISOString(),
+                read: false
+            };
+
+            remoteNotifications.unshift(newNotif); // Newest first
+            if (remoteNotifications.length > 200) remoteNotifications = remoteNotifications.slice(0, 200); // Limit to 200
+
+            await GitHubAPI.updateFile(
+                `news/notifications-storage/${targetUserId}.json`,
+                JSON.stringify(remoteNotifications),
+                `New notification for ${targetUserId}`,
+                sha
+            );
+        } catch (e) {
+            console.error('Failed to send notification:', e);
+        }
+    }
+
+    async function pollNotifications() {
+        if (!user) return;
+        try {
+            const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
+            if (data && data.sha !== notificationsSHA) {
+                notificationsSHA = data.sha;
+                notifications = JSON.parse(data.content);
+                updateNotificationUI();
+            }
+        } catch (e) {
+            // Probably doesn't exist yet
+            if (notifications.length > 0) {
+                notifications = [];
+                updateNotificationUI();
+            }
+        }
+    }
+
+    function updateNotificationUI() {
+        const badge = document.getElementById('notification-badge');
+        const unreadCount = notifications.filter(n => !n.read).length;
+        
+        if (unreadCount > 0) {
+            badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+        const list = document.getElementById('notifications-list');
+        if (!list) return;
+
+        if (notifications.length === 0) {
+            list.innerHTML = '<p class="status-msg">No notifications yet.</p>';
+            return;
+        }
+
+        list.innerHTML = notifications.map(n => {
+            let message = "";
+            switch (n.type) {
+                case 'mention': message = `mentioned you in a comment on <strong>${n.articleTitle}</strong>`; break;
+                case 'comment': message = `commented on your article <strong>${n.articleTitle}</strong>`; break;
+                case 'reaction': message = `reacted to your article <strong>${n.articleTitle}</strong>`; break;
+                case 'pin': message = `pinned your comment on <strong>${n.articleTitle}</strong>`; break;
+                case 'reply': message = `replied to your comment on <strong>${n.articleTitle}</strong>`; break;
+            }
+
+            return `
+                <div class="notification-item ${n.read ? 'read' : 'unread'}" onclick="handleNotificationClick('${n.id}')">
+                    <img src="${n.fromUser.pfp}" class="notification-pfp">
+                    <div class="notification-content">
+                        <p><strong>${n.fromUser.username}</strong> ${message}</p>
+                        <span class="notification-time">${new Date(n.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.handleNotificationClick = async function(notificationId) {
+        const n = notifications.find(notif => notif.id === notificationId);
+        if (!n) return;
+
+        // Mark as read
+        n.read = true;
+        updateNotificationUI();
+        
+        try {
+            await GitHubAPI.updateFile(
+                `news/notifications-storage/${user.id}.json`,
+                JSON.stringify(notifications),
+                `Mark notification ${notificationId} as read`,
+                notificationsSHA
+            );
+        } catch (e) {}
+
+        // Redirect and highlight
+        window.location.hash = `#article-${n.articleId}`;
+        
+        // Wait for article to load then open comments and highlight
+        setTimeout(async () => {
+            await openComments(n.articleId, n.articleTitle);
+            if (n.commentId) {
+                setTimeout(() => {
+                    const commentEl = document.getElementById(`comment-${n.commentId}`);
+                    if (commentEl) {
+                        commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        commentEl.classList.add('highlight-comment');
+                        setTimeout(() => commentEl.classList.remove('highlight-comment'), 2000);
+                    }
+                }, 500);
+            }
+        }, 500);
+
+        document.getElementById('notifications-modal').classList.add('hidden');
+    };
+
+    // UI Listeners for Notifications
+    const btnNotif = document.getElementById('btn-notifications');
+    const notifModal = document.getElementById('notifications-modal');
+    const closeNotifModal = document.querySelector('.close-notifications-modal');
+
+    if (btnNotif) {
+        btnNotif.addEventListener('click', () => {
+            notifModal.classList.remove('hidden');
+            updateNotificationUI();
+        });
+    }
+
+    if (closeNotifModal) {
+        closeNotifModal.addEventListener('click', () => {
+            notifModal.classList.add('hidden');
+        });
     }
 
     async function pollUserProfile() {
@@ -136,6 +298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!window.pollingInterval) {
                 window.pollingInterval = setInterval(pollReactions, 15000);
                 window.profilePollingInterval = setInterval(pollUserProfile, 30000); // Check profile every 30s
+                window.notificationPollingInterval = setInterval(pollNotifications, 20000); // Check notifications every 20s
             }
         } catch (e) {
             articlesList.innerHTML = `<p>Error loading articles: ${e.message}. Make sure you have set your PAT in the Dashboard.</p>`;
@@ -208,8 +371,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Ensure reactions object exists
         if (!article.reactions) article.reactions = {};
         
-        // Track user's own reactions locally (in real app, this would be in the article data)
-        const userReactions = JSON.parse(localStorage.getItem(`reactions_${article.id}`) || '[]');
+        const getReactionCount = (emoji) => {
+            const data = article.reactions[emoji];
+            if (Array.isArray(data)) return data.length;
+            return typeof data === 'number' ? data : 0;
+        };
+
+        const hasUserReacted = (emoji) => {
+            if (!user) return false;
+            const data = article.reactions[emoji];
+            if (Array.isArray(data)) return data.includes(user.id);
+            // Fallback for old data
+            const localReactions = JSON.parse(localStorage.getItem(`reactions_${article.id}`) || '[]');
+            return localReactions.includes(emoji);
+        };
 
         const READ_MORE_LIMIT = 500;
         const isLong = article.content.length > READ_MORE_LIMIT;
@@ -254,11 +429,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <div class="reactions-container">
                         ${Object.entries(article.reactions)
-                            .filter(([emoji, count]) => count > 0)
-                            .map(([emoji, count]) => `
-                                <button class="reaction-btn ${userReactions.includes(emoji) ? 'active' : ''}" data-emoji="${emoji}" data-article-id="${article.id}">
+                            .filter(([emoji, data]) => getReactionCount(emoji) > 0)
+                            .map(([emoji, data]) => `
+                                <button class="reaction-btn ${hasUserReacted(emoji) ? 'active' : ''}" data-emoji="${emoji}" data-article-id="${article.id}">
                                     <span class="emoji">${emoji}</span>
-                                    <span class="count">${count}</span>
+                                    <span class="count">${getReactionCount(emoji)}</span>
                                 </button>
                             `).join('')}
                         <button class="reaction-btn add-reaction" data-article-id="${article.id}">+</button>
@@ -331,8 +506,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function handleReaction(articleId, emoji) {
-        const userReactions = JSON.parse(localStorage.getItem(`reactions_${articleId}`) || '[]');
-        const isRemoving = userReactions.includes(emoji);
+        if (!user) return alert('You must be logged in to react');
         
         // Disable buttons for this article during update
         const container = document.querySelector(`#article-${articleId} .reactions-container`);
@@ -346,13 +520,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (!article.reactions) article.reactions = {};
             
+            // Migrate old data if necessary
+            Object.keys(article.reactions).forEach(e => {
+                if (typeof article.reactions[e] === 'number') {
+                    // We can't know who reacted, so we just clear old counts to start fresh with IDs
+                    // Or keep it as empty array. Let's start fresh to ensure sync works.
+                    article.reactions[e] = []; 
+                }
+            });
+
+            if (!article.reactions[emoji]) article.reactions[emoji] = [];
+            
+            const userIndex = article.reactions[emoji].indexOf(user.id);
+            const isRemoving = userIndex > -1;
+
             if (isRemoving) {
-                article.reactions[emoji] = Math.max(0, (article.reactions[emoji] || 1) - 1);
-                const index = userReactions.indexOf(emoji);
-                userReactions.splice(index, 1);
+                article.reactions[emoji].splice(userIndex, 1);
             } else {
-                article.reactions[emoji] = (article.reactions[emoji] || 0) + 1;
-                userReactions.push(emoji);
+                article.reactions[emoji].push(user.id);
             }
 
             const res = await GitHubAPI.updateFile(
@@ -363,10 +548,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
 
             // Update local state
-            localStorage.setItem(`reactions_${articleId}`, JSON.stringify(userReactions));
             articleSHAs[articleId] = res.content.sha;
             articleData[articleId] = article;
             
+            // Send notification if adding a reaction
+            if (!isRemoving) {
+                addNotification(article.authorId, 'reaction', {
+                    articleId: article.id,
+                    articleTitle: article.title
+                });
+            }
+
             // Re-render the reaction section
             updateReactionUI(article);
 
@@ -411,15 +603,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!card) return;
 
         const container = card.querySelector('.reactions-container');
-        const userReactions = JSON.parse(localStorage.getItem(`reactions_${article.id}`) || '[]');
         
+        const getReactionCount = (emoji) => {
+            const data = article.reactions[emoji];
+            if (Array.isArray(data)) return data.length;
+            return typeof data === 'number' ? data : 0;
+        };
+
+        const hasUserReacted = (emoji) => {
+            if (!user) return false;
+            const data = article.reactions[emoji];
+            if (Array.isArray(data)) return data.includes(user.id);
+            return false;
+        };
+
         const html = `
             ${Object.entries(article.reactions)
-                .filter(([emoji, count]) => count > 0)
-                .map(([emoji, count]) => `
-                    <button class="reaction-btn ${userReactions.includes(emoji) ? 'active' : ''}" data-emoji="${emoji}" data-article-id="${article.id}">
+                .filter(([emoji, data]) => getReactionCount(emoji) > 0)
+                .map(([emoji, data]) => `
+                    <button class="reaction-btn ${hasUserReacted(emoji) ? 'active' : ''}" data-emoji="${emoji}" data-article-id="${article.id}">
                         <span class="emoji">${emoji}</span>
-                        <span class="count">${count}</span>
+                        <span class="count">${getReactionCount(emoji)}</span>
                     </button>
                 `).join('')}
             <button class="reaction-btn add-reaction" data-article-id="${article.id}">+</button>
@@ -604,6 +808,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const renderCommentHtml = (c, isReply = false) => {
             const replies = !isReply ? getReplies(c.id) : [];
+            const upvotes = (c.votes && c.votes.up) ? c.votes.up.length : 0;
+            const downvotes = (c.votes && c.votes.down) ? c.votes.down.length : 0;
+            const userUpvoted = user && c.votes && c.votes.up && c.votes.up.includes(user.id);
+            const userDownvoted = user && c.votes && c.votes.down && c.votes.down.includes(user.id);
+
             return `
                 <div class="comment-thread">
                     <div class="comment-item ${c.pinned ? 'pinned' : ''}" id="comment-${c.id}">
@@ -624,6 +833,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             ` : ''}
                         </div>
                         <div class="comment-actions">
+                            <div class="comment-votes">
+                                <button class="vote-btn upvote ${userUpvoted ? 'upvoted' : ''}" onclick="handleCommentVote('${c.id}', 'up')">
+                                    ▲ <span class="vote-count">${upvotes}</span>
+                                </button>
+                                <button class="vote-btn downvote ${userDownvoted ? 'downvoted' : ''}" onclick="handleCommentVote('${c.id}', 'down')">
+                                    ▼ <span class="vote-count">${downvotes}</span>
+                                </button>
+                            </div>
                             <span class="action-link" onclick="setupReply('${c.id}', '${c.authorName}')">Reply</span>
                             ${isAuthor ? `
                                 <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="togglePinComment('${c.id}')">
@@ -700,9 +917,66 @@ document.addEventListener('DOMContentLoaded', async () => {
                 data.sha
             );
             
+            // Send notification if pinning
+            if (comment.pinned) {
+                const article = articleData[currentArticleIdForComments];
+                addNotification(comment.authorId, 'pin', {
+                    articleId: article.id,
+                    articleTitle: article.title,
+                    commentId: comment.id
+                });
+            }
+
             renderComments(comments);
         } catch (e) {
             alert('Failed to pin comment: ' + e.message);
+        }
+    };
+
+    window.handleCommentVote = async function(commentId, type) {
+        if (!user) return alert('You must be logged in to vote');
+        
+        try {
+            const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+            if (!data) return;
+            
+            let comments = JSON.parse(data.content);
+            const comment = comments.find(c => c.id === commentId);
+            if (!comment) return;
+            
+            if (!comment.votes) comment.votes = { up: [], down: [] };
+            if (!comment.votes.up) comment.votes.up = [];
+            if (!comment.votes.down) comment.votes.down = [];
+
+            const upIndex = comment.votes.up.indexOf(user.id);
+            const downIndex = comment.votes.down.indexOf(user.id);
+
+            if (type === 'up') {
+                if (upIndex > -1) {
+                    comment.votes.up.splice(upIndex, 1); // Remove upvote
+                } else {
+                    comment.votes.up.push(user.id); // Add upvote
+                    if (downIndex > -1) comment.votes.down.splice(downIndex, 1); // Remove downvote if exists
+                }
+            } else if (type === 'down') {
+                if (downIndex > -1) {
+                    comment.votes.down.splice(downIndex, 1); // Remove downvote
+                } else {
+                    comment.votes.down.push(user.id); // Add downvote
+                    if (upIndex > -1) comment.votes.up.splice(upIndex, 1); // Remove upvote if exists
+                }
+            }
+
+            await GitHubAPI.updateFile(
+                `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                JSON.stringify(comments),
+                `Vote ${type} on comment ${commentId}`,
+                data.sha
+            );
+            
+            renderComments(comments);
+        } catch (e) {
+            console.error('Vote failed:', e);
         }
     };
 
@@ -734,7 +1008,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 timestamp: new Date().toISOString(),
                 replyToId: currentReplyToId,
                 attachment: currentAttachmentBase64,
-                pinned: false
+                pinned: false,
+                votes: { up: [], down: [] }
             };
 
             comments.push(newComment);
@@ -745,6 +1020,53 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `New comment on article ${currentArticleIdForComments}`,
                 sha
             );
+
+            // Send notifications
+            const article = articleData[currentArticleIdForComments];
+            
+            // 1. Notify article author
+            addNotification(article.authorId, 'comment', {
+                articleId: article.id,
+                articleTitle: article.title,
+                commentId: newComment.id
+            });
+
+            // 2. Notify replied user
+            if (currentReplyToId) {
+                const parentComment = comments.find(c => c.id === currentReplyToId);
+                if (parentComment) {
+                    addNotification(parentComment.authorId, 'reply', {
+                        articleId: article.id,
+                        articleTitle: article.title,
+                        commentId: newComment.id
+                    });
+                }
+            }
+
+            // 3. Notify mentioned users
+            const mentions = text.match(/@([a-zA-Z0-9_]+)/g);
+            if (mentions) {
+                const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
+                for (const username of uniqueMentions) {
+                    // Find user ID by username
+                    try {
+                        const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+                        for (const file of files) {
+                            if (!file.name.endsWith('.json')) continue;
+                            const accData = await GitHubAPI.getFile(file.path);
+                            const account = JSON.parse(accData.content);
+                            if (account.username.toLowerCase() === username.toLowerCase()) {
+                                addNotification(account.id, 'mention', {
+                                    articleId: article.id,
+                                    articleTitle: article.title,
+                                    commentId: newComment.id
+                                });
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
 
             commentsSHA = res.content.sha;
             resetCommentInput();
