@@ -16,6 +16,106 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
 
     let userSHA = null;
+    let notifications = [];
+    let notificationsSHA = null;
+
+    async function pollNotifications() {
+        if (!user) return;
+        try {
+            const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
+            if (data && data.sha !== notificationsSHA) {
+                notificationsSHA = data.sha;
+                notifications = JSON.parse(data.content);
+                updateNotificationUI();
+            }
+        } catch (e) {
+            if (notifications.length > 0) {
+                notifications = [];
+                updateNotificationUI();
+            }
+        }
+    }
+
+    function updateNotificationUI() {
+        const badge = document.getElementById('notification-badge');
+        const unreadCount = notifications.filter(n => !n.read).length;
+        
+        if (unreadCount > 0) {
+            badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+
+        const list = document.getElementById('notifications-list');
+        if (!list) return;
+
+        if (notifications.length === 0) {
+            list.innerHTML = '<p class="status-msg">No notifications yet.</p>';
+            return;
+        }
+
+        list.innerHTML = notifications.map(n => {
+            let message = "";
+            switch (n.type) {
+                case 'mention': message = `mentioned you in a comment on <strong>${n.articleTitle}</strong>`; break;
+                case 'comment': message = `commented on your article <strong>${n.articleTitle}</strong>`; break;
+                case 'reaction': message = `reacted to your article <strong>${n.articleTitle}</strong>`; break;
+                case 'pin': message = `pinned your comment on <strong>${n.articleTitle}</strong>`; break;
+                case 'reply': message = `replied to your comment on <strong>${n.articleTitle}</strong>`; break;
+            }
+
+            return `
+                <div class="notification-item ${n.read ? 'read' : 'unread'}" onclick="handleNotificationClick('${n.id}')">
+                    <img src="${n.fromUser.pfp}" class="notification-pfp">
+                    <div class="notification-content">
+                        <p><strong>${n.fromUser.username}</strong> ${message}</p>
+                        <span class="notification-time">${new Date(n.timestamp).toLocaleString()}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.handleNotificationClick = async function(notificationId) {
+        const n = notifications.find(notif => notif.id === notificationId);
+        if (!n) return;
+
+        // Mark as read
+        n.read = true;
+        updateNotificationUI();
+        
+        try {
+            await GitHubAPI.updateFile(
+                `news/notifications-storage/${user.id}.json`,
+                JSON.stringify(notifications),
+                `Mark notification ${notificationId} as read`,
+                notificationsSHA
+            );
+        } catch (e) {}
+
+        // Redirect to article page with hash
+        window.location.href = `../articles/#article-${n.articleId}`;
+    };
+
+    // UI Listeners for Notifications
+    const btnNotif = document.getElementById('btn-notifications');
+    const notifModal = document.getElementById('notifications-modal');
+    const closeNotifModal = document.querySelector('.close-notifications-modal');
+
+    if (btnNotif) {
+        btnNotif.addEventListener('click', () => {
+            notifModal.classList.remove('hidden');
+            updateNotificationUI();
+        });
+    }
+
+    if (closeNotifModal) {
+        closeNotifModal.addEventListener('click', () => {
+            notifModal.classList.add('hidden');
+        });
+    }
+
     async function pollUserProfile() {
         if (!user) return;
         try {
@@ -48,6 +148,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     pollUserProfile(); // Initial check
     setInterval(pollUserProfile, 30000); // Poll every 30s
+
+    pollNotifications(); // Initial check
+    setInterval(pollNotifications, 20000); // Poll every 20s
 
     const recentList = document.getElementById('recent-articles-list');
     const btnLogout = document.getElementById('btn-logout');

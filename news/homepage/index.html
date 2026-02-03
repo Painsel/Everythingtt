@@ -35,11 +35,17 @@
                     <p id="welcome-desc">Catch up on the latest news from the EverythingTT community.</p>
                 </div>
                 <div class="header-right">
-                    <div class="mini-profile-card">
-                        <img id="header-pfp" src="" alt="PFP">
-                        <div class="mini-profile-info">
-                            <span id="header-username"></span>
-                            <small id="header-id"></small>
+                    <div class="header-actions">
+                        <div class="notification-trigger" id="btn-notifications">
+                            🔔
+                            <span id="notification-badge" class="notification-badge hidden">0</span>
+                        </div>
+                        <div class="mini-profile-card">
+                            <img id="header-pfp" src="" alt="PFP">
+                            <div class="mini-profile-info">
+                                <span id="header-username"></span>
+                                <small id="header-id"></small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -91,6 +97,17 @@
                 </aside>
             </div>
         </main>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div id="notifications-modal" class="modal hidden">
+        <div class="modal-content notifications-modal-content">
+            <span class="close-notifications-modal">&times;</span>
+            <h3>Notifications</h3>
+            <div id="notifications-list" class="notifications-list">
+                <!-- Notifications will be loaded here -->
+            </div>
+        </div>
     </div>
 
     <script src="../utils.js"></script>
