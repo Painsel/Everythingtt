@@ -78,9 +78,11 @@ const GitHubAPI = {
 
             // Safety check for empty or invalid content
             if (!content || content.trim() === "") {
-                console.warn(`File at ${path} returned empty content.`);
-                return null;
-            }
+                    if (!path.endsWith('.gitkeep')) {
+                        console.warn(`File at ${path} returned empty content.`);
+                    }
+                    return null;
+                }
 
             return {
                 content,

@@ -351,10 +351,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const files = await GitHubAPI.listFiles('news/created-articles-storage');
             for (const file of files) {
+                // SKIP non-article files like .gitkeep
+                if (!file.name.endsWith('.json')) continue;
+                
                 // If SHA changed, fetch new data
                 const articleId = file.name.replace('.json', '');
                 if (file.sha !== articleSHAs[articleId]) {
                     const data = await GitHubAPI.getFile(file.path);
+                    if (!data || !data.content) continue; // Safety check
+                    
                     const article = JSON.parse(data.content);
                     
                     // Update state
