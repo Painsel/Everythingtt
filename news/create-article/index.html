@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Article - EverythingTT</title>
+    <meta property="og:title" content="Publish News - EverythingTT" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://painsel.github.io/Everythingtt/news/create-article/" />
+    <meta property="og:description" content="Share your stories and updates with the EverythingTT community. Publish a new article today." />
+    <meta name="theme-color" content="#5865f2">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <aside class="sidebar">
+            <div class="user-info">
+                <img id="side-pfp" src="" alt="PFP">
+                <span id="side-username"></span>
+            </div>
+            <nav>
+                <a href="../" class="nav-item">Dashboard</a>
+                <a href="../articles/" class="nav-item">Explore Articles</a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <h2>Create New Article</h2>
+            <div class="form-group">
+                <div class="input-with-counter">
+                    <input type="text" id="article-title" placeholder="Article Title" maxlength="50">
+                    <span id="title-counter" class="char-counter">0 / 50</span>
+                </div>
+                
+                <div class="banner-upload-container">
+                    <label for="article-banner-file" class="upload-label">
+                        <span>Upload Article Banner</span>
+                        <input type="file" id="article-banner-file" accept="image/*">
+                    </label>
+                    <div id="banner-preview-container" class="hidden">
+                        <img id="banner-preview" src="" alt="Banner Preview">
+                        <button id="btn-remove-banner">×</button>
+                    </div>
+                </div>
+
+                <div class="input-with-counter">
+                    <textarea id="article-content" rows="15" placeholder="Article Content (Markdown supported)"></textarea>
+                    <span id="content-counter" class="char-counter">0 / 3000</span>
+                </div>
+                <div class="formatting-guide">
+                    <span>Format: </span>
+                    <code># Header</code>
+                    <code>**Bold**</code>
+                    <code>*Italic*</code>
+                    <code>> Quote</code>
+                    <code>/red Text</code>
+                    <small>(red, blue, violet, yellow, green)</small>
+                </div>
+                <button id="btn-publish">Publish Article</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="../utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverythingTT - News Homepage</title>
+    <meta property="og:title" content="Dashboard - EverythingTT" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://painsel.github.io/Everythingtt/news/homepage/" />
+    <meta property="og:description" content="Catch up on the latest news and community updates on your personal EverythingTT Dashboard." />
+    <meta name="theme-color" content="#5865f2">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <aside class="sidebar">
+            <div id="logged-in-user" class="user-info">
+                <img id="side-pfp" src="" alt="PFP">
+                <span id="side-username"></span>
+            </div>
+            <nav>
+                <a href="../articles/" class="nav-item">Explore Feed</a>
+                <a href="../create-article/" class="nav-item">Publish News</a>
+                <a href="../profile-editor/index.html" class="nav-item">Profile Settings</a>
+            </nav>
+            <button id="btn-logout" class="logout-btn">Logout</button>
+        </aside>
+
+        <main class="content">
+            <header class="home-header">
+                <div class="header-left">
+                    <h1 id="welcome-title">Welcome back!</h1>
+                    <p id="welcome-desc">Catch up on the latest news from the EverythingTT community.</p>
+                </div>
+                <div class="header-right">
+                    <div class="mini-profile-card">
+                        <img id="header-pfp" src="" alt="PFP">
+                        <div class="mini-profile-info">
+                            <span id="header-username"></span>
+                            <small id="header-id"></small>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <section class="main-stats">
+                    <div class="stat-card recent-news-card">
+                        <div class="card-header">
+                            <h3>🔥 Recent News</h3>
+                            <a href="../articles/" class="view-all">View All</a>
+                        </div>
+                        <div id="recent-articles-list" class="mini-list">
+                            <p class="loading">Fetching latest updates...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <aside class="quick-actions">
+                    <div class="action-grid-vertical">
+                        <div class="action-card-mini" onclick="location.href='../create-article/'">
+                            <div class="icon">✍️</div>
+                            <div class="action-info">
+                                <h4>Write Article</h4>
+                                <p>Share your stories</p>
+                            </div>
+                        </div>
+                        <div class="action-card-mini" onclick="location.href='../articles/'">
+                            <div class="icon">🌍</div>
+                            <div class="action-info">
+                                <h4>Browse Feed</h4>
+                                <p>See what's new</p>
+                            </div>
+                        </div>
+                        <div class="action-card-mini" onclick="location.href='../profile-editor/index.html'">
+                            <div class="icon">⚙️</div>
+                            <div class="action-info">
+                                <h4>Settings</h4>
+                                <p>Update profile</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="community-card">
+                        <h4>Community</h4>
+                        <p>Join the conversation on our Discord server.</p>
+                        <button class="btn-discord">Join Discord</button>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script src="../utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

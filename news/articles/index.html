@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Articles - EverythingTT News</title>
+    <meta property="og:title" content="Explore Feed - EverythingTT News" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://painsel.github.io/Everythingtt/news/articles/" />
+    <meta property="og:description" content="Browse and interact with the latest articles published by the EverythingTT community." />
+    <meta name="theme-color" content="#5865f2">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="article-styler.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <aside class="sidebar">
+            <div id="logged-in-user" class="user-info hidden">
+                <img id="side-pfp" src="" alt="PFP">
+                <span id="side-username"></span>
+            </div>
+            <nav>
+                <a href="../" class="nav-item">Dashboard</a>
+                <a href="../create-article/" class="nav-item">Create Article</a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <h2>Explore Articles</h2>
+            <div id="articles-list" class="articles-grid">
+                <!-- Articles will be loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="profile-preview" id="modal-profile-content">
+                <!-- User profile data will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div id="comments-modal" class="modal hidden">
+        <div class="modal-content comments-modal-content">
+            <span class="close-comments-modal">&times;</span>
+            <h3 id="comments-title">Comments</h3>
+            <div id="comments-list" class="comments-list">
+                <!-- Comments will be loaded here -->
+            </div>
+            <div class="comment-input-area">
+                <textarea id="new-comment-text" placeholder="Write a comment..." rows="2"></textarea>
+                <button id="btn-submit-comment">Post</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../utils.js"></script>
+    <script src="article-renderer.js"></script>
+</body>
+</html>

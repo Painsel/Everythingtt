@@ -1,0 +1,260 @@
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #40444b;
+}
+
+.header-left h1 {
+    font-size: 2.2rem;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.header-left p {
+    color: #b9bbbe;
+    margin: 0.5rem 0 0 0;
+    font-size: 1.1rem;
+}
+
+.mini-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #2f3136;
+    padding: 0.75rem 1.25rem;
+    border-radius: 50px;
+    border: 1px solid #40444b;
+    transition: all 0.2s;
+}
+
+.mini-profile-card:hover {
+    border-color: #5865f2;
+    background: #36393f;
+}
+
+#header-pfp {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #5865f2;
+}
+
+.mini-profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+#header-username {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+#header-id {
+    color: #b9bbbe;
+    font-size: 0.75rem;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: #fff;
+}
+
+.view-all {
+    color: #5865f2;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.view-all:hover {
+    text-decoration: underline;
+}
+
+.stat-card {
+    background-color: #2f3136;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #40444b;
+}
+
+.mini-article {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: #36393f;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.mini-article:hover {
+    border-color: #4f545c;
+    transform: translateX(5px);
+    background: #40444b;
+}
+
+.mini-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mini-title {
+    font-weight: 600;
+    color: #fff;
+    font-size: 1.05rem;
+}
+
+.mini-author {
+    font-size: 0.85rem;
+    color: #b9bbbe;
+}
+
+.mini-article button {
+    background: #5865f2;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.25rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+
+.mini-article button:hover {
+    background: #4752c4;
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.action-grid-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.action-card-mini {
+    background: #2f3136;
+    padding: 1rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+    border: 1px solid #40444b;
+    transition: all 0.2s;
+}
+
+.action-card-mini:hover {
+    background: #36393f;
+    border-color: #5865f2;
+    transform: translateY(-2px);
+}
+
+.action-card-mini .icon {
+    font-size: 1.5rem;
+    background: #36393f;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.action-info h4 {
+    margin: 0;
+    color: #fff;
+    font-size: 1rem;
+}
+
+.action-info p {
+    margin: 2px 0 0 0;
+    color: #b9bbbe;
+    font-size: 0.85rem;
+}
+
+.community-card {
+    background: linear-gradient(135deg, #5865f2 0%, #4752c4 100%);
+    padding: 1.5rem;
+    border-radius: 12px;
+    color: white;
+}
+
+.community-card h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.community-card p {
+    margin: 0 0 1.25rem 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    line-height: 1.4;
+}
+
+.btn-discord {
+    width: 100%;
+    background: white;
+    color: #5865f2;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-discord:hover {
+    transform: scale(1.02);
+}
+
+@media (max-width: 1000px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .home-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .mini-article {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .mini-article button {
+        width: 100%;
+    }
+}

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Dashboard - EverythingTT</title>
+    <meta property="og:title" content="News Dashboard - EverythingTT" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://painsel.github.io/Everythingtt/news/" />
+    <meta property="og:description" content="Access the EverythingTT News Dashboard. Login or sign up to join the community." />
+    <meta name="theme-color" content="#5865f2">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="auth-container" class="container">
+        <h1>News Dashboard Login</h1>
+        <form id="login-form" class="form-group">
+            <input type="text" id="login-username" placeholder="Username" autocomplete="username">
+            <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+            <button type="submit" id="btn-login">Login / Sign Up</button>
+        </form>
+        <p class="hint">Don't have an account? Entering a new username will create one.</p>
+    </div>
+
+    <div id="dashboard-container" class="container hidden">
+        <aside class="sidebar">
+            <div class="user-info">
+                <img id="side-pfp" src="" alt="PFP">
+                <span id="side-username"></span>
+            </div>
+            <nav>
+                <a href="homepage/index.html" class="nav-item">Home Dashboard</a>
+                <a href="profile-editor/index.html" class="nav-item">Edit Profile</a>
+                <a href="articles/index.html" class="nav-item">Explore Articles</a>
+                <a href="create-article/index.html" class="nav-item">Create Article</a>
+            </nav>
+            <button id="btn-logout">Logout</button>
+        </aside>
+
+        <main class="content">
+            <header>
+                <h2 id="welcome-msg"></h2>
+            </header>
+
+            <section class="profile-editor">
+                <h3>Profile Editor</h3>
+                <div class="profile-preview">
+                    <div id="profile-banner" class="banner"></div>
+                    <div class="profile-header">
+                        <img id="profile-pfp" class="pfp" src="" alt="PFP">
+                        <div class="profile-names">
+                            <h4 id="profile-username-display"></h4>
+                            <small id="profile-id-display"></small>
+                        </div>
+                    </div>
+                    <p id="profile-bio-display" class="bio"></p>
+                </div>
+
+                <div class="editor-fields">
+                    <input type="text" id="edit-pfp" placeholder="Profile Picture URL">
+                    <input type="text" id="edit-banner" placeholder="Banner Color or URL">
+                    <input type="text" id="edit-username" placeholder="Username">
+                    <textarea id="edit-bio" placeholder="Bio"></textarea>
+                    <button id="btn-save-profile">Save Changes</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

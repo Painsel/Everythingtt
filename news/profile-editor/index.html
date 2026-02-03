@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - EverythingTT</title>
+    <meta property="og:title" content="Profile Settings - EverythingTT" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://painsel.github.io/Everythingtt/news/profile-editor/" />
+    <meta property="og:description" content="Customize your EverythingTT profile. Change your username, profile picture, and bio." />
+    <meta name="theme-color" content="#5865f2">
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container dashboard-container">
+        <aside class="sidebar">
+            <div class="user-info">
+                <img id="side-pfp" src="" alt="PFP">
+                <span id="side-username"></span>
+            </div>
+            <nav>
+                <a href="../homepage/index.html" class="nav-item">Home</a>
+                <a href="../articles/index.html" class="nav-item">Explore Articles</a>
+                <a href="../create-article/index.html" class="nav-item">Create Article</a>
+            </nav>
+            <button id="btn-logout" class="logout-btn">Logout</button>
+        </aside>
+
+        <main class="content">
+            <header>
+                <h2>Profile Editor</h2>
+                <p>Customize how others see you on EverythingTT.</p>
+            </header>
+
+            <section class="profile-editor-section">
+                <div class="profile-preview">
+                    <div id="profile-banner" class="banner"></div>
+                    <div class="profile-header">
+                        <img id="profile-pfp" class="pfp" src="" alt="PFP">
+                        <div class="profile-names">
+                            <h4 id="profile-username-display"></h4>
+                            <small id="profile-id-display"></small>
+                        </div>
+                    </div>
+                    <p id="profile-bio-display" class="bio"></p>
+                </div>
+
+                <div class="editor-fields">
+                    <div class="input-group">
+                        <label for="edit-username">Display Name</label>
+                        <input type="text" id="edit-username" placeholder="Username">
+                    </div>
+                    <div class="input-group">
+                        <label for="upload-pfp">Profile Picture</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="upload-pfp" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="upload-banner">Profile Banner</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="upload-banner" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-bio">Bio</label>
+                        <textarea id="edit-bio" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                    <button id="btn-save-profile" class="save-btn">Save Changes</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="../utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
