@@ -50,8 +50,15 @@ const GitHubAPI = {
 
     // Data Sharding Configuration
     shards: {
-        'news/created-news-accounts-storage': { owner: 'Painsel', repo: 'everythingtt-users-db' },
-        'news/article-comments-storage': { owner: 'Painsel', repo: 'everythingtt-comments-db' },
+        'news/created-news-accounts-storage': [
+            { owner: 'Painsel', repo: 'everythingtt-users-alpha' },
+            { owner: 'Painsel', repo: 'everythingtt-users-beta' },
+            { owner: 'Painsel', repo: 'everythingtt-users-gamma' }
+        ],
+        'news/article-comments-storage': [
+            { owner: 'Painsel', repo: 'everythingtt-comments-alpha' },
+            { owner: 'Painsel', repo: 'everythingtt-comments-beta' }
+        ],
         'news/created-articles-storage': { owner: 'Painsel', repo: 'everythingtt-articles-db' },
         'news/notifications-storage': { owner: 'Painsel', repo: 'everythingtt-notifications-db' }
     },
@@ -63,6 +70,20 @@ const GitHubAPI = {
         // Find if this path belongs to a shard
         for (const [prefix, info] of Object.entries(this.shards)) {
             if (cleanPath.startsWith(prefix)) {
+                // Check if this prefix has multiple shards (Horizontal Partitioning)
+                if (Array.isArray(info)) {
+                    // Try to extract an ID from the path (e.g., news/storage/12345.json)
+                    const idMatch = cleanPath.match(/\/(\d+)\.json$/);
+                    if (idMatch) {
+                        const id = idMatch[1];
+                        // Routing Algorithm: simpleId % totalShards
+                        const simpleId = parseInt(id.toString().slice(-6));
+                        const shardIndex = simpleId % info.length;
+                        return info[shardIndex];
+                    }
+                    // Fallback to first shard if no ID found (e.g., listFiles)
+                    return info[0];
+                }
                 return info;
             }
         }
@@ -228,6 +249,44 @@ const GitHubAPI = {
     },
 
     async listFiles(path) {
+        // Remove leading slash if present
+        const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+        
+        // Find if this path belongs to a sharded prefix
+        let shards = null;
+        for (const [prefix, info] of Object.entries(this.shards)) {
+            if (cleanPath.startsWith(prefix) && Array.isArray(info)) {
+                shards = info;
+                break;
+            }
+        }
+
+        if (shards) {
+            // Aggregate files from all shards
+            try {
+                const allFilesResults = await Promise.all(shards.map(async (shard) => {
+                    try {
+                        const url = `https://api.github.com/repos/${shard.owner}/${shard.repo}/contents/${cleanPath}`;
+                        const worker = await this.getWorker();
+                        const headers = {
+                            'Authorization': `token ${worker.token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        };
+                        const res = await fetch(url, { headers });
+                        if (!res.ok) return [];
+                        const data = await res.json();
+                        return Array.isArray(data) ? data : [data];
+                    } catch (e) {
+                        return [];
+                    }
+                }));
+                return allFilesResults.flat();
+            } catch (e) {
+                console.error('Failed to list files across shards:', e);
+                return [];
+            }
+        }
+
         try {
             const data = await this.request(`/contents/${path}`);
             return Array.isArray(data) ? data : [data];
