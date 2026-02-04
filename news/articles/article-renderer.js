@@ -1184,7 +1184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const article = articleData[currentArticleIdForComments];
-        const isAuthor = user && article && article.authorId === user.id;
+        const isArticleAuthor = user && article && article.authorId === user.id;
 
         // Separate pinned and unpinned, and organize into threads
         const pinnedComments = comments.filter(c => c.pinned).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1198,6 +1198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const downvotes = (c.votes && c.votes.down) ? c.votes.down.length : 0;
             const userUpvoted = user && c.votes && c.votes.up && c.votes.up.includes(user.id);
             const userDownvoted = user && c.votes && c.votes.down && c.votes.down.includes(user.id);
+            const isCommentOwner = user && c.authorId === user.id;
 
             return `
                 <div class="comment-thread">
@@ -1234,10 +1235,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </button>
                             </div>
                             <span class="action-link" onclick="setupReply('${c.id}', '${c.authorName}')">Reply</span>
-                            ${isAuthor ? `
+                            ${isArticleAuthor ? `
                                 <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="togglePinComment('${c.id}')">
                                     ${c.pinned ? 'Unpin' : 'Pin'}
                                 </span>
+                            ` : ''}
+                            ${(isArticleAuthor || isCommentOwner) ? `
                                 <span class="action-link delete-comment-btn" onclick="handleDeleteComment('${c.id}')">Delete</span>
                             ` : ''}
                         </div>
@@ -1310,30 +1313,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.handleDeleteComment = async function(commentId) {
          if (!user || !currentArticleIdForComments) return;
          if (!confirm('Are you sure you want to delete this comment?')) return;
- 
-         try {
-             const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
-             if (!data) return;
-             
-             let comments = JSON.parse(data.content);
-             const index = comments.findIndex(c => c.id === commentId);
-             if (index === -1) return;
-             
-             // Remove the comment and all its replies
-             comments = comments.filter(c => c.id !== commentId && c.replyToId !== commentId);
-             
-             await GitHubAPI.updateFile(
-                 `news/article-comments-storage/${currentArticleIdForComments}.json`,
-                 JSON.stringify(comments),
-                 `Delete comment ${commentId}`,
-                 data.sha
-             );
-             
-             renderComments(comments);
-         } catch (e) {
-             console.error('Delete comment failed:', e);
-             alert('Failed to delete comment');
+
+         // Optimistically hide the comment
+         const commentEl = document.getElementById(`comment-${commentId}`);
+         if (commentEl) {
+             const thread = commentEl.closest('.comment-thread');
+             if (thread) thread.style.display = 'none';
          }
+
+         GitHubAPI.queuedWrite(`news/article-comments-storage/${currentArticleIdForComments}.json`, async () => {
+             try {
+                 const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+                 if (!data) return;
+                 
+                 let comments = JSON.parse(data.content);
+                 const index = comments.findIndex(c => c.id === commentId);
+                 if (index === -1) return;
+                 
+                 const commentToDelete = comments[index];
+                 const article = articleData[currentArticleIdForComments];
+                 const isArticleAuthor = user && article && article.authorId === user.id;
+                 const isCommentOwner = user && commentToDelete.authorId === user.id;
+
+                 if (!isArticleAuthor && !isCommentOwner) {
+                     throw new Error('You do not have permission to delete this comment.');
+                 }
+
+                 // Remove the comment and all its replies
+                 comments = comments.filter(c => c.id !== commentId && c.replyToId !== commentId);
+                 
+                 await GitHubAPI.updateFile(
+                     `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                     JSON.stringify(comments),
+                     `Delete comment ${commentId}`,
+                     data.sha
+                 );
+                 
+                 renderComments(comments);
+             } catch (e) {
+                 console.error('Delete comment failed:', e);
+                 alert('Failed to delete comment: ' + e.message);
+                 // Rollback optimistic hide
+                 if (commentEl) {
+                     const thread = commentEl.closest('.comment-thread');
+                     if (thread) thread.style.display = 'block';
+                 }
+             }
+         });
      };
 
      window.cancelReply = function() {
@@ -1343,90 +1369,94 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
     window.togglePinComment = async function(commentId) {
-        try {
-            const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
-            if (!data) return;
-            
-            let comments = JSON.parse(data.content);
-            const comment = comments.find(c => c.id === commentId);
-            if (!comment) return;
-            
-            // Unpin others if we are pinning this one (Discord style - only one pinned comment usually, but we can allow multiple if we want. Let's do one for simplicity)
-            const isCurrentlyPinned = comment.pinned;
-            if (!isCurrentlyPinned) {
-                comments.forEach(c => c.pinned = false);
-            }
-            
-            comment.pinned = !isCurrentlyPinned;
-            
-            await GitHubAPI.updateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
-                JSON.stringify(comments),
-                `${comment.pinned ? 'Pin' : 'Unpin'} comment ${commentId}`,
-                data.sha
-            );
-            
-            // Send notification if pinning
-            if (comment.pinned) {
-                const article = articleData[currentArticleIdForComments];
-                addNotification(comment.authorId, 'pin', {
-                    articleId: article.id,
-                    articleTitle: article.title,
-                    commentId: comment.id
-                });
-            }
+        GitHubAPI.queuedWrite(`news/article-comments-storage/${currentArticleIdForComments}.json`, async () => {
+            try {
+                const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+                if (!data) return;
+                
+                let comments = JSON.parse(data.content);
+                const comment = comments.find(c => c.id === commentId);
+                if (!comment) return;
+                
+                // Unpin others if we are pinning this one
+                const isCurrentlyPinned = comment.pinned;
+                if (!isCurrentlyPinned) {
+                    comments.forEach(c => c.pinned = false);
+                }
+                
+                comment.pinned = !isCurrentlyPinned;
+                
+                const res = await GitHubAPI.updateFile(
+                    `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                    JSON.stringify(comments),
+                    `${comment.pinned ? 'Pin' : 'Unpin'} comment ${commentId}`,
+                    data.sha
+                );
+                
+                // Send notification if pinning
+                if (comment.pinned) {
+                    const article = articleData[currentArticleIdForComments];
+                    addNotification(comment.authorId, 'pin', {
+                        articleId: article.id,
+                        articleTitle: article.title,
+                        commentId: comment.id
+                    });
+                }
 
-            renderComments(comments);
-        } catch (e) {
-            alert('Failed to pin comment: ' + e.message);
-        }
+                renderComments(comments);
+            } catch (e) {
+                alert('Failed to pin comment: ' + e.message);
+            }
+        });
     };
 
     window.handleCommentVote = async function(commentId, type) {
         if (!user) return alert('You must be logged in to vote');
         
-        try {
-            const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
-            if (!data) return;
-            
-            let comments = JSON.parse(data.content);
-            const comment = comments.find(c => c.id === commentId);
-            if (!comment) return;
-            
-            if (!comment.votes) comment.votes = { up: [], down: [] };
-            if (!comment.votes.up) comment.votes.up = [];
-            if (!comment.votes.down) comment.votes.down = [];
+        GitHubAPI.queuedWrite(`news/article-comments-storage/${currentArticleIdForComments}.json`, async () => {
+            try {
+                const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+                if (!data) return;
+                
+                let comments = JSON.parse(data.content);
+                const comment = comments.find(c => c.id === commentId);
+                if (!comment) return;
+                
+                if (!comment.votes) comment.votes = { up: [], down: [] };
+                if (!comment.votes.up) comment.votes.up = [];
+                if (!comment.votes.down) comment.votes.down = [];
 
-            const upIndex = comment.votes.up.indexOf(user.id);
-            const downIndex = comment.votes.down.indexOf(user.id);
+                const upIndex = comment.votes.up.indexOf(user.id);
+                const downIndex = comment.votes.down.indexOf(user.id);
 
-            if (type === 'up') {
-                if (upIndex > -1) {
-                    comment.votes.up.splice(upIndex, 1); // Remove upvote
-                } else {
-                    comment.votes.up.push(user.id); // Add upvote
-                    if (downIndex > -1) comment.votes.down.splice(downIndex, 1); // Remove downvote if exists
+                if (type === 'up') {
+                    if (upIndex > -1) {
+                        comment.votes.up.splice(upIndex, 1);
+                    } else {
+                        comment.votes.up.push(user.id);
+                        if (downIndex > -1) comment.votes.down.splice(downIndex, 1);
+                    }
+                } else if (type === 'down') {
+                    if (downIndex > -1) {
+                        comment.votes.down.splice(downIndex, 1);
+                    } else {
+                        comment.votes.down.push(user.id);
+                        if (upIndex > -1) comment.votes.up.splice(upIndex, 1);
+                    }
                 }
-            } else if (type === 'down') {
-                if (downIndex > -1) {
-                    comment.votes.down.splice(downIndex, 1); // Remove downvote
-                } else {
-                    comment.votes.down.push(user.id); // Add downvote
-                    if (upIndex > -1) comment.votes.up.splice(upIndex, 1); // Remove upvote if exists
-                }
+
+                await GitHubAPI.updateFile(
+                    `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                    JSON.stringify(comments),
+                    `Vote ${type} on comment ${commentId}`,
+                    data.sha
+                );
+                
+                renderComments(comments);
+            } catch (e) {
+                console.error('Vote failed:', e);
             }
-
-            await GitHubAPI.updateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
-                JSON.stringify(comments),
-                `Vote ${type} on comment ${commentId}`,
-                data.sha
-            );
-            
-            renderComments(comments);
-        } catch (e) {
-            console.error('Vote failed:', e);
-        }
+        });
     };
 
     btnSubmitComment.addEventListener('click', async () => {
