@@ -311,6 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadArticles();
 
     // Article Management Modal
+    // Article Management Modal Logic
     const settingsModal = document.getElementById('article-settings-modal');
     const closeSettingsModal = document.querySelector('.close-management-modal');
     const editTitle = document.getElementById('edit-article-title');
@@ -325,6 +326,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnSaveSettings = document.getElementById('btn-save-article-changes');
     const btnDeleteArticle = document.getElementById('btn-delete-article');
 
+    // Tab Logic
+    const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    sidebarTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.getAttribute('data-tab');
+            
+            // Update tabs
+            sidebarTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update panes
+            tabPanes.forEach(pane => {
+                pane.classList.remove('active');
+                if (pane.id === `tab-${targetTab}`) {
+                    pane.classList.add('active');
+                }
+            });
+        });
+    });
+
     let currentEditingArticleId = null;
     let currentEditingBannerBase64 = null;
 
@@ -332,6 +355,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
         if (!article) return;
+
+        // Reset to first tab
+        sidebarTabs[0].click();
 
         editTitle.value = article.title;
         editContent.value = article.content;
@@ -347,16 +373,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderMutedUsers(mutes) {
         mutedUsersList.innerHTML = '';
         const now = Date.now();
-        Object.entries(mutes).forEach(([userId, expiry]) => {
-            if (expiry !== 'permanent' && parseInt(expiry) < now) return; // Skip expired
+        const entries = Object.entries(mutes);
+        
+        if (entries.length === 0) {
+            mutedUsersList.innerHTML = '<p class="help-text" style="text-align:center; padding: 10px;">No users muted on this article.</p>';
+            return;
+        }
+
+        entries.forEach(([userId, expiry]) => {
+            if (expiry !== 'permanent' && parseInt(expiry) < now) return;
             
-            const item = document.createElement('div');
-            item.className = 'muted-user-item';
-            item.innerHTML = `
-                <span>User: ${userId} ${expiry === 'permanent' ? '(Permanent)' : `(Until ${new Date(parseInt(expiry)).toLocaleString()})`}</span>
-                <span class="unmute-btn" onclick="handleUnmute('${userId}')">Unmute</span>
+            const card = document.createElement('div');
+            card.className = 'muted-user-card';
+            card.innerHTML = `
+                <div class="user-mute-info">
+                    <span class="user-id-text">User ID: ${userId}</span>
+                    <span class="expiry-text">${expiry === 'permanent' ? 'Permanently Muted' : `Muted until ${new Date(parseInt(expiry)).toLocaleString()}`}</span>
+                </div>
+                <button class="unmute-action-btn" onclick="handleUnmute('${userId}')">Unmute</button>
             `;
-            mutedUsersList.appendChild(item);
+            mutedUsersList.appendChild(card);
         });
     }
 
