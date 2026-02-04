@@ -120,11 +120,12 @@ body {
     transform: translateX(5px);
 }
 
-/* Responsive adjustments */
-@media (max-width: 320px) {
+/* Responsive adjustments for mobile/tablet */
+@media (max-width: 768px) {
     body {
         align-items: flex-start;
         padding: 0;
+        overflow-y: auto;
     }
 
     .dashboard-container {
@@ -133,6 +134,8 @@ body {
         min-height: 100vh;
         margin: 0;
         border-radius: 0;
+        width: 100%;
+        box-shadow: none;
     }
 
     .sidebar {
@@ -142,39 +145,70 @@ body {
         padding: 1rem;
         border-right: none;
         border-bottom: 1px solid #2f3136;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
     }
 
     .user-info {
-        margin-bottom: 1rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
     }
 
     nav {
         display: flex;
-        flex-wrap: wrap;
-        gap: 5px;
-        margin-bottom: 1rem;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 4px 0;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 
-    nav a {
-        flex: 1 1 calc(50% - 10px);
-        text-align: center;
+    nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .nav-item {
         margin-bottom: 0;
-        font-size: 0.9rem;
-        padding: 8px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
     }
 
     #btn-logout {
         margin-top: 0;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        flex-shrink: 0;
     }
 
     .content {
         padding: 1rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 }
 
-@media (max-width: 480px) {
-    nav a {
-        flex: 1 1 100%;
+/* Specific fix for extremely small screens (like 330px width) */
+@media (max-width: 400px) {
+    .sidebar {
+        flex-wrap: wrap;
+        padding: 0.8rem;
+    }
+
+    nav {
+        width: 100%;
+        order: 3;
+        justify-content: space-between;
+    }
+
+    .user-info {
+        order: 1;
+    }
+
+    #btn-logout {
+        order: 2;
     }
 }
 

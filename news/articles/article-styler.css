@@ -43,24 +43,67 @@
     height: 300px;
 }
 
-/* Responsive adjustments */
+/* Responsive adjustments for articles and modals */
 @media (max-width: 600px) {
     .articles-grid {
         grid-template-columns: 1fr;
     }
 
     .article-banner {
-        height: 120px;
+        height: 140px;
     }
 
     .modal-content {
-        width: 95%;
-        margin: 10px;
+        width: 100%;
+        margin: 0;
+        height: 100%;
+        border-radius: 0;
     }
 
     .emoji-picker {
         grid-template-columns: repeat(4, 1fr);
-        width: 200px;
+        width: 100%;
+        max-width: 250px;
+    }
+
+    .article-info {
+        padding: 1rem;
+    }
+
+    .article-info h3 {
+        font-size: 1.2rem;
+    }
+}
+
+/* Fix for extremely small screens (330px range) */
+@media (max-width: 360px) {
+    .article-banner {
+        height: 120px;
+    }
+
+    .article-info h3 {
+        font-size: 1.1rem;
+    }
+
+    .article-text {
+        font-size: 0.9rem;
+    }
+
+    .management-sidebar {
+        padding: 0.5rem;
+    }
+
+    .sidebar-tab {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+
+    .management-main {
+        padding: 1rem 1.2rem;
+    }
+
+    .pane-header h2 {
+        font-size: 1.2rem;
     }
 }
 
