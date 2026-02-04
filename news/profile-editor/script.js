@@ -38,6 +38,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Form
         document.getElementById('edit-username').value = user.username;
         document.getElementById('edit-bio').value = user.bio;
+        document.getElementById('edit-status-msg').value = user.statusMsg || '';
+        document.getElementById('edit-status-type').value = user.statusType || 'auto';
+
+        updateStatusPreview();
+    }
+
+    function updateStatusPreview() {
+        const msg = document.getElementById('edit-status-msg').value;
+        const type = document.getElementById('edit-status-type').value;
+        const bubble = document.getElementById('status-bubble');
+        const icon = document.getElementById('status-icon');
+
+        if (msg) {
+            bubble.innerText = msg;
+            bubble.style.display = 'block';
+        } else {
+            bubble.style.display = 'none';
+        }
+
+        // For preview, we show the manual status or Online if auto
+        let iconUrl = '../../User Status Icons/Online.png';
+            if (type === 'dnd') iconUrl = '../../User Status Icons/DoNotDisturb.png';
+        
+        icon.style.backgroundImage = `url('${iconUrl}')`;
     }
 
     updateUI(currentUser);
@@ -111,6 +135,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnSave.addEventListener('click', async () => {
         const username = document.getElementById('edit-username').value;
         const bio = document.getElementById('edit-bio').value;
+        const statusMsg = document.getElementById('edit-status-msg').value;
+        const statusType = document.getElementById('edit-status-type').value;
 
         if (!username) return alert('Username is required');
 
@@ -140,7 +166,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 username,
                 pfp,
                 banner,
-                bio
+                bio,
+                statusMsg,
+                statusType
             };
 
             const res = await GitHubAPI.updateFile(
@@ -196,11 +224,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Real-time preview listeners
-    ['edit-username', 'edit-bio'].forEach(id => {
+    ['edit-username', 'edit-bio', 'edit-status-msg', 'edit-status-type'].forEach(id => {
         document.getElementById(id).addEventListener('input', () => {
             const val = document.getElementById(id).value;
             if (id === 'edit-username') document.getElementById('profile-username-display').innerText = val;
             if (id === 'edit-bio') document.getElementById('profile-bio-display').innerText = val;
+            if (id.startsWith('edit-status')) updateStatusPreview();
         });
     });
+    
+    // Also handle 'change' for the select
+    document.getElementById('edit-status-type').addEventListener('change', updateStatusPreview);
 });

@@ -6,12 +6,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Update sidebar and header
-    document.getElementById('side-pfp').src = user.pfp;
-    document.getElementById('side-username').innerText = user.username;
-    
-    document.getElementById('header-pfp').src = user.pfp;
-    document.getElementById('header-username').innerText = user.username;
-    document.getElementById('header-id').innerText = `@${user.id || user.username.toLowerCase().replace(/\s+/g, '')}`;
+    const updateUIWithStatus = (u) => {
+        const statusIcon = (u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png'));
+        const iconPath = `../../User Status Icons/${statusIcon}`;
+
+        document.getElementById('side-pfp').src = u.pfp;
+        document.getElementById('side-username').innerText = u.username;
+        document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
+        
+        const sideBubble = document.getElementById('side-status-bubble');
+        if (u.statusMsg) {
+            sideBubble.innerText = u.statusMsg;
+            sideBubble.style.display = 'block';
+        } else {
+            sideBubble.style.display = 'none';
+        }
+
+        document.getElementById('header-pfp').src = u.pfp;
+        document.getElementById('header-username').innerText = u.username;
+        document.getElementById('header-id').innerText = `@${u.id || u.username.toLowerCase().replace(/\s+/g, '')}`;
+        document.getElementById('header-status-icon').style.backgroundImage = `url('${iconPath}')`;
+
+        const headerBubble = document.getElementById('header-status-bubble');
+        if (u.statusMsg) {
+            headerBubble.innerText = u.statusMsg;
+            headerBubble.style.display = 'block';
+        } else {
+            headerBubble.style.display = 'none';
+        }
+    };
+
+    updateUIWithStatus(user);
     
     // Update Stats Card
     const updateStats = (u) => {
@@ -141,10 +166,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     localStorage.setItem('current_user', JSON.stringify(remoteUser));
                     
                     // Update UI elements
-                    document.getElementById('side-pfp').src = remoteUser.pfp;
-                    document.getElementById('side-username').innerText = remoteUser.username;
-                    document.getElementById('header-pfp').src = remoteUser.pfp;
-                    document.getElementById('header-username').innerText = remoteUser.username;
+                    updateUIWithStatus(remoteUser);
                     document.getElementById('welcome-title').innerText = `Welcome back, ${remoteUser.username}!`;
                     
                     // Update stats card

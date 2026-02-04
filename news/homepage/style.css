@@ -1,3 +1,57 @@
+/* Status UI Styles */
+.side-pfp-wrapper, .header-pfp-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.status-icon {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid #2f3136;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #2f3136;
+    z-index: 2;
+}
+
+.side-username-row, .header-username-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-bubble {
+    background: #40444b;
+    color: #dcddde;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    position: relative;
+    max-width: 120px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid #4f545c;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.status-bubble::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-right: 5px solid #40444b;
+}
+
 .home-header {
     display: flex;
     justify-content: space-between;

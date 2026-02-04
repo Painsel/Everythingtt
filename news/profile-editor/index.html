@@ -38,9 +38,15 @@
                 <div class="profile-preview">
                     <div id="profile-banner" class="banner"></div>
                     <div class="profile-header">
-                        <img id="profile-pfp" class="pfp" src="" alt="PFP">
+                        <div class="pfp-wrapper">
+                            <img id="profile-pfp" class="pfp" src="" alt="PFP">
+                            <div id="status-icon" class="status-icon"></div>
+                        </div>
                         <div class="profile-names">
-                            <h4 id="profile-username-display"></h4>
+                            <div class="username-row">
+                                <h4 id="profile-username-display"></h4>
+                                <div id="status-bubble" class="status-bubble" style="display: none;"></div>
+                            </div>
                             <small id="profile-id-display"></small>
                         </div>
                     </div>
@@ -67,6 +73,17 @@
                     <div class="input-group">
                         <label for="edit-bio">Bio</label>
                         <textarea id="edit-bio" placeholder="Tell us about yourself..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-status">Status Message</label>
+                        <input type="text" id="edit-status-msg" placeholder="What's on your mind?">
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-status-type">Manual Status</label>
+                        <select id="edit-status-type">
+                            <option value="auto">Automatic (Online/Idle/Offline)</option>
+                            <option value="dnd">Do Not Disturb</option>
+                        </select>
                     </div>
                     <button id="btn-save-profile" class="save-btn">Save Changes</button>
                 </div>

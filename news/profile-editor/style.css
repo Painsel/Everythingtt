@@ -25,6 +25,11 @@
     gap: 1rem;
 }
 
+.pfp-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
 .pfp {
     width: 90px;
     height: 90px;
@@ -32,6 +37,54 @@
     border: 6px solid #2f3136;
     background: #36393f;
     object-fit: cover;
+}
+
+.status-icon {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 3px solid #2f3136;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #2f3136;
+}
+
+.username-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.status-bubble {
+    background: #40444b;
+    color: #dcddde;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    position: relative;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid #4f545c;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    margin-bottom: 2px;
+}
+
+.status-bubble::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 6px solid #40444b;
 }
 
 .profile-names {
@@ -79,7 +132,8 @@
 }
 
 .input-group input, 
-.input-group textarea {
+.input-group textarea,
+.input-group select {
     background: #202225;
     border: none;
     padding: 0.75rem;
@@ -90,7 +144,8 @@
 }
 
 .input-group input:focus, 
-.input-group textarea:focus {
+.input-group textarea:focus,
+.input-group select:focus {
     outline: none;
     box-shadow: 0 0 0 2px #5865f2;
 }

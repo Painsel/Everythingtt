@@ -17,8 +17,16 @@
     <div class="container dashboard-container">
         <aside class="sidebar">
             <div id="logged-in-user" class="user-info hidden">
-                <img id="side-pfp" src="" alt="PFP">
-                <span id="side-username"></span>
+                <div class="side-pfp-wrapper">
+                    <img id="side-pfp" src="" alt="PFP">
+                    <div id="side-status-icon" class="status-icon"></div>
+                </div>
+                <div class="side-user-details">
+                    <div class="side-username-row">
+                        <span id="side-username"></span>
+                        <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                    </div>
+                </div>
             </div>
             <nav>
                 <a href="../homepage/" class="nav-item">Dashboard</a>
@@ -208,6 +216,8 @@
     </div>
 
     <script src="../utils.js"></script>
+    <script src="../status-manager.js"></script>
     <script src="article-renderer.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

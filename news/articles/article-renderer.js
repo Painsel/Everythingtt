@@ -25,16 +25,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     const REACTION_EMOJIS = ["🔥", "✨", "👍", "🎉", "🤣", "😂", "😃", "🤔", "🥵", "🥶", "🤡", "🤖", "💀"];
     let articleSHAs = {}; // Store SHAs for updates
     let articleData = {}; // Store local data for polling comparisons
+    let userStatusCache = {}; // Cache for user status data
 
     // Show logged in user in sidebar if exists
+    const updateSideProfileWithStatus = (u) => {
+        const statusInfo = {
+            status: u.status || 'offline',
+            statusType: u.statusType || 'auto',
+            statusMsg: u.statusMsg || ''
+        };
+        const iconPath = getStatusIcon(statusInfo);
+
+        document.getElementById('side-pfp').src = u.pfp;
+        document.getElementById('side-username').innerText = u.username;
+        document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
+        
+        const sideBubble = document.getElementById('side-status-bubble');
+        if (u.statusMsg) {
+            sideBubble.innerText = u.statusMsg;
+            sideBubble.style.display = 'block';
+        } else {
+            sideBubble.style.display = 'none';
+        }
+    };
+
     let user = JSON.parse(localStorage.getItem('current_user'));
     let userSHA = null;
 
     if (user) {
         const loggedInDiv = document.getElementById('logged-in-user');
         loggedInDiv.classList.remove('hidden');
-        document.getElementById('side-pfp').src = user.pfp;
-        document.getElementById('side-username').innerText = user.username;
+        updateSideProfileWithStatus(user);
         pollUserProfile(); // Initial fetch
         pollNotifications(); // Initial notifications fetch
     }
@@ -81,6 +102,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             console.error('Failed to send notification:', e);
         }
+    }
+
+    async function fetchUserStatus(userId) {
+        if (userStatusCache[userId]) return userStatusCache[userId];
+        
+        try {
+            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${userId}.json`);
+            if (data) {
+                const userData = JSON.parse(data.content);
+                userStatusCache[userId] = {
+                    status: userData.status || 'offline',
+                    statusType: userData.statusType || 'auto',
+                    statusMsg: userData.statusMsg || ''
+                };
+                return userStatusCache[userId];
+            }
+        } catch (e) {
+            console.warn(`Could not fetch status for user ${userId}`);
+        }
+        return { status: 'offline', statusType: 'auto', statusMsg: '' };
+    }
+
+    function getStatusIcon(statusInfo) {
+        const type = statusInfo.statusType;
+        const status = statusInfo.status;
+        
+        let icon = 'Offline.png';
+        if (type === 'dnd') {
+            icon = 'DoNotDisturb.png';
+        } else if (status === 'online') {
+            icon = 'Online.png';
+        } else if (status === 'idle') {
+            icon = 'Idle.png';
+        }
+        
+        return `../../User Status Icons/${icon}`;
     }
 
     async function pollNotifications() {
@@ -212,8 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     localStorage.setItem('current_user', JSON.stringify(remoteUser));
                     
                     // Update sidebar UI
-                    document.getElementById('side-pfp').src = remoteUser.pfp;
-                    document.getElementById('side-username').innerText = remoteUser.username;
+                    updateSideProfileWithStatus(remoteUser);
                     
                     // Update local user reference properties
                     Object.assign(user, remoteUser);
@@ -1126,9 +1182,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="comment-item ${c.pinned ? 'pinned' : ''}" id="comment-${c.id}">
                         ${c.pinned ? '<div class="pinned-badge">📌 Pinned by author</div>' : ''}
                         <div class="comment-header">
-                            <img src="${c.authorPfp}" alt="${c.authorName}" class="comment-pfp" onclick="window.showAuthorProfile('${c.authorId}')">
+                            <div class="comment-pfp-wrapper">
+                                <img src="${c.authorPfp}" alt="${c.authorName}" class="comment-pfp" onclick="window.showAuthorProfile('${c.authorId}')">
+                                <div class="comment-status-icon" data-user-id="${c.authorId}"></div>
+                            </div>
                             <div class="comment-author-info">
-                                <span class="comment-author-name" onclick="window.showAuthorProfile('${c.authorId}')">${c.authorName}</span>
+                                <div class="comment-author-row">
+                                    <span class="comment-author-name" onclick="window.showAuthorProfile('${c.authorId}')">${c.authorName}</span>
+                                    <div class="comment-status-bubble" data-user-id="${c.authorId}" style="display: none;"></div>
+                                </div>
                                 <span class="comment-timestamp">${new Date(c.timestamp).toLocaleString()}</span>
                             </div>
                         </div>
@@ -1171,6 +1233,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...pinnedComments.map(c => renderCommentHtml(c)),
             ...unpinnedComments.map(c => renderCommentHtml(c))
         ].join('');
+
+        // Update statuses asynchronously
+        updateCommentStatuses(comments);
+    }
+
+    async function updateCommentStatuses(comments) {
+        const authorIds = [...new Set(comments.map(c => c.authorId))];
+        
+        for (const authorId of authorIds) {
+            const statusInfo = await fetchUserStatus(authorId);
+            const iconUrl = getStatusIcon(statusInfo);
+            
+            // Update icons
+            document.querySelectorAll(`.comment-status-icon[data-user-id="${authorId}"]`).forEach(el => {
+                el.style.backgroundImage = `url('${iconUrl}')`;
+            });
+            
+            // Update bubbles
+            document.querySelectorAll(`.comment-status-bubble[data-user-id="${authorId}"]`).forEach(el => {
+                if (statusInfo.statusMsg) {
+                    el.innerText = statusInfo.statusMsg;
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
     }
 
     window.setupReply = function(commentId, authorName) {
