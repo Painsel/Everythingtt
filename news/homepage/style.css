@@ -5,6 +5,8 @@
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid #40444b;
+    flex-wrap: wrap;
+    gap: 1.5rem;
 }
 
 .header-left h1 {
@@ -209,6 +211,14 @@
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 2rem;
+    transition: grid-template-columns 0.3s ease;
+}
+
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 280px;
+        gap: 1.5rem;
+    }
 }
 
 .card-header {
