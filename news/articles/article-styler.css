@@ -817,36 +817,48 @@
     scrollbar-width: thin;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 480px) {
     .profile-modal-container {
         max-width: 100%;
         border-radius: 12px 12px 0 0;
         align-self: flex-end; /* Slide up from bottom on mobile */
-        max-height: 90vh;
+        max-height: 92vh; /* Slightly taller to use more space */
+        margin: 0;
     }
 
     .modal {
         padding: 0;
         align-items: flex-end;
+        overflow: hidden; /* Prevent double scrollbars */
     }
 
     .profile-card-header {
-        height: 140px;
+        height: 100px; /* Reduced for 599px height screens */
     }
 
     .profile-card-pfp-wrapper {
-        width: 100px;
-        height: 100px;
-        bottom: -40px;
-        left: 16px;
+        width: 80px; /* Scaled down for 333px width */
+        height: 80px;
+        bottom: -35px;
+        left: 15px;
     }
 
     .profile-card-body {
-        padding: 50px 16px 16px 16px;
+        padding: 45px 15px 15px 15px;
+        gap: 12px;
     }
 
     .profile-card-username {
-        font-size: 1.4rem;
+        font-size: 1.3rem;
+    }
+
+    .profile-card-bio {
+        font-size: 0.95rem;
+        padding: 8px 0;
+    }
+
+    .profile-stat-value {
+        font-size: 1rem;
     }
 }
 
