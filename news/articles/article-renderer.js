@@ -991,16 +991,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             const joinDateStr = author.joinDate || author.createdAt;
             const joinDate = joinDateStr ? new Date(joinDateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown';
 
+            // Get status info
+            const statusIconPath = getStatusIcon({
+                status: author.status,
+                statusType: author.statusType
+            });
+
             modalContent.innerHTML = `
                 <div class="profile-card-header">
                     <div class="profile-card-banner" style="background: ${author.banner.startsWith('#') ? author.banner : `url(${author.banner})`}"></div>
                     <div class="profile-card-pfp-wrapper">
                         <img class="profile-card-pfp" src="${author.pfp}" alt="PFP">
+                        <div class="profile-card-status-icon" style="background-image: url('${statusIconPath}')"></div>
                     </div>
                 </div>
                 <div class="profile-card-body">
                     <div class="profile-card-names">
-                        <span class="profile-card-username">${author.username}</span>
+                        <div class="profile-card-username-row">
+                            <span class="profile-card-username">${author.username}</span>
+                            ${author.statusMsg ? `<div class="profile-card-status-bubble">${author.statusMsg}</div>` : ''}
+                        </div>
                         <span class="profile-card-id">#${author.id}</span>
                     </div>
                     
