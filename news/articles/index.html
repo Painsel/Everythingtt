@@ -119,10 +119,30 @@
                     </label>
                     <span>Mark as Private</span>
                 </div>
-                
-                <div class="danger-zone">
-                    <button id="btn-delete-article" class="delete-btn">Delete Article</button>
+            </div>
+
+            <div class="management-section moderation-section">
+                <h4>Moderation</h4>
+                <div class="moderation-controls">
+                    <div class="mute-input-group">
+                        <input type="text" id="mute-user-id" placeholder="User ID to mute">
+                        <select id="mute-duration">
+                            <option value="3600">1 Hour</option>
+                            <option value="86400">24 Hours</option>
+                            <option value="604800">1 Week</option>
+                            <option value="2592000">30 Days</option>
+                            <option value="permanent">Permanent</option>
+                        </select>
+                        <button id="btn-mute-user" class="mute-btn">Mute User</button>
+                    </div>
+                    <div id="muted-users-list" class="muted-users-list">
+                        <!-- Muted users will appear here -->
+                    </div>
                 </div>
+            </div>
+
+            <div class="danger-zone">
+                <button id="btn-delete-article" class="delete-btn">Delete Article</button>
             </div>
 
             <div class="modal-footer">

@@ -318,6 +318,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editBannerPreview = document.getElementById('edit-banner-preview');
     const editBannerUpload = document.getElementById('edit-banner-upload');
     const markPrivateToggle = document.getElementById('mark-private-toggle');
+    const muteUserIdInput = document.getElementById('mute-user-id');
+    const muteDurationSelect = document.getElementById('mute-duration');
+    const btnMuteUser = document.getElementById('btn-mute-user');
+    const mutedUsersList = document.getElementById('muted-users-list');
     const btnSaveSettings = document.getElementById('btn-save-article-changes');
     const btnDeleteArticle = document.getElementById('btn-delete-article');
 
@@ -335,8 +339,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         markPrivateToggle.checked = !!article.isPrivate;
         currentEditingBannerBase64 = article.banner;
 
+        renderMutedUsers(article.mutes || {});
+
         settingsModal.classList.remove('hidden');
     }
+
+    function renderMutedUsers(mutes) {
+        mutedUsersList.innerHTML = '';
+        const now = Date.now();
+        Object.entries(mutes).forEach(([userId, expiry]) => {
+            if (expiry !== 'permanent' && parseInt(expiry) < now) return; // Skip expired
+            
+            const item = document.createElement('div');
+            item.className = 'muted-user-item';
+            item.innerHTML = `
+                <span>User: ${userId} ${expiry === 'permanent' ? '(Permanent)' : `(Until ${new Date(parseInt(expiry)).toLocaleString()})`}</span>
+                <span class="unmute-btn" onclick="handleUnmute('${userId}')">Unmute</span>
+            `;
+            mutedUsersList.appendChild(item);
+        });
+    }
+
+    window.handleUnmute = function(userId) {
+        if (!currentEditingArticleId) return;
+        const article = articleData[currentEditingArticleId];
+        if (article.mutes && article.mutes[userId]) {
+            delete article.mutes[userId];
+            renderMutedUsers(article.mutes);
+        }
+    };
+
+    btnMuteUser.addEventListener('click', () => {
+        const userId = muteUserIdInput.value.trim();
+        if (!userId) return;
+        
+        const duration = muteDurationSelect.value;
+        const expiry = duration === 'permanent' ? 'permanent' : (Date.now() + parseInt(duration) * 1000).toString();
+        
+        if (!currentEditingArticleId) return;
+        const article = articleData[currentEditingArticleId];
+        if (!article.mutes) article.mutes = {};
+        
+        article.mutes[userId] = expiry;
+        muteUserIdInput.value = '';
+        renderMutedUsers(article.mutes);
+    });
 
     closeSettingsModal.addEventListener('click', () => {
         settingsModal.classList.add('hidden');
@@ -373,6 +420,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             content: editContent.value.trim(),
             banner: currentEditingBannerBase64,
             isPrivate: markPrivateToggle.checked,
+            mutes: article.mutes || {},
             lastUpdated: new Date().toISOString()
         };
 
@@ -1004,6 +1052,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="togglePinComment('${c.id}')">
                                     ${c.pinned ? 'Unpin' : 'Pin'}
                                 </span>
+                                <span class="action-link delete-comment-btn" onclick="handleDeleteComment('${c.id}')">Delete</span>
                             ` : ''}
                         </div>
                     </div>
@@ -1045,11 +1094,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    window.cancelReply = function() {
-        currentReplyToId = null;
-        const info = document.querySelector('.replying-to-info');
-        if (info) info.remove();
-    };
+    window.handleDeleteComment = async function(commentId) {
+         if (!user || !currentArticleIdForComments) return;
+         if (!confirm('Are you sure you want to delete this comment?')) return;
+ 
+         try {
+             const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+             if (!data) return;
+             
+             let comments = JSON.parse(data.content);
+             const index = comments.findIndex(c => c.id === commentId);
+             if (index === -1) return;
+             
+             // Remove the comment and all its replies
+             comments = comments.filter(c => c.id !== commentId && c.replyToId !== commentId);
+             
+             await GitHubAPI.updateFile(
+                 `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                 JSON.stringify(comments),
+                 `Delete comment ${commentId}`,
+                 data.sha
+             );
+             
+             renderComments(comments);
+         } catch (e) {
+             console.error('Delete comment failed:', e);
+             alert('Failed to delete comment');
+         }
+     };
+
+     window.cancelReply = function() {
+          currentReplyToId = null;
+          const info = document.querySelector('.replying-to-info');
+          if (info) info.remove();
+      };
 
     window.togglePinComment = async function(commentId) {
         try {
@@ -1142,6 +1220,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const text = commentInput.value.trim();
         if (!text && !currentAttachmentBase64) return;
         if (!user) return alert('You must be logged in to comment');
+
+        // Check if user is muted on this article
+        const article = articleData[currentArticleIdForComments];
+        if (article && article.mutes && article.mutes[user.id]) {
+            const expiry = article.mutes[user.id];
+            if (expiry === 'permanent') {
+                return alert('You have been permanently muted from commenting on this article.');
+            } else {
+                const expiryTime = parseInt(expiry);
+                if (expiryTime > Date.now()) {
+                    return alert(`You are muted from commenting on this article until ${new Date(expiryTime).toLocaleString()}.`);
+                }
+            }
+        }
 
         btnSubmitComment.disabled = true;
         btnSubmitComment.innerText = 'Posting...';

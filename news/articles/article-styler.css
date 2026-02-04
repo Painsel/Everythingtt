@@ -190,9 +190,89 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #40444b;
+}
+
+.moderation-section {
+    background: #202225;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+
+.moderation-section h4 {
+    margin-bottom: 1rem;
+    color: #fff;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mute-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.mute-input-group input {
+    flex: 1;
+}
+
+.mute-input-group select {
+    background: #2f3136;
+    border: 1px solid #40444b;
+    color: #fff;
+    padding: 0 10px;
+    border-radius: 4px;
+}
+
+.mute-btn {
+    background: #4f545c;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.mute-btn:hover {
+    background: #686d73;
+}
+
+.muted-users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.muted-user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2f3136;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.muted-user-item .unmute-btn {
+    color: #ed4245;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.danger-zone {
     margin-top: 2rem;
     padding-top: 1.5rem;
-    border-top: 1px solid #40444b;
+    border-top: 2px solid #ed4245;
+    display: flex;
+    justify-content: center;
 }
 
 .toggle-wrapper {
