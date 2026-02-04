@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showDashboard(user) {
         currentUser = user;
+        user.sha = userSha; // Ensure SHA is stored for status exit tracking
         localStorage.setItem('current_user', JSON.stringify(user));
         authContainer.classList.add('hidden');
         dashboardContainer.classList.remove('hidden');

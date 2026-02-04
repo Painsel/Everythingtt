@@ -36,9 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    updateUIWithStatus(user);
-    
-    // Update Stats Card
+    // Initial render from local storage
     const updateStats = (u) => {
         const contributions = u.contributions || 0;
         const joinDate = u.joinDate || u.createdAt;
@@ -47,13 +45,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('home-contributions').innerText = contributions;
         document.getElementById('home-join-date').innerText = formattedDate;
     };
+
+    updateUIWithStatus(user);
     updateStats(user);
-    
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
 
     let userSHA = null;
     let notifications = [];
     let notificationsSHA = null;
+
+    async function pollUserProfile() {
+        if (!user) return;
+        try {
+            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+            if (data) {
+                userSHA = data.sha;
+                const remoteUser = JSON.parse(data.content);
+                remoteUser.sha = data.sha; // Preserve SHA for exit tracking
+                
+                // Update localStorage and UI
+                localStorage.setItem('current_user', JSON.stringify(remoteUser));
+                
+                // Update local user reference
+                Object.assign(user, remoteUser);
+
+                // Update UI elements with fresh data
+                updateUIWithStatus(remoteUser);
+                updateStats(remoteUser);
+                document.getElementById('welcome-title').innerText = `Welcome back, ${remoteUser.username}!`;
+                
+                console.log('Account data synced from remote');
+            }
+        } catch (e) {
+            console.error('Profile sync failed:', e);
+        }
+    }
 
     async function pollNotifications() {
         if (!user) return;
@@ -152,39 +178,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    async function pollUserProfile() {
-        if (!user) return;
-        try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
-            if (data && data.sha !== userSHA) {
-                userSHA = data.sha;
-                const remoteUser = JSON.parse(data.content);
-                
-                // Update localStorage and UI if changed
-                const localUser = JSON.parse(localStorage.getItem('current_user'));
-                if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {
-                    localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                    
-                    // Update UI elements
-                    updateUIWithStatus(remoteUser);
-                    document.getElementById('welcome-title').innerText = `Welcome back, ${remoteUser.username}!`;
-                    
-                    // Update stats card
-                    updateStats(remoteUser);
-                    
-                    // Update local user reference properties
-                    Object.assign(user, remoteUser);
-                    console.log('Profile updated from remote');
-                }
-            }
-        } catch (e) {
-            console.error('Profile polling failed:', e);
-        }
-    }
+    // Force sync immediately on visit
+    await pollUserProfile();
 
-    pollUserProfile(); // Initial check
+    // Start background polling
     setInterval(pollUserProfile, 30000); // Poll every 30s
-
+    
     pollNotifications(); // Initial check
     setInterval(pollNotifications, 20000); // Poll every 20s
 

@@ -180,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             userSha = res.content.sha;
             currentUser = updatedUser;
+            currentUser.sha = userSha; // Preserve SHA for status tracking
             localStorage.setItem('current_user', JSON.stringify(currentUser));
             updateUI(currentUser);
             
