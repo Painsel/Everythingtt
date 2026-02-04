@@ -84,11 +84,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function pollNotifications() {
         if (!user) return;
         try {
-            const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
-            if (data && data.sha !== notificationsSHA) {
-                notificationsSHA = data.sha;
-                notifications = JSON.parse(data.content);
-                updateNotificationUI();
+            // Use getFileRaw for high-speed polling (check for changes without SHA)
+            const content = await GitHubAPI.getFileRaw(`news/notifications-storage/${user.id}.json`);
+            if (content) {
+                const freshNotifications = JSON.parse(content);
+                // We only need to hit the API if the data actually changed
+                // (Comparing length or stringified content is a cheap way to check)
+                if (JSON.stringify(freshNotifications) !== JSON.stringify(notifications)) {
+                    // Fetch with API to get the latest SHA for marking as read later
+                    const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
+                    if (data) {
+                        notificationsSHA = data.sha;
+                        notifications = JSON.parse(data.content);
+                        updateNotificationUI();
+                    }
+                }
             }
         } catch (e) {
             if (notifications.length > 0) {
@@ -214,8 +224,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         for (const file of sortedFiles) {
             if (count >= 5) break;
             
-            const data = await GitHubAPI.getFile(file.path);
-            const article = JSON.parse(data.content);
+            // Use getFileRaw for speed since we don't need a SHA for listing
+            const content = await GitHubAPI.getFileRaw(file.path);
+            if (!content) continue;
+            const article = JSON.parse(content);
             
             // Skip private articles unless user is author
             if (article.isPrivate && (!user || user.id !== article.authorId)) {

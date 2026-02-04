@@ -3,37 +3,90 @@
  */
 const GitHubAPI = {
     cachedPAT: null,
+    swarm: [], // Array of { token: string, lastUsed: number }
 
-    // Fetches the PAT from an external JSON file to avoid GitHub's auto-revocation
+    // Fetches the swarm configuration from an external JSON file
     async getPAT() {
-        if (this.cachedPAT) return this.cachedPAT;
+        if (this.swarm.length > 0) return this.swarm[0].token;
         
         try {
-            // Fetching from external JSONBin to avoid GitHub's auto-revocation
             const response = await fetch('https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988', {
                 headers: { 'X-Bin-Meta': 'false' }
             });
             const config = await response.json();
-            this.cachedPAT = config.github_pat;
-            if (this.cachedPAT) {
-                localStorage.setItem('gh_pat', this.cachedPAT);
+            
+            // Handle both single token and array of tokens (swarm)
+            if (Array.isArray(config.github_swarm)) {
+                this.swarm = config.github_swarm.map(t => ({ token: t, lastUsed: 0 }));
+            } else if (config.github_pat) {
+                this.swarm = [{ token: config.github_pat, lastUsed: 0 }];
             }
-            return this.cachedPAT;
-        } catch (e) {
-            console.error('Failed to load external PAT:', e);
-            // Fallback to local storage if you decide to implement a setup UI later
+
+            if (this.swarm.length > 0) {
+                this.cachedPAT = this.swarm[0].token;
+                localStorage.setItem('gh_pat', this.cachedPAT);
+                return this.cachedPAT;
+            }
             return localStorage.getItem('gh_pat');
+        } catch (e) {
+            console.error('Failed to load external swarm:', e);
+            const local = localStorage.getItem('gh_pat');
+            if (local) this.swarm = [{ token: local, lastUsed: 0 }];
+            return local;
         }
     },
 
-    getOwner: () => 'Painsel',
-    getRepo: () => 'Everythingtt',
+    // Get the next worker using rotation (longest idle)
+    async getWorker() {
+        if (this.swarm.length === 0) await this.getPAT();
+        if (this.swarm.length === 0) throw new Error('No GitHub tokens available.');
+        
+        // Sort by lastUsed ascending to find the most idle worker
+        this.swarm.sort((a, b) => a.lastUsed - b.lastUsed);
+        const worker = this.swarm[0];
+        worker.lastUsed = Date.now();
+        return worker;
+    },
+
+    // Data Sharding Configuration
+    shards: {
+        'news/created-news-accounts-storage': { owner: 'Painsel', repo: 'everythingtt-users-db' },
+        'news/article-comments-storage': { owner: 'Painsel', repo: 'everythingtt-comments-db' },
+        'news/created-articles-storage': { owner: 'Painsel', repo: 'everythingtt-articles-db' },
+        'news/notifications-storage': { owner: 'Painsel', repo: 'everythingtt-notifications-db' }
+    },
+
+    getRepoInfo(path) {
+        // Remove leading slash if present
+        const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+        
+        // Find if this path belongs to a shard
+        for (const [prefix, info] of Object.entries(this.shards)) {
+            if (cleanPath.startsWith(prefix)) {
+                return info;
+            }
+        }
+        
+        // Default to main repo
+        return { owner: 'Painsel', repo: 'Everythingtt' };
+    },
+
+    getAPIURL(path) {
+        const { owner, repo } = this.getRepoInfo(path.replace('/contents/', ''));
+        return `https://api.github.com/repos/${owner}/${repo}${path}`;
+    },
+
+    getRawURL(path) {
+        const { owner, repo } = this.getRepoInfo(path);
+        return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
+    },
 
     async request(path, method = 'GET', body = null, retries = 3) {
-        const pat = await this.getPAT();
-        if (!pat) throw new Error('GitHub PAT not found.');
-
-        const url = `https://api.github.com/repos/${this.getOwner()}/${this.getRepo()}${path}`;
+        const worker = await this.getWorker();
+        const pat = worker.token;
+        
+        const url = this.getAPIURL(path);
+        
         const headers = {
             'Authorization': `token ${pat}`,
             'Accept': 'application/vnd.github.v3+json',
@@ -46,6 +99,17 @@ const GitHubAPI = {
         try {
             const response = await fetch(url, options);
             
+            // Handle Rate Limiting (403 or 429) by switching workers immediately
+            if ((response.status === 403 || response.status === 429) && retries > 0) {
+                const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
+                if (rateLimitRemaining === '0' || response.status === 429) {
+                    console.warn(`Worker ${worker.token.substring(0, 8)}... rate limited. Swapping...`);
+                    // Mark this worker as used far in the future to deprioritize it
+                    worker.lastUsed = Date.now() + 3600000; // 1 hour penalty
+                    return this.request(path, method, body, retries - 1);
+                }
+            }
+
             if (response.status === 409 && retries > 0) {
                 console.warn(`Conflict (409) detected for ${path}. Retrying... (${retries} attempts left)`);
                 // Wait for a random jittered interval before retrying
@@ -138,6 +202,19 @@ const GitHubAPI = {
         } catch (e) {
             if (e.message.includes('Not Found') || e.message.includes('404')) return null;
             throw e;
+        }
+    },
+
+    // High-speed raw fetch for read-only operations (no SHA returned)
+    async getFileRaw(path) {
+        try {
+            const url = this.getRawURL(path);
+            const res = await fetch(`${url}?t=${Date.now()}`);
+            if (!res.ok) return null;
+            const content = await res.text();
+            return content;
+        } catch (e) {
+            return null;
         }
     },
 

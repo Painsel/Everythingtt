@@ -37,12 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (const file of files) {
                     if (file.type !== 'file' || !file.name.endsWith('.json')) continue;
                     
-                    const data = await GitHubAPI.getFile(file.path);
-                    if (!data) continue;
+                    // Use getFileRaw for high-speed searching
+                    const content = await GitHubAPI.getFileRaw(file.path);
+                    if (!content) continue;
                     
                     let user;
                     try {
-                        user = JSON.parse(data.content);
+                        user = JSON.parse(content);
                     } catch (e) {
                         console.warn(`Skipping invalid JSON file: ${file.path}`);
                         continue;
@@ -51,6 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (user.username === username) {
                         if (user.password === password) {
                             foundUser = user;
+                            // We still need the SHA for the actual login sync later, so fetch it now
+                            const data = await GitHubAPI.getFile(file.path);
                             userSha = data.sha;
                             break;
                         } else {
@@ -93,10 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 let count = 0;
                 for (const file of articles) {
                     if (file.name.endsWith('.json')) {
-                        const articleRes = await GitHubAPI.getFile(file.path);
-                        if (articleRes) {
+                        // Use getFileRaw for speed
+                        const content = await GitHubAPI.getFileRaw(file.path);
+                        if (content) {
                             try {
-                                const article = JSON.parse(articleRes.content);
+                                const article = JSON.parse(content);
                                 if (article.authorId === foundUser.id) {
                                     count++;
                                 }

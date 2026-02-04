@@ -1164,8 +1164,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
             for (const file of files) {
                 if (!file.name.endsWith('.json')) continue;
-                const data = await GitHubAPI.getFile(file.path);
-                const account = JSON.parse(data.content);
+                // Use getFileRaw for speed since we don't need a SHA for searching
+                const content = await GitHubAPI.getFileRaw(file.path);
+                if (!content) continue;
+                const account = JSON.parse(content);
                 if (account.username.toLowerCase() === username.toLowerCase()) {
                     window.showAuthorProfile(account.id);
                     return;

@@ -91,26 +91,32 @@ const StatusManager = {
         // Since we can't fetch it during beforeunload, we use the last known SHA
         // that was stored in this.user when the session was active.
         
-        const url = `https://api.github.com/repos/${GitHubAPI.repoOwner}/${GitHubAPI.repoName}/contents/news/created-news-accounts-storage/${this.user.id}.json`;
+        const path = `news/created-news-accounts-storage/${this.user.id}.json`;
+        const url = GitHubAPI.getAPIURL(`/contents/${path}`);
         
         const userData = {...this.user};
         userData.status = status;
         userData.lastActive = new Date().toISOString();
 
         const body = JSON.stringify({
-            message: `Update status to ${status} on exit`,
+            message: `Update status to ${status} (Sync)`,
             content: btoa(unescape(encodeURIComponent(JSON.stringify(userData)))),
-            sha: this.user.sha // Use last known SHA
+            sha: this.user.sha
         });
 
+        const headers = {
+            'Authorization': `token ${pat}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        };
+
+        // Navigator.sendBeacon doesn't support custom headers easily for PUT
+        // so we use a synchronous fetch if possible, or just fire and forget.
         fetch(url, {
             method: 'PUT',
-            headers: {
-                'Authorization': `token ${pat}`,
-                'Content-Type': 'application/json'
-            },
+            headers: headers,
             body: body,
-            keepalive: true // Crucial for beforeunload
+            keepalive: true
         });
     }
 };
