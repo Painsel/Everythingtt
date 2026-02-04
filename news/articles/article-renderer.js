@@ -896,19 +896,52 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!data) return alert('Author profile not found.');
             const author = JSON.parse(data.content);
 
+            // Fetch all articles to count author's contributions
+            const allFiles = await GitHubAPI.getDirectory('news/created-articles-storage');
+            const authorArticlesCount = allFiles.filter(f => f.name.includes(authorId)).length;
+            
+            const joinDate = author.createdAt ? new Date(author.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown';
+
             modalContent.innerHTML = `
-                <div class="banner" style="background: ${author.banner.startsWith('#') ? author.banner : `url(${author.banner})`}"></div>
-                <div class="profile-header">
-                    <img class="pfp" src="${author.pfp}" alt="PFP">
-                    <div class="profile-names">
-                        <h4>${author.username}</h4>
-                        <small>ID: ${author.id}</small>
+                <div class="profile-card-header">
+                    <div class="profile-card-banner" style="background: ${author.banner.startsWith('#') ? author.banner : `url(${author.banner})`}"></div>
+                    <div class="profile-card-pfp-wrapper">
+                        <img class="profile-card-pfp" src="${author.pfp}" alt="PFP">
                     </div>
                 </div>
-                <p class="bio">${author.bio}</p>
+                <div class="profile-card-body">
+                    <div class="profile-card-names">
+                        <span class="profile-card-username">${author.username}</span>
+                        <span class="profile-card-id">#${author.id}</span>
+                    </div>
+                    
+                    ${author.bio ? `
+                        <div class="profile-card-bio">${author.bio}</div>
+                    ` : ''}
+
+                    <div class="profile-card-divider"></div>
+
+                    <div class="profile-card-section-title">Contributions</div>
+                    <div class="profile-card-stats">
+                        <div class="profile-stat">
+                            <span class="profile-stat-value">${authorArticlesCount}</span>
+                            <span class="profile-stat-label">Articles</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-card-divider"></div>
+                    
+                    <div class="profile-card-footer">
+                        <div class="profile-join-date">
+                            <span class="profile-join-icon">🗓️</span>
+                            <span>Joined ${joinDate}</span>
+                        </div>
+                    </div>
+                </div>
             `;
             profileModal.classList.remove('hidden');
         } catch (e) {
+            console.error('Error loading profile:', e);
             alert('Error loading profile: ' + e.message);
         }
     }
