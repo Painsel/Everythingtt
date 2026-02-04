@@ -84,6 +84,53 @@
         </div>
     </div>
 
+    <!-- Article Management Modal -->
+    <div id="article-settings-modal" class="modal hidden">
+        <div class="modal-content management-modal-content">
+            <span class="close-management-modal">&times;</span>
+            <h3>Article Settings</h3>
+            
+            <div class="management-section">
+                <label>Title</label>
+                <input type="text" id="edit-article-title" placeholder="Article Title">
+            </div>
+
+            <div class="management-section">
+                <label>Content</label>
+                <textarea id="edit-article-content" rows="10" placeholder="Article Content"></textarea>
+            </div>
+
+            <div class="management-section">
+                <label>Banner Image</label>
+                <div class="banner-edit-wrapper">
+                    <img id="edit-banner-preview" src="" alt="Banner Preview" class="banner-preview-small">
+                    <label for="edit-banner-upload" class="upload-btn-styled">
+                        Change Banner
+                        <input type="file" id="edit-banner-upload" accept="image/*" hidden>
+                    </label>
+                </div>
+            </div>
+
+            <div class="management-actions">
+                <div class="toggle-wrapper">
+                    <label class="switch">
+                        <input type="checkbox" id="mark-private-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>Mark as Private</span>
+                </div>
+                
+                <div class="danger-zone">
+                    <button id="btn-delete-article" class="delete-btn">Delete Article</button>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btn-save-article-changes" class="save-btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../utils.js"></script>
     <script src="article-renderer.js"></script>
 </body>

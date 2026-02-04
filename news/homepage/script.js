@@ -175,9 +175,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             .slice(0, 5); // Show last 5
 
         recentList.innerHTML = '';
+        let count = 0;
         for (const file of sortedFiles) {
+            if (count >= 5) break;
+            
             const data = await GitHubAPI.getFile(file.path);
             const article = JSON.parse(data.content);
+            
+            // Skip private articles unless user is author
+            if (article.isPrivate && (!user || user.id !== article.authorId)) {
+                continue;
+            }
             
             const item = document.createElement('div');
             item.className = 'mini-article';
@@ -189,6 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button onclick="location.href='../articles/#article-${article.id}'">Read</button>
             `;
             recentList.appendChild(item);
+            count++;
         }
     } catch (e) {
         console.error('Failed to load recent articles:', e);

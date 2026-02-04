@@ -278,7 +278,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } catch (e) { return null; }
                 }));
 
-                const validArticles = articles.filter(a => a !== null).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const validArticles = articles.filter(a => a !== null)
+                    .filter(a => !a.isPrivate || (user && user.id === a.authorId)) // Filter out private articles unless author
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
                 for (const article of validArticles) {
                     articleSHAs[article.id] = article.sha;
@@ -308,10 +310,152 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initial load
     loadArticles();
 
-    // Listen for hash changes to switch between single and feed view
-    window.addEventListener('hashchange', loadArticles);
+    // Article Management Modal
+    const settingsModal = document.getElementById('article-settings-modal');
+    const closeSettingsModal = document.querySelector('.close-management-modal');
+    const editTitle = document.getElementById('edit-article-title');
+    const editContent = document.getElementById('edit-article-content');
+    const editBannerPreview = document.getElementById('edit-banner-preview');
+    const editBannerUpload = document.getElementById('edit-banner-upload');
+    const markPrivateToggle = document.getElementById('mark-private-toggle');
+    const btnSaveSettings = document.getElementById('btn-save-article-changes');
+    const btnDeleteArticle = document.getElementById('btn-delete-article');
 
-    // Back to feed button
+    let currentEditingArticleId = null;
+    let currentEditingBannerBase64 = null;
+
+    async function openArticleSettings(articleId) {
+        currentEditingArticleId = articleId;
+        const article = articleData[articleId];
+        if (!article) return;
+
+        editTitle.value = article.title;
+        editContent.value = article.content;
+        editBannerPreview.src = article.banner || 'https://via.placeholder.com/400x150';
+        markPrivateToggle.checked = !!article.isPrivate;
+        currentEditingBannerBase64 = article.banner;
+
+        settingsModal.classList.remove('hidden');
+    }
+
+    closeSettingsModal.addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+        currentEditingArticleId = null;
+        currentEditingBannerBase64 = null;
+    });
+
+    editBannerUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) { // 2MB limit
+            alert('Image is too large. Max 2MB.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            currentEditingBannerBase64 = event.target.result;
+            editBannerPreview.src = currentEditingBannerBase64;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    btnSaveSettings.addEventListener('click', async () => {
+        if (!currentEditingArticleId || !user) return;
+
+        const article = articleData[currentEditingArticleId];
+        const sha = articleSHAs[currentEditingArticleId];
+        
+        const updatedArticle = {
+            ...article,
+            title: editTitle.value.trim(),
+            content: editContent.value.trim(),
+            banner: currentEditingBannerBase64,
+            isPrivate: markPrivateToggle.checked,
+            lastUpdated: new Date().toISOString()
+        };
+
+        if (!updatedArticle.title || !updatedArticle.content) {
+            alert('Title and content are required.');
+            return;
+        }
+
+        btnSaveSettings.disabled = true;
+        btnSaveSettings.innerText = 'Saving...';
+
+        try {
+            await GitHubAPI.updateFile(
+                `news/created-articles-storage/${currentEditingArticleId}.json`,
+                JSON.stringify(updatedArticle),
+                `Update article: ${updatedArticle.title}`,
+                sha
+            );
+            
+            // Update local state
+            articleData[currentEditingArticleId] = updatedArticle;
+            
+            // Reload or update UI
+            settingsModal.classList.add('hidden');
+            loadArticles(); // Refresh to show changes
+            alert('Article updated successfully!');
+        } catch (e) {
+            console.error('Failed to update article:', e);
+            alert('Failed to save changes: ' + e.message);
+        } finally {
+            btnSaveSettings.disabled = false;
+            btnSaveSettings.innerText = 'Save Changes';
+        }
+    });
+
+    btnDeleteArticle.addEventListener('click', async () => {
+        if (!currentEditingArticleId || !user) return;
+
+        if (!confirm('Are you absolutely sure you want to delete this article? This action cannot be undone.')) {
+            return;
+        }
+
+        const sha = articleSHAs[currentEditingArticleId];
+        btnDeleteArticle.disabled = true;
+        btnDeleteArticle.innerText = 'Deleting...';
+
+        try {
+            // Delete article file
+            await GitHubAPI.request(`/contents/news/created-articles-storage/${currentEditingArticleId}.json`, 'DELETE', {
+                message: `Delete article: ${currentEditingArticleId}`,
+                sha: sha
+            });
+
+            // Optionally delete comments file
+            try {
+                const commentsRes = await GitHubAPI.getFile(`news/article-comments-storage/${currentEditingArticleId}.json`);
+                if (commentsRes) {
+                    await GitHubAPI.request(`/contents/news/article-comments-storage/${currentEditingArticleId}.json`, 'DELETE', {
+                        message: `Delete comments for article: ${currentEditingArticleId}`,
+                        sha: commentsRes.sha
+                    });
+                }
+            } catch (e) {
+                // Comments might not exist, ignore
+            }
+
+            settingsModal.classList.add('hidden');
+            window.location.hash = ''; // Go back to feed
+            loadArticles();
+            alert('Article deleted successfully.');
+        } catch (e) {
+            console.error('Failed to delete article:', e);
+            alert('Failed to delete article: ' + e.message);
+        } finally {
+            btnDeleteArticle.disabled = false;
+            btnDeleteArticle.innerText = 'Delete Article';
+        }
+    });
+ 
+     // Listen for hash changes to switch between single and feed view
+     window.addEventListener('hashchange', loadArticles);
+ 
+     // Back to feed button
     btnBackToFeed.addEventListener('click', () => {
         window.location.hash = '';
     });
@@ -409,6 +553,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.innerHTML = `
             <div class="article-banner" style="background-image: url(${article.banner || 'https://via.placeholder.com/400x150'})"></div>
             <div class="article-info">
+                ${(user && user.id === article.authorId) ? `
+                    <div class="article-settings-trigger" title="Article Settings" data-article-id="${article.id}">
+                        ⚙️
+                    </div>
+                ` : ''}
                 <h3>${article.title}</h3>
                 <div class="author-info" data-author-id="${article.authorId}">
                     <img src="${article.authorPfp}" alt="${article.authorName}" class="author-pfp">
@@ -442,6 +591,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `;
+
+        // Settings trigger
+        const settingsBtn = card.querySelector('.article-settings-trigger');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openArticleSettings(article.id);
+            });
+        }
 
         card.querySelector('.author-info').addEventListener('click', () => window.showAuthorProfile(article.authorId));
         
