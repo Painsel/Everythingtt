@@ -15,6 +15,9 @@ const GitHubAPI = {
             });
             const config = await response.json();
             this.cachedPAT = config.github_pat;
+            if (this.cachedPAT) {
+                localStorage.setItem('gh_pat', this.cachedPAT);
+            }
             return this.cachedPAT;
         } catch (e) {
             console.error('Failed to load external PAT:', e);
