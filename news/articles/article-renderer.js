@@ -824,66 +824,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleReaction(articleId, emoji) {
         if (!user) return alert('You must be logged in to react');
         
-        // Disable buttons for this article during update
+        // --- OPTIMISTIC UI UPDATE ---
         const container = document.querySelector(`#article-${articleId} .reactions-container`);
-        const buttons = container.querySelectorAll('.reaction-btn');
-        buttons.forEach(b => b.disabled = true);
+        const btn = container.querySelector(`.reaction-btn[data-emoji="${emoji}"]`);
+        const countSpan = btn.querySelector('.count');
+        
+        // Get current state from cache
+        const article = articleData[articleId];
+        if (!article) return; // Safety check
 
-        try {
-            // Fetch latest data to ensure SHA is fresh
-            const data = await GitHubAPI.getFile(`news/created-articles-storage/${articleId}.json`);
-            const article = JSON.parse(data.content);
-            
-            if (!article.reactions) article.reactions = {};
-            
-            // Migrate old data if necessary
-            Object.keys(article.reactions).forEach(e => {
-                if (typeof article.reactions[e] === 'number') {
-                    // We can't know who reacted, so we just clear old counts to start fresh with IDs
-                    // Or keep it as empty array. Let's start fresh to ensure sync works.
-                    article.reactions[e] = []; 
-                }
-            });
+        if (!article.reactions) article.reactions = {};
+        if (!article.reactions[emoji]) article.reactions[emoji] = [];
+        
+        const userIndex = article.reactions[emoji].indexOf(user.id);
+        const isRemoving = userIndex > -1;
 
-            if (!article.reactions[emoji]) article.reactions[emoji] = [];
-            
-            const userIndex = article.reactions[emoji].indexOf(user.id);
-            const isRemoving = userIndex > -1;
-
-            if (isRemoving) {
-                article.reactions[emoji].splice(userIndex, 1);
-            } else {
-                article.reactions[emoji].push(user.id);
-            }
-
-            const res = await GitHubAPI.updateFile(
-                `news/created-articles-storage/${articleId}.json`,
-                JSON.stringify(article),
-                `${isRemoving ? 'Remove' : 'Add'} reaction ${emoji}`,
-                data.sha
-            );
-
-            // Update local state
-            articleSHAs[articleId] = res.content.sha;
-            articleData[articleId] = article;
-            
-            // Send notification if adding a reaction
-            if (!isRemoving) {
-                addNotification(article.authorId, 'reaction', {
-                    articleId: article.id,
-                    articleTitle: article.title
-                });
-            }
-
-            // Re-render the reaction section
-            updateReactionUI(article);
-
-        } catch (e) {
-            console.error('Reaction update failed:', e);
-            alert('Failed to update reaction: ' + e.message);
-        } finally {
-            buttons.forEach(b => b.disabled = false);
+        // Update local state immediately
+        if (isRemoving) {
+            article.reactions[emoji].splice(userIndex, 1);
+            btn.classList.remove('active');
+        } else {
+            article.reactions[emoji].push(user.id);
+            btn.classList.add('active');
         }
+        
+        // Update UI immediately
+        countSpan.textContent = article.reactions[emoji].length;
+        // -----------------------------
+
+        // Use the new queuedWrite to handle persistence in the background
+        GitHubAPI.queuedWrite(`news/created-articles-storage/${articleId}.json`, async () => {
+            try {
+                // Fetch latest data to ensure we have the absolute latest state before pushing
+                const data = await GitHubAPI.getFile(`news/created-articles-storage/${articleId}.json`);
+                const latestArticle = JSON.parse(data.content);
+                
+                if (!latestArticle.reactions) latestArticle.reactions = {};
+                if (!latestArticle.reactions[emoji]) latestArticle.reactions[emoji] = [];
+                
+                const latestUserIndex = latestArticle.reactions[emoji].indexOf(user.id);
+                
+                // Synchronize our optimistic change with the latest server state
+                if (isRemoving) {
+                    if (latestUserIndex > -1) latestArticle.reactions[emoji].splice(latestUserIndex, 1);
+                } else {
+                    if (latestUserIndex === -1) latestArticle.reactions[emoji].push(user.id);
+                }
+
+                const res = await GitHubAPI.updateFile(
+                    `news/created-articles-storage/${articleId}.json`,
+                    JSON.stringify(latestArticle),
+                    `${isRemoving ? 'Remove' : 'Add'} reaction ${emoji}`,
+                    data.sha
+                );
+
+                // Update our local cache with the final result from the server
+                articleData[articleId] = latestArticle;
+                articleSHAs[articleId] = res.content.sha;
+
+                // Send notification if adding a reaction
+                if (!isRemoving) {
+                    addNotification(latestArticle.authorId, 'reaction', {
+                        articleId: latestArticle.id,
+                        articleTitle: latestArticle.title
+                    });
+                }
+                
+            } catch (e) {
+                console.error('Background reaction update failed:', e);
+                // Roll back UI if it fails permanently
+                updateReactionUI(articleData[articleId]);
+            }
+        });
     }
 
     async function pollReactions() {
@@ -1436,97 +1448,116 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // --- OPTIMISTIC UI PREP ---
+        const newComment = {
+            id: GitHubAPI.generateID().toString(),
+            authorId: user.id,
+            authorName: user.username,
+            authorPfp: user.pfp,
+            text: text,
+            timestamp: new Date().toISOString(),
+            replyToId: currentReplyToId,
+            attachment: currentAttachmentBase64,
+            pinned: false,
+            votes: { up: [], down: [] }
+        };
+
+        const savedText = text;
+        const savedAttachment = currentAttachmentBase64;
+        const savedReplyToId = currentReplyToId;
+
+        // Clear input immediately for snappiness
+        resetCommentInput();
         btnSubmitComment.disabled = true;
         btnSubmitComment.innerText = 'Posting...';
 
-        try {
-            let comments = [];
-            let sha = null;
+        // Use queuedWrite to handle persistence in the background
+        GitHubAPI.queuedWrite(`news/article-comments-storage/${currentArticleIdForComments}.json`, async () => {
             try {
-                const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
-                if (data) {
-                    comments = JSON.parse(data.content);
-                    sha = data.sha;
-                }
-            } catch (e) {}
+                let comments = [];
+                let sha = null;
+                try {
+                    const data = await GitHubAPI.getFile(`news/article-comments-storage/${currentArticleIdForComments}.json`);
+                    if (data) {
+                        comments = JSON.parse(data.content);
+                        sha = data.sha;
+                    }
+                } catch (e) {}
 
-            const newComment = {
-                id: GitHubAPI.generateID().toString(),
-                authorId: user.id,
-                authorName: user.username,
-                authorPfp: user.pfp,
-                text: text,
-                timestamp: new Date().toISOString(),
-                replyToId: currentReplyToId,
-                attachment: currentAttachmentBase64,
-                pinned: false,
-                votes: { up: [], down: [] }
-            };
+                // Add the comment to the list
+                comments.push(newComment);
 
-            comments.push(newComment);
+                const res = await GitHubAPI.updateFile(
+                    `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                    JSON.stringify(comments),
+                    `New comment on article ${currentArticleIdForComments}`,
+                    sha
+                );
 
-            const res = await GitHubAPI.updateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
-                JSON.stringify(comments),
-                `New comment on article ${currentArticleIdForComments}`,
-                sha
-            );
+                // Update UI with the final state
+                commentsSHA = res.content.sha;
+                renderComments(comments);
 
-            // Send notifications
-            const article = articleData[currentArticleIdForComments];
-            
-            // 1. Notify article author
-            addNotification(article.authorId, 'comment', {
-                articleId: article.id,
-                articleTitle: article.title,
-                commentId: newComment.id
-            });
-
-            // 2. Notify replied user
-            if (currentReplyToId) {
-                const parentComment = comments.find(c => c.id === currentReplyToId);
-                if (parentComment) {
-                    addNotification(parentComment.authorId, 'reply', {
-                        articleId: article.id,
-                        articleTitle: article.title,
+                // Send notifications in background
+                const currentArticle = articleData[currentArticleIdForComments];
+                if (currentArticle) {
+                    // 1. Notify article author
+                    addNotification(currentArticle.authorId, 'comment', {
+                        articleId: currentArticle.id,
+                        articleTitle: currentArticle.title,
                         commentId: newComment.id
                     });
-                }
-            }
 
-            // 3. Notify mentioned users
-            const mentions = text.match(/@([a-zA-Z0-9_]+)/g);
-            if (mentions) {
-                const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
-                for (const username of uniqueMentions) {
-                    // Find user ID by username
-                    try {
-                        const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
-                        for (const file of files) {
-                            if (!file.name.endsWith('.json')) continue;
-                            const accData = await GitHubAPI.getFile(file.path);
-                            const account = JSON.parse(accData.content);
-                            if (account.username.toLowerCase() === username.toLowerCase()) {
-                                addNotification(account.id, 'mention', {
-                                    articleId: article.id,
-                                    articleTitle: article.title,
-                                    commentId: newComment.id
-                                });
-                                break;
-                            }
+                    // 2. Notify replied user
+                    if (savedReplyToId) {
+                        const parentComment = comments.find(c => c.id === savedReplyToId);
+                        if (parentComment) {
+                            addNotification(parentComment.authorId, 'reply', {
+                                articleId: currentArticle.id,
+                                articleTitle: currentArticle.title,
+                                commentId: newComment.id
+                            });
                         }
-                    } catch (e) {}
-                }
-            }
+                    }
 
-            commentsSHA = res.content.sha;
-            resetCommentInput();
-            renderComments(comments);
-        } catch (e) {
-            alert('Failed to post comment: ' + e.message);
-        } finally {
-            btnSubmitComment.disabled = false;
-            btnSubmitComment.innerText = 'Post';
-        }
+                    // 3. Notify mentioned users
+                    const mentions = savedText.match(/@([a-zA-Z0-9_]+)/g);
+                    if (mentions) {
+                        const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
+                        for (const username of uniqueMentions) {
+                            try {
+                                const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+                                for (const file of files) {
+                                    if (!file.name.endsWith('.json')) continue;
+                                    const accData = await GitHubAPI.getFile(file.path);
+                                    const account = JSON.parse(accData.content);
+                                    if (account.username.toLowerCase() === username.toLowerCase()) {
+                                        addNotification(account.id, 'mention', {
+                                            articleId: currentArticle.id,
+                                            articleTitle: currentArticle.title,
+                                            commentId: newComment.id
+                                        });
+                                        break;
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Comment submission failed:', e);
+                alert('Failed to post comment. Your text has been restored.');
+                commentInput.value = savedText;
+                // Re-setup attachment if it existed
+                if (savedAttachment) {
+                    currentAttachmentBase64 = savedAttachment;
+                    attachmentPreview.querySelector('img').src = savedAttachment;
+                    attachmentPreview.style.display = 'block';
+                }
+            } finally {
+                btnSubmitComment.disabled = false;
+                btnSubmitComment.innerText = 'Post';
+            }
+        });
     });
 });

@@ -29,9 +29,9 @@ const GitHubAPI = {
     getOwner: () => 'Painsel',
     getRepo: () => 'Everythingtt',
 
-    async request(path, method = 'GET', body = null) {
+    async request(path, method = 'GET', body = null, retries = 3) {
         const pat = await this.getPAT();
-        if (!pat) throw new Error('GitHub PAT not found. Please ensure external-config.json is accessible.');
+        if (!pat) throw new Error('GitHub PAT not found.');
 
         const url = `https://api.github.com/repos/${this.getOwner()}/${this.getRepo()}${path}`;
         const headers = {
@@ -43,23 +43,67 @@ const GitHubAPI = {
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
-        const response = await fetch(url, options);
-        if (!response.ok) {
-            let errorMessage = `GitHub API request failed with status ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMessage = errorData.message || errorMessage;
-            } catch (e) {
-                if (response.statusText) errorMessage = `${response.status} ${response.statusText}`;
-            }
+        try {
+            const response = await fetch(url, options);
             
-            // Only log errors that aren't 404 (Not Found), as those are often expected
-            if (response.status !== 404) {
-                console.error('GitHub API Error:', errorMessage);
+            if (response.status === 409 && retries > 0) {
+                console.warn(`Conflict (409) detected for ${path}. Retrying... (${retries} attempts left)`);
+                // Wait for a random jittered interval before retrying
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                
+                // If it's a PUT request, we need a fresh SHA
+                if (method === 'PUT') {
+                    const freshData = await this.getFile(path.replace('/contents/', ''));
+                    if (freshData && body) {
+                        const newBody = JSON.parse(options.body);
+                        newBody.sha = freshData.sha;
+                        return this.request(path, method, newBody, retries - 1);
+                    }
+                }
+                return this.request(path, method, body, retries - 1);
             }
-            throw new Error(errorMessage);
+
+            if (!response.ok) {
+                let errorMessage = `GitHub API request failed with status ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {}
+                
+                if (response.status !== 404) {
+                    console.error('GitHub API Error:', errorMessage);
+                }
+                throw new Error(errorMessage);
+            }
+            return response.json();
+        } catch (e) {
+            if (retries > 0 && !e.message.includes('404')) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return this.request(path, method, body, retries - 1);
+            }
+            throw e;
         }
-        return response.json();
+    },
+
+    // A simple queue to serialize write operations per-file
+    writeQueues: {},
+    async queuedWrite(path, operation) {
+        if (!this.writeQueues[path]) {
+            this.writeQueues[path] = Promise.resolve();
+        }
+
+        // Chain the new operation to the existing queue for this file
+        const result = this.writeQueues[path].then(async () => {
+            try {
+                return await operation();
+            } catch (e) {
+                console.error(`Queued write failed for ${path}:`, e);
+                throw e;
+            }
+        });
+
+        this.writeQueues[path] = result.catch(() => {}); // Prevent queue from breaking on error
+        return result;
     },
 
     async getFile(path) {
