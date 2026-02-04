@@ -523,6 +523,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Comments might not exist, ignore
             }
 
+            // Update user contributions count
+            try {
+                const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                if (userData) {
+                    const profile = JSON.parse(userData.content);
+                    profile.contributions = Math.max(0, (profile.contributions || 1) - 1);
+                    await GitHubAPI.updateFile(
+                        `news/created-news-accounts-storage/${user.id}.json`,
+                        JSON.stringify(profile),
+                        `Decrement contributions for ${user.username}`,
+                        userData.sha
+                    );
+                    localStorage.setItem('current_user', JSON.stringify(profile));
+                }
+            } catch (e) {
+                console.warn('Failed to update contributions count:', e);
+            }
+
             settingsModal.classList.add('hidden');
             window.location.hash = ''; // Go back to feed
             loadArticles();
@@ -896,11 +914,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!data) return alert('Author profile not found.');
             const author = JSON.parse(data.content);
 
-            // Fetch all articles to count author's contributions
-            const allFiles = await GitHubAPI.listFiles('news/created-articles-storage');
-            const authorArticlesCount = allFiles.filter(f => f.name.includes(authorId)).length;
+            // Use recorded contributions if available, otherwise calculate
+            let authorArticlesCount = author.contributions;
+            if (authorArticlesCount === undefined) {
+                const allFiles = await GitHubAPI.listFiles('news/created-articles-storage');
+                authorArticlesCount = 0;
+                for (const file of allFiles) {
+                    if (file.name.endsWith('.json')) {
+                        const artData = await GitHubAPI.getFile(file.path);
+                        if (artData) {
+                            try {
+                                const art = JSON.parse(artData.content);
+                                if (art.authorId === authorId) authorArticlesCount++;
+                            } catch(e) {}
+                        }
+                    }
+                }
+            }
             
-            const joinDate = author.createdAt ? new Date(author.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown';
+            const joinDateStr = author.joinDate || author.createdAt;
+            const joinDate = joinDateStr ? new Date(joinDateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown';
 
             modalContent.innerHTML = `
                 <div class="profile-card-header">

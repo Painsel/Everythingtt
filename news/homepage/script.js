@@ -13,6 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('header-username').innerText = user.username;
     document.getElementById('header-id').innerText = `@${user.id || user.username.toLowerCase().replace(/\s+/g, '')}`;
     
+    // Update Stats Card
+    const updateStats = (u) => {
+        const contributions = u.contributions || 0;
+        const joinDate = u.joinDate || u.createdAt;
+        const formattedDate = joinDate ? new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently';
+        
+        document.getElementById('home-contributions').innerText = contributions;
+        document.getElementById('home-join-date').innerText = formattedDate;
+    };
+    updateStats(user);
+    
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
 
     let userSHA = null;
@@ -135,6 +146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.getElementById('header-pfp').src = remoteUser.pfp;
                     document.getElementById('header-username').innerText = remoteUser.username;
                     document.getElementById('welcome-title').innerText = `Welcome back, ${remoteUser.username}!`;
+                    
+                    // Update stats card
+                    updateStats(remoteUser);
                     
                     // Update local user reference properties
                     Object.assign(user, remoteUser);

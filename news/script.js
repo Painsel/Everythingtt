@@ -71,11 +71,54 @@ document.addEventListener('DOMContentLoaded', () => {
                     password,
                     pfp: 'https://via.placeholder.com/150',
                     banner: '#7289da',
-                    bio: 'Welcome to my profile!'
+                    bio: 'Welcome to my profile!',
+                    joinDate: new Date().toISOString(),
+                    contributions: 0
                 };
                 const res = await GitHubAPI.updateFile(`news/created-news-accounts-storage/${newUser.id}.json`, JSON.stringify(newUser), `Create user ${username}`);
                 userSha = res.content.sha; // Capture SHA for future updates
                 foundUser = newUser;
+            } else {
+                // For existing users, update joinDate and contributions if needed
+                btnLogin.innerText = 'Syncing Profile...';
+                let needsUpdate = false;
+                
+                if (!foundUser.joinDate) {
+                    foundUser.joinDate = new Date().toISOString();
+                    needsUpdate = true;
+                }
+
+                // Recalculate contributions
+                const articles = await GitHubAPI.listFiles('news/created-articles-storage');
+                let count = 0;
+                for (const file of articles) {
+                    if (file.name.endsWith('.json')) {
+                        const articleRes = await GitHubAPI.getFile(file.path);
+                        if (articleRes) {
+                            try {
+                                const article = JSON.parse(articleRes.content);
+                                if (article.authorId === foundUser.id) {
+                                    count++;
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                }
+                
+                if (foundUser.contributions !== count) {
+                    foundUser.contributions = count;
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate) {
+                    const res = await GitHubAPI.updateFile(
+                        `news/created-news-accounts-storage/${foundUser.id}.json`,
+                        JSON.stringify(foundUser),
+                        `Update account metadata for ${foundUser.username}`,
+                        userSha
+                    );
+                    userSha = res.content.sha;
+                }
             }
 
             showDashboard(foundUser);
@@ -132,6 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-username-display').innerText = user.username;
         document.getElementById('profile-id-display').innerText = `ID: ${user.id}`;
         document.getElementById('profile-bio-display').innerText = user.bio;
+        
+        // Stats
+        const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently';
+        document.getElementById('profile-contributions-display').innerText = `📚 ${user.contributions || 0} Articles`;
+        document.getElementById('profile-join-display').innerText = `🗓️ Joined ${joinDate}`;
 
         // Editor Fields
         document.getElementById('edit-pfp').value = user.pfp;

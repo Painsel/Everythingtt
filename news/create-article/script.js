@@ -196,6 +196,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 JSON.stringify(article), 
                 `Publish article: ${title}`
             );
+
+            // Update user contributions
+            try {
+                const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                if (userData) {
+                    const profile = JSON.parse(userData.content);
+                    profile.contributions = (profile.contributions || 0) + 1;
+                    await GitHubAPI.updateFile(
+                        `news/created-news-accounts-storage/${user.id}.json`,
+                        JSON.stringify(profile),
+                        `Increment contributions for ${user.username}`,
+                        userData.sha
+                    );
+                    // Update local storage
+                    localStorage.setItem('current_user', JSON.stringify(profile));
+                }
+            } catch (e) {
+                console.warn('Failed to update contributions count:', e);
+            }
             
             alert('Article published successfully!');
             window.location.href = '../articles/';
