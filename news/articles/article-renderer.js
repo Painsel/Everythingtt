@@ -897,7 +897,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const author = JSON.parse(data.content);
 
             // Fetch all articles to count author's contributions
-            const allFiles = await GitHubAPI.getDirectory('news/created-articles-storage');
+            const allFiles = await GitHubAPI.listFiles('news/created-articles-storage');
             const authorArticlesCount = allFiles.filter(f => f.name.includes(authorId)).length;
             
             const joinDate = author.createdAt ? new Date(author.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown';
