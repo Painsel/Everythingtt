@@ -806,10 +806,10 @@
 /* Profile Modal Redesign */
 .profile-modal-container {
     width: 100%;
-    max-width: 450px;
+    max-width: 650px; /* Increased from 450px */
     max-height: calc(100vh - 40px);
     background-color: #18191c;
-    overflow-y: auto; /* Allow content inside to scroll if needed */
+    overflow-y: auto;
     overflow-x: hidden;
     border-radius: 8px;
     box-shadow: 0 8px 16px rgba(0,0,0,0.3);
@@ -817,12 +817,12 @@
     scrollbar-width: thin;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 680px) {
     .profile-modal-container {
         max-width: 100%;
         border-radius: 12px 12px 0 0;
         align-self: flex-end; /* Slide up from bottom on mobile */
-        max-height: 85vh;
+        max-height: 90vh;
     }
 
     .modal {
@@ -831,23 +831,28 @@
     }
 
     .profile-card-header {
-        height: 100px;
+        height: 140px;
     }
 
     .profile-card-pfp-wrapper {
-        width: 80px;
-        height: 80px;
-        bottom: -35px;
+        width: 100px;
+        height: 100px;
+        bottom: -40px;
+        left: 16px;
     }
 
     .profile-card-body {
-        padding: 40px 16px 16px 16px;
+        padding: 50px 16px 16px 16px;
+    }
+
+    .profile-card-username {
+        font-size: 1.4rem;
     }
 }
 
 .profile-card-header {
     position: relative;
-    height: 120px;
+    height: 180px; /* Increased from 120px to match wider aspect ratio */
 }
 
 .profile-card-banner {
@@ -859,13 +864,13 @@
 
 .profile-card-pfp-wrapper {
     position: absolute;
-    bottom: -40px;
-    left: 16px;
-    width: 92px;
-    height: 92px;
+    bottom: -50px; /* Adjusted for larger PFP */
+    left: 24px;
+    width: 120px; /* Increased from 92px */
+    height: 120px; /* Increased from 92px */
     background-color: #18191c;
     border-radius: 50%;
-    padding: 6px;
+    padding: 7px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -880,36 +885,36 @@
 }
 
 .profile-card-body {
-    padding: 50px 16px 16px 16px;
+    padding: 65px 24px 24px 24px; /* Increased top padding and side padding */
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .profile-card-names {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
 }
 
 .profile-card-username {
     color: #fff;
-    font-size: 1.25rem;
+    font-size: 1.6rem; /* Increased from 1.25rem */
     font-weight: 700;
 }
 
 .profile-card-id {
     color: #b9bbbe;
-    font-size: 0.85rem;
+    font-size: 1rem; /* Increased from 0.85rem */
     font-weight: 500;
 }
 
 .profile-card-bio {
     color: #dcddde;
-    font-size: 0.9rem;
-    line-height: 1.4;
+    font-size: 1.1rem; /* Increased from 0.9rem */
+    line-height: 1.5;
     white-space: pre-wrap;
-    padding: 8px 0;
+    padding: 12px 0;
 }
 
 .profile-card-divider {
@@ -940,12 +945,12 @@
 .profile-stat-value {
     color: #fff;
     font-weight: 600;
-    font-size: 0.95rem;
+    font-size: 1.2rem; /* Increased from 0.95rem */
 }
 
 .profile-stat-label {
     color: #b9bbbe;
-    font-size: 0.75rem;
+    font-size: 0.85rem; /* Increased from 0.75rem */
 }
 
 .profile-card-footer {
@@ -955,9 +960,9 @@
 .profile-join-date {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: #b9bbbe;
-    font-size: 0.8rem;
+    font-size: 0.9rem; /* Increased from 0.8rem */
 }
 
 .profile-join-icon {
