@@ -114,6 +114,11 @@ const GitHubAPI = {
         }
     },
 
+    // Alias for listFiles to prevent errors if renamed or cached
+    async getDirectory(path) {
+        return this.listFiles(path);
+    },
+
     generateID() {
         return Math.floor(Math.random() * 900000000000000) + 100000000000000;
     }
