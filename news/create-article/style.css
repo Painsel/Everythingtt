@@ -101,6 +101,22 @@
     padding: 2px 6px;
     border-radius: 4px;
     pointer-events: none;
+}
+
+.user-badge {
+    width: 18px;
+    height: 18px;
+    margin-left: 6px;
+    vertical-align: middle;
+    cursor: help;
+}
+
+.badge-container {
+    display: inline-flex;
+    align-items: center;
+}    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
     transition: color 0.2s;
 }
 

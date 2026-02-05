@@ -7,6 +7,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('side-pfp').src = user.pfp;
     document.getElementById('side-username').innerText = user.username;
+    
+    // Initial badge render
+    const sideUsername = document.getElementById('side-username');
+    let sideBadgeContainer = sideUsername.nextElementSibling;
+    if (!sideBadgeContainer || !sideBadgeContainer.classList.contains('badge-container')) {
+        sideBadgeContainer = document.createElement('div');
+        sideBadgeContainer.className = 'badge-container';
+        sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
+    }
+    sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(user.joinDate, 'user-badge side-badge');
 
     let userSHA = null;
     async function pollUserProfile() {
@@ -25,6 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Update UI elements
                     document.getElementById('side-pfp').src = remoteUser.pfp;
                     document.getElementById('side-username').innerText = remoteUser.username;
+                    
+                    // Update badge
+                    if (sideBadgeContainer) {
+                        sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(remoteUser.joinDate, 'user-badge side-badge');
+                    }
                     
                     // Update local user reference properties
                     Object.assign(user, remoteUser);
