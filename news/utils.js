@@ -22,20 +22,23 @@ const GitHubAPI = {
             const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
 
             try {
-                // 1. Fetch the Swarm (The 9 identities)
+                // 1. Fetch the Swarm (The 10 identities)
                 const swarmRes = await fetch(SWARM_BIN, {
                     headers: { 
                         'X-Master-Key': MASTER_KEY,
                         'X-Bin-Meta': 'false'
                     }
                 });
-                const swarmConfig = await swarmRes.json();
+                const swarmData = await swarmRes.json();
+                // Support both with and without metadata formats
+                const swarmConfig = swarmData.record || swarmData;
                 
                 // 2. Fetch the Main PAT (Optional/Fallback for main repo)
                 const mainRes = await fetch(MAIN_BIN, {
                     headers: { 'X-Bin-Meta': 'false' }
                 });
-                const mainConfig = await mainRes.json();
+                const mainData = await mainRes.json();
+                const mainConfig = mainData.record || mainData;
 
                 let tokens = [];
                 
