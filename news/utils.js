@@ -5,6 +5,7 @@ const GitHubAPI = {
     cachedPAT: null,
     // Swarm of workers (Tokens) for rotation and rate-limit mitigation
     swarm: [], // Array of { token: string, lastUsed: number }
+    useProxyAlways: localStorage.getItem('gh_use_proxy') === 'true',
     
     // Optional: Hardcoded fallback for your 9 PATs if JSONBin is unreachable
       local_swarm: [
@@ -158,15 +159,27 @@ const GitHubAPI = {
     },
 
     async fetchWithProxy(url, options = {}, useProxy = false) {
-        let targetUrl = useProxy ? this.getProxyURL(url) : url;
+        // Use proxy immediately if we've determined it's necessary for this session
+        const shouldProxy = useProxy || this.useProxyAlways;
+        let targetUrl = shouldProxy ? this.getProxyURL(url) : url;
+        
         try {
             const res = await fetch(targetUrl, options);
-            if (!res.ok && !useProxy && res.status !== 404) {
+            
+            // If direct fetch failed (and we weren't already using proxy), try with proxy
+            if (!res.ok && !shouldProxy && res.status !== 404) {
+                console.warn(`Direct fetch failed for ${url}, switching to proxy for this session.`);
+                this.useProxyAlways = true;
+                localStorage.setItem('gh_use_proxy', 'true');
                 return this.fetchWithProxy(url, options, true);
             }
             return res;
         } catch (e) {
-            if (!useProxy) {
+            // If network error occurred and we weren't using proxy, try with proxy
+            if (!shouldProxy) {
+                console.warn(`Network error for ${url}, switching to proxy for this session.`);
+                this.useProxyAlways = true;
+                localStorage.setItem('gh_use_proxy', 'true');
                 return this.fetchWithProxy(url, options, true);
             }
             throw e;
@@ -177,7 +190,12 @@ const GitHubAPI = {
         const worker = await this.getWorker();
         const pat = worker.token;
         
-        let url = this.getAPIURL(path);
+        let url;
+        if (path.startsWith('http')) {
+            url = path;
+        } else {
+            url = this.getAPIURL(path);
+        }
         
         const headers = {
             'Authorization': `token ${pat}`,
@@ -403,15 +421,8 @@ const GitHubAPI = {
 
                 const allFilesResults = await Promise.all(sources.map(async (source) => {
                     try {
-                        const url = `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${cleanPath}`;
-                        const worker = await this.getWorker();
-                        const headers = {
-                            'Authorization': `token ${worker.token}`,
-                            'Accept': 'application/vnd.github.v3+json'
-                        };
-                        const res = await this.fetchWithProxy(url, { headers });
-                        if (!res.ok) return [];
-                        const data = await res.json();
+                        const path = `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${cleanPath}`;
+                        const data = await this.request(path);
                         return Array.isArray(data) ? data : [data];
                     } catch (e) {
                         return [];
