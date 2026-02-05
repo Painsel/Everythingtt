@@ -1033,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="profile-card-username-row">
                             <span class="profile-card-username">${author.username}</span>
                             ${author.statusMsg ? `<div class="profile-card-status-bubble">${author.statusMsg}</div>` : ''}
-                            ${GitHubAPI.isNewUser(author.joinDate) ? `<img src="${GitHubAPI.getBadgePath('new_badge.png')}" class="user-badge" title="New User">` : ''}
+                            ${GitHubAPI.renderNewUserBadge(author.joinDate)}
                         </div>
                         <span class="profile-card-id">#${author.id}</span>
                     </div>
@@ -1226,6 +1226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="comment-author-info">
                                 <div class="comment-author-row">
                                     <span class="comment-author-name" onclick="window.showAuthorProfile('${c.authorId}')">${c.authorName}</span>
+                                    ${GitHubAPI.renderNewUserBadge(c.authorJoinDate, 'user-badge comment-badge')}
                                     <div class="comment-status-bubble" data-user-id="${c.authorId}" style="display: none;"></div>
                                 </div>
                                 <span class="comment-timestamp">${new Date(c.timestamp).toLocaleString()}</span>
@@ -1493,6 +1494,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             authorId: user.id,
             authorName: user.username,
             authorPfp: user.pfp,
+            authorJoinDate: user.joinDate,
             text: text,
             timestamp: new Date().toISOString(),
             replyToId: currentReplyToId,

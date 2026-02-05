@@ -38,14 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Badges
         const badgeContainer = document.getElementById('badge-container');
         if (badgeContainer) {
-            badgeContainer.innerHTML = '';
-            if (GitHubAPI.isNewUser(user.joinDate)) {
-                const badge = document.createElement('img');
-                badge.src = GitHubAPI.getBadgePath('new_badge.png');
-                badge.className = 'user-badge';
-                badge.title = 'New User';
-                badgeContainer.appendChild(badge);
-            }
+            badgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(user.joinDate);
         }
 
         // Form

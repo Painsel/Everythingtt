@@ -585,6 +585,15 @@ const GitHubAPI = {
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(now.getMonth() - 1);
         return join > oneMonthAgo;
+    },
+
+    /**
+     * Helper to render the New User badge HTML if applicable.
+     */
+    renderNewUserBadge(joinDate, className = 'user-badge') {
+        if (!this.isNewUser(joinDate)) return '';
+        const badgePath = this.getBadgePath('new_badge.png');
+        return `<img src="${badgePath}" class="${className}" title="New User - This account was created less than a month ago" alt="New User Badge">`;
     }
 };
 
