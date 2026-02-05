@@ -213,16 +213,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        // Sort by date (filename/ID usually correlates with date in this app)
+        // Show much more recent articles to remove visibility limits
         const sortedFiles = files
             .filter(f => f.name.endsWith('.json'))
             .sort((a, b) => b.name.localeCompare(a.name))
-            .slice(0, 5); // Show last 5
+            .slice(0, 50); // Increased from 5 to 50
 
         recentList.innerHTML = '';
         let count = 0;
         for (const file of sortedFiles) {
-            if (count >= 5) break;
+            if (count >= 50) break; // Increased from 5 to 50
             
             // Use getFileRaw for speed since we don't need a SHA for listing
             const content = await GitHubAPI.getFileRaw(file.path);

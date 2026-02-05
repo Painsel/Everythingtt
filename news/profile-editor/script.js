@@ -116,8 +116,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Export as JPEG with 80% quality
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    // Export as JPEG with 90% quality
+                    resolve(canvas.toDataURL('image/jpeg', 0.9));
                 };
                 img.onerror = reject;
                 img.src = e.target.result;
@@ -152,11 +152,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const bannerFile = uploadBanner.files[0];
 
             if (pfpFile) {
-                pfp = await optimizeImage(pfpFile, 256, 256);
+                pfp = await optimizeImage(pfpFile, 512, 512);
             }
 
             if (bannerFile) {
-                banner = await optimizeImage(bannerFile, 1200, 400);
+                banner = await optimizeImage(bannerFile, 1920, 640);
             }
 
             btnSave.innerText = 'Saving Profile...';
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const file = e.target.files[0];
         if (file) {
             try {
-                const optimized = await optimizeImage(file, 256, 256);
+                const optimized = await optimizeImage(file, 512, 512);
                 document.getElementById('profile-pfp').src = optimized;
             } catch (err) {
                 console.error('PFP preview failed:', err);
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const file = e.target.files[0];
         if (file) {
             try {
-                const optimized = await optimizeImage(file, 1200, 400);
+                const optimized = await optimizeImage(file, 1920, 640);
                 document.getElementById('profile-banner').style.background = `url(${optimized})`;
                 document.getElementById('profile-banner').style.backgroundSize = 'cover';
             } catch (err) {

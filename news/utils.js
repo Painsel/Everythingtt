@@ -109,7 +109,7 @@ const GitHubAPI = {
         return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
     },
 
-    async request(path, method = 'GET', body = null, retries = 3) {
+    async request(path, method = 'GET', body = null, retries = 10) { // Increased retries from 3 to 10
         const worker = await this.getWorker();
         const pat = worker.token;
         
@@ -140,8 +140,8 @@ const GitHubAPI = {
 
             if (response.status === 409 && retries > 0) {
                 console.warn(`Conflict (409) detected for ${path}. Retrying... (${retries} attempts left)`);
-                // Wait for a random jittered interval before retrying
-                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                // Use a smaller jitter for faster retries in a sharded environment
+                await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 500));
                 
                 // If it's a PUT request, we need a fresh SHA
                 if (method === 'PUT') {

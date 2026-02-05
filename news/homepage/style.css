@@ -326,6 +326,27 @@
     border: 1px solid #40444b;
 }
 
+.mini-list {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* Custom scrollbar for mini-list */
+.mini-list::-webkit-scrollbar {
+    width: 6px;
+}
+.mini-list::-webkit-scrollbar-track {
+    background: #2f3136;
+}
+.mini-list::-webkit-scrollbar-thumb {
+    background: #4f545c;
+    border-radius: 10px;
+}
+.mini-list::-webkit-scrollbar-thumb:hover {
+    background: #5865f2;
+}
+
 .mini-article {
     display: flex;
     justify-content: space-between;

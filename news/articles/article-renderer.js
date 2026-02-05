@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             remoteNotifications.unshift(newNotif); // Newest first
-            if (remoteNotifications.length > 200) remoteNotifications = remoteNotifications.slice(0, 200); // Limit to 200
+            if (remoteNotifications.length > 1000) remoteNotifications = remoteNotifications.slice(0, 1000); // Limit to 1000
 
             await GitHubAPI.updateFile(
                 `news/notifications-storage/${targetUserId}.json`,
@@ -486,11 +486,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     editBannerUpload.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
-        if (file.size > 2 * 1024 * 1024) { // 2MB limit
-            alert('Image is too large. Max 2MB.');
-            return;
-        }
 
         const reader = new FileReader();
         reader.onload = (event) => {

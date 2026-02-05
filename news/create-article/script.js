@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentBannerBase64 = '';
 
-    const TITLE_LIMIT = 50;
-    const CONTENT_LIMIT = 3000;
+    const TITLE_LIMIT = 200;
+    const CONTENT_LIMIT = 50000;
 
     // Image optimization helper
     async function optimizeImage(file, maxWidth, maxHeight) {
@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    resolve(canvas.toDataURL('image/jpeg', 0.9)); // Higher quality
                 };
                 img.onerror = reject;
                 img.src = e.target.result;
@@ -99,7 +99,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnPublish.disabled = true;
                 btnPublish.innerText = 'Processing Image...';
                 
-                currentBannerBase64 = await optimizeImage(file, 1200, 600);
+                // Allow larger banners for higher quality
+                currentBannerBase64 = await optimizeImage(file, 1920, 1080);
                 bannerPreview.src = currentBannerBase64;
                 bannerPreviewContainer.classList.remove('hidden');
                 
@@ -120,20 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
         bannerPreview.src = '';
     });
 
-    // A text-format character counts as 2 characters
+    // Removed the "double count" logic for format characters to allow more content
     function calculateCount(text) {
         if (!text) return 0;
-        let count = 0;
-        const formatChars = ['#', '*', '>', '/'];
-        
-        for (let char of text) {
-            if (formatChars.includes(char)) {
-                count += 2;
-            } else {
-                count += 1;
-            }
-        }
-        return count;
+        return text.length;
     }
 
     function updateCounters() {
