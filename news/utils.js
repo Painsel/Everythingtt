@@ -133,16 +133,16 @@ const GitHubAPI = {
             { owner: 'KONAFAAPIER', repo: 'everythingtt-users-shard-2' }
         ],
         'news/article-comments-storage': [
-            { owner: 'Purrofecor', repo: 'everythingtt-comments-shard-3' },
-            { owner: 'Toothpainsel', repo: 'everythingtt-comments-shard-4' }
+            { owner: 'Purrofecor', repo: 'everythingtt-comments-shard-1' },
+            { owner: 'Toothpainsel', repo: 'everythingtt-comments-shard-2' }
         ],
         'news/created-articles-storage': [
-            { owner: 'YUTOP546', repo: 'everythingtt-users-shard-5' },
-            { owner: 'Rahhben20', repo: 'everythingtt-comments-shard-1' }
+            { owner: 'YUTOP546', repo: 'everythingtt-articles-shard-1' },
+            { owner: 'Rahhben20', repo: 'everythingtt-articles-shard-2' }
         ],
         'news/notifications-storage': [
-            { owner: 'Perfecell', repo: 'everythingtt-comments-shard-2' },
-            { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' }
+            { owner: 'Perfecell', repo: 'everythingtt-notifications-shard-1' },
+            { owner: 'Painsel', repo: 'everythingtt-notifications-shard-2' }
         ]
     },
 

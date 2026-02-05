@@ -317,6 +317,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 exploreTitle.classList.remove('hidden');
                 
                 const files = await GitHubAPI.listFiles('news/created-articles-storage');
+                console.log(`Raw files from listFiles:`, files);
                 
                 if (!files || files.length === 0) {
                     articlesList.innerHTML = '<p class="status-msg">No articles found. Be the first to publish!</p>';
@@ -326,26 +327,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 articlesList.innerHTML = ''; // Clear loading message
                 // Sort by timestamp descending
                 const articleFiles = files.filter(f => f.type === 'file' && f.name.endsWith('.json'));
+                console.log(`Filtered article files:`, articleFiles);
                 
                 // Fetch all articles
                 const articles = await Promise.all(articleFiles.map(async (file) => {
+                    console.log(`Fetching article content for: ${file.path}`);
                     const data = await GitHubAPI.getFile(file.path);
-                    if (!data) return null;
+                    if (!data) {
+                        console.warn(`No data returned for article: ${file.path}`);
+                        return null;
+                    }
                     try {
                         const article = JSON.parse(data.content);
                         article.sha = data.sha;
+                        console.log(`Successfully loaded article: ${article.title} (${article.id})`);
                         return article;
-                    } catch (e) { return null; }
+                    } catch (e) { 
+                        console.error(`Failed to parse article JSON for ${file.path}:`, e);
+                        return null; 
+                    }
                 }));
 
-                const validArticles = articles.filter(a => a !== null)
+                const validArticles = articles.filter(a => a !== null);
+                console.log(`Total valid articles: ${validArticles.length}`);
+
+                const filteredArticles = validArticles
                     .filter(a => !a.isPrivate || (user && user.id === a.authorId)) // Filter out private articles unless author
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
-                for (const article of validArticles) {
-                    articleSHAs[article.id] = article.sha;
-                    articleData[article.id] = article;
-                    renderArticleCard(article, false);
+                console.log(`Articles after privacy filtering: ${filteredArticles.length}`);
+                
+                if (filteredArticles.length === 0) {
+                    articlesList.innerHTML = '<p class="status-msg">No visible articles found.</p>';
+                } else {
+                    for (const article of filteredArticles) {
+                        articleSHAs[article.id] = article.sha;
+                        articleData[article.id] = article;
+                        renderArticleCard(article, false);
+                    }
                 }
             }
 
