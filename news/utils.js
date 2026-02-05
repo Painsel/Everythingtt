@@ -303,8 +303,13 @@ const GitHubAPI = {
     async getFile(path) {
         try {
             // First attempt to get the file from its designated shard/main repo
+            const targetRepo = this.getRepoInfo(path);
             const data = await this.request(`/contents/${path}`);
-            return await this._processFileData(data, path);
+            const processed = await this._processFileData(data, path);
+            if (processed) {
+                processed.origin = targetRepo; // Mark where it was found
+            }
+            return processed;
         } catch (e) {
             // If the file is not found in the designated shard, check the main repo as a fallback
             if (e.status === 404 || e.message.includes('404')) {
@@ -314,9 +319,12 @@ const GitHubAPI = {
                     try {
                         console.log(`File ${path} not found in shard ${owner}/${repo}, falling back to main repo...`);
                         const mainUrl = `https://api.github.com/repos/Painsel/Everythingtt/contents/${path}`;
-                        // FIX: Pass the full URL to request() instead of replacing it, which caused infinite routing loops
                         const data = await this.request(mainUrl);
-                        return await this._processFileData(data, path);
+                        const processed = await this._processFileData(data, path);
+                        if (processed) {
+                            processed.origin = { owner: 'Painsel', repo: 'Everythingtt' };
+                        }
+                        return processed;
                     } catch (innerE) {
                         console.error(`Fallback failed for ${path}:`, innerE);
                         return null;
@@ -408,7 +416,20 @@ const GitHubAPI = {
                 return { skipped: true, message: "No changes detected" };
             }
 
-            return await this.updateFile(path, newContent, message, data ? data.sha : null);
+            // Determine if the SHA is valid for the target repository
+            const targetRepo = this.getRepoInfo(path);
+            let sha = null;
+            
+            if (data) {
+                // Only use the SHA if the file was found in the same repo we are about to write to
+                if (data.origin && data.origin.owner === targetRepo.owner && data.origin.repo === targetRepo.repo) {
+                    sha = data.sha;
+                } else {
+                    console.log(`Migrating ${path} from ${data.origin.owner}/${data.origin.repo} to ${targetRepo.owner}/${targetRepo.repo} (ignoring old SHA)`);
+                }
+            }
+
+            return await this.updateFile(path, newContent, message, sha);
         });
     },
 
