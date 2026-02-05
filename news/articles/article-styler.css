@@ -1000,14 +1000,17 @@
 }
 
 .user-badge {
-    width: 16px;
-    height: 16px;
+    width: 14px !important;
+    height: 14px !important;
     object-fit: contain;
     cursor: help;
     flex-shrink: 0;
+    margin-left: 6px;
+    vertical-align: middle;
 }
 
 .comment-badge {
+    /* Inherits 14px from .user-badge style if applied elsewhere, but explicitly defined here */
     width: 14px;
     height: 14px;
     margin-left: 4px;

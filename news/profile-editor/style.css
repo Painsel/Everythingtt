@@ -67,8 +67,8 @@
 }
 
 .user-badge {
-    width: 16px;
-    height: 16px;
+    width: 14px !important;
+    height: 14px !important;
     object-fit: contain;
     flex-shrink: 0;
 }

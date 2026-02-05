@@ -598,7 +598,8 @@ window.GitHubAPI = {
     renderNewUserBadge(joinDate, className = 'user-badge') {
         if (!this.isNewUser(joinDate)) return '';
         const badgePath = this.getBadgePath('new_badge.png');
-        return `<img src="${badgePath}" class="${className}" title="New User - This account was created less than a month ago" alt="New User Badge">`;
+        // We use inline styles for width/height as a safety fallback against large source images
+        return `<img src="${badgePath}" class="${className}" style="width: 14px; height: 14px; object-fit: contain; vertical-align: middle;" title="New User - This account was created less than a month ago" alt="New User Badge">`;
     }
 };
 

@@ -78,15 +78,14 @@
 
 /* User Badge Styles */
 .user-badge {
-    width: 16px;
-    height: 16px;
+    width: 14px !important;
+    height: 14px !important;
     object-fit: contain;
     flex-shrink: 0;
 }
 
 .side-badge {
-    width: 14px;
-    height: 14px;
+    /* Inherits 14px from .user-badge */
 }
 
 .badge-container {
