@@ -1145,6 +1145,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data) {
                 commentsSHA = data.sha;
                 const comments = JSON.parse(data.content);
+                // Cache comments for editing
+                localStorage.setItem(`comments_${articleId}`, data.content);
                 renderComments(comments);
             } else {
                 commentsSHA = null;
@@ -1237,6 +1239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="comment-body">
                             ${formatCommentText(c.text)}
+                            ${c.edited ? `<span class="comment-edited-tag" title="Last edited: ${new Date(c.lastEdited).toLocaleString()}">(edited)</span>` : ''}
                             ${c.attachment ? `
                                 <div class="comment-attachment">
                                     <img src="${c.attachment}" alt="Attachment" onclick="window.open('${c.attachment}', '_blank')">
@@ -1260,6 +1263,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             ` : ''}
                             ${(isArticleAuthor || isCommentOwner) ? `
                                 <span class="action-link delete-comment-btn" onclick="handleDeleteComment('${c.id}')">Delete</span>
+                            ` : ''}
+                            ${isCommentOwner ? `
+                                <span class="action-link edit-comment-btn" onclick="setupEditComment('${c.id}')">Edit</span>
                             ` : ''}
                         </div>
                     </div>
@@ -1383,6 +1389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (res.content) {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+                localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
             }
         } catch (e) {
@@ -1424,6 +1431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (res.content) {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+                localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 const pinnedComment = finalComments.find(c => c.id === commentId);
                 
                 if (pinnedComment && pinnedComment.pinned) {
@@ -1439,6 +1447,111 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             alert('Failed to pin comment: ' + e.message);
         }
+    };
+
+    let currentEditingCommentId = null;
+
+    window.setupEditComment = function(commentId) {
+        const commentEl = document.getElementById(`comment-${commentId}`);
+        if (!commentEl) return;
+
+        const bodyEl = commentEl.querySelector('.comment-body');
+        if (!bodyEl) return;
+
+        // If already editing this one, do nothing
+        if (currentEditingCommentId === commentId) return;
+        
+        // If editing another one, cancel it first? 
+        // For simplicity, just allow multiple or handle one at a time.
+        // Let's do one at a time.
+        if (currentEditingCommentId) {
+            const prevEdit = document.getElementById(`comment-${currentEditingCommentId}`);
+            if (prevEdit) {
+                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                renderComments(cachedComments); // Re-render all to reset
+            }
+        }
+
+        currentEditingCommentId = commentId;
+
+        // Find the comment data from the passed comments array if possible, or localStorage
+        let comment = null;
+        if (typeof comments !== 'undefined' && Array.isArray(comments)) {
+            comment = comments.find(c => c.id === commentId);
+        }
+        
+        if (!comment) {
+            const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+            comment = cachedComments.find(c => c.id === commentId);
+        }
+
+        if (!comment) return;
+
+        const originalText = comment.text;
+        
+        bodyEl.innerHTML = `
+            <div class="edit-comment-container">
+                <textarea class="edit-comment-input">${originalText}</textarea>
+                <div class="edit-comment-actions">
+                    <button class="save-edit-btn">Save</button>
+                    <button class="cancel-edit-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        const textarea = bodyEl.querySelector('.edit-comment-input');
+        const saveBtn = bodyEl.querySelector('.save-edit-btn');
+        const cancelBtn = bodyEl.querySelector('.cancel-edit-btn');
+
+        textarea.focus();
+
+        cancelBtn.onclick = () => {
+            currentEditingCommentId = null;
+            const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+            renderComments(cachedComments);
+        };
+
+        saveBtn.onclick = async () => {
+            const newText = textarea.value.trim();
+            if (!newText && !comment.attachment) return alert('Comment cannot be empty');
+            if (newText === originalText) {
+                currentEditingCommentId = null;
+                renderComments(articleComments);
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerText = 'Saving...';
+
+            try {
+                const res = await GitHubAPI.safeUpdateFile(
+                    `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                    (content) => {
+                        if (!content) return "";
+                        let comments = JSON.parse(content);
+                        const c = comments.find(x => x.id === commentId);
+                        if (c) {
+                            c.text = newText;
+                            c.edited = true;
+                            c.lastEdited = new Date().toISOString();
+                        }
+                        return JSON.stringify(comments);
+                    },
+                    `Edit comment ${commentId}`
+                );
+
+                currentEditingCommentId = null;
+                if (res.content) {
+                    const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+                    localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
+                    renderComments(finalComments);
+                }
+            } catch (e) {
+                alert('Failed to save edit: ' + e.message);
+                saveBtn.disabled = false;
+                saveBtn.innerText = 'Save';
+            }
+        };
     };
 
     window.handleCommentVote = async function(commentId, type) {
@@ -1482,6 +1595,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (res.content) {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+                localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
             }
         } catch (e) {
