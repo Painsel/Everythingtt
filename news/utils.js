@@ -273,8 +273,31 @@ const GitHubAPI = {
 
     async getFile(path) {
         try {
+            // First attempt to get the file from its designated shard/main repo
             const data = await this.request(`/contents/${path}`);
-            
+            return await this._processFileData(data, path);
+        } catch (e) {
+            // If the file is not found in the designated shard, check the main repo as a fallback
+            if (e.status === 404 || e.message.includes('404')) {
+                const { owner, repo } = this.getRepoInfo(path);
+                // Only check main if we didn't just check it
+                if (owner !== 'Painsel' || repo !== 'Everythingtt') {
+                    try {
+                        const mainUrl = `https://api.github.com/repos/Painsel/Everythingtt/contents/${path}`;
+                        const data = await this.request(mainUrl.replace('https://api.github.com/repos/Painsel/Everythingtt', ''));
+                        return await this._processFileData(data, path);
+                    } catch (innerE) {
+                        return null;
+                    }
+                }
+                return null;
+            }
+            throw e;
+        }
+    },
+
+    async _processFileData(data, path) {
+        try {
             let content;
             // If file is > 1MB, GitHub doesn't include 'content'. We must fetch from download_url.
             if (!data.content && data.download_url) {
@@ -290,30 +313,38 @@ const GitHubAPI = {
 
             // Safety check for empty or invalid content
             if (!content || content.trim() === "") {
-                    if (!path.endsWith('.gitkeep')) {
-                        console.warn(`File at ${path} returned empty content.`);
-                    }
-                    return null;
+                if (!path.endsWith('.gitkeep')) {
+                    console.warn(`File at ${path} returned empty content.`);
                 }
+                return null;
+            }
 
             return {
                 content,
                 sha: data.sha
             };
         } catch (e) {
-            if (e.message.includes('Not Found') || e.message.includes('404')) return null;
-            throw e;
+            console.error(`Error processing file data for ${path}:`, e);
+            return null;
         }
     },
 
     // High-speed raw fetch for read-only operations (no SHA returned)
     async getFileRaw(path) {
         try {
+            // Check designated shard first
             const url = this.getRawURL(path);
             const res = await this.fetchWithProxy(`${url}?t=${Date.now()}`);
-            if (!res.ok) return null;
-            const content = await res.text();
-            return content;
+            if (res.ok) return await res.text();
+
+            // If not found, fallback to main repo
+            const { owner, repo } = this.getRepoInfo(path);
+            if (owner !== 'Painsel' || repo !== 'Everythingtt') {
+                const mainUrl = `https://raw.githubusercontent.com/Painsel/Everythingtt/main/${path}?t=${Date.now()}`;
+                const mainRes = await this.fetchWithProxy(mainUrl);
+                if (mainRes.ok) return await mainRes.text();
+            }
+            return null;
         } catch (e) {
             return null;
         }
@@ -362,11 +393,17 @@ const GitHubAPI = {
         }
 
         if (shards) {
-            // Aggregate files from all shards
+            // Aggregate files from all shards PLUS the main repo
             try {
-                const allFilesResults = await Promise.all(shards.map(async (shard) => {
+                // Add the main repo to the list of sources to check
+                const sources = [
+                    ...shards,
+                    { owner: 'Painsel', repo: 'Everythingtt' }
+                ];
+
+                const allFilesResults = await Promise.all(sources.map(async (source) => {
                     try {
-                        const url = `https://api.github.com/repos/${shard.owner}/${shard.repo}/contents/${cleanPath}`;
+                        const url = `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${cleanPath}`;
                         const worker = await this.getWorker();
                         const headers = {
                             'Authorization': `token ${worker.token}`,
