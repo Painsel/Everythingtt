@@ -5,21 +5,18 @@ const GitHubAPI = {
     cachedPAT: null,
     // Swarm of workers (Tokens) for rotation and rate-limit mitigation
     swarm: [], // Array of { token: string, lastUsed: number }
-    useProxyAlways: localStorage.getItem('gh_use_proxy') === 'true',
     
     // Optional: Hardcoded fallback for your 9 PATs if JSONBin is unreachable
-      local_swarm: [
-          // "github_pat_...",
-          // Add your 9 PATs here locally. GitHub will block them if you try to push them.
-      ],
+    local_swarm: [],
 
     // Fetches the swarm configuration from an external JSON file
     async getPAT() {
         if (this.swarm.length > 0) return this.swarm[0].token;
 
         const MASTER_KEY = '$2a$10$Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
-        const SWARM_BIN = 'https://corsproxy.io/?' + encodeURIComponent('https://api.jsonbin.io/v3/b/6984fc19d0ea881f40a3b259');
-        const MAIN_BIN = 'https://corsproxy.io/?' + encodeURIComponent('https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988');
+        // Removed proxy from JSONBin URLs
+        const SWARM_BIN = 'https://api.jsonbin.io/v3/b/69850998ae596e708f1434df';
+        const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
 
         try {
             // 1. Fetch the Swarm (The 9 identities)
@@ -75,6 +72,44 @@ const GitHubAPI = {
         }
     },
 
+    /**
+     * Helper to create a new PUBLIC JSONBin.io Bin for the swarm.
+     * Usage: GitHubAPI.createSwarmBin(['token1', 'token2'], 'OptionalMasterKey')
+     */
+    async createSwarmBin(tokens, masterKey = null) {
+        const url = 'https://api.jsonbin.io/v3/b';
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Bin-Private': 'false'
+        };
+        if (masterKey) headers['X-Master-Key'] = masterKey;
+
+        const body = JSON.stringify({
+            github_swarm: tokens
+        });
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: body
+            });
+            const data = await res.json();
+            if (res.ok) {
+                console.log('Successfully created new JSONBin Swarm Bin!');
+                console.log('Bin ID:', data.metadata.id);
+                console.log('URL:', `https://api.jsonbin.io/v3/b/${data.metadata.id}`);
+                return data.metadata.id;
+            } else {
+                console.error('Failed to create bin:', data);
+                throw new Error(data.message || 'Failed to create bin');
+            }
+        } catch (e) {
+            console.error('Error creating JSONBin:', e);
+            throw e;
+        }
+    },
+
     // Get the next worker using rotation (longest idle)
     async getWorker() {
         if (this.swarm.length === 0) await this.getPAT();
@@ -106,8 +141,7 @@ const GitHubAPI = {
         ],
         'news/notifications-storage': [
             { owner: 'Perfecell', repo: 'everythingtt-comments-shard-2' },
-            { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' },
-            { owner: 'COURTESYCOIL', repo: 'everythingtt-shard-9' }
+            { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' }
         ]
     },
 
@@ -120,11 +154,11 @@ const GitHubAPI = {
             if (cleanPath.startsWith(prefix)) {
                 // Check if this prefix has multiple shards (Horizontal Partitioning)
                 if (Array.isArray(info)) {
-                    // Try to extract an ID from the path (e.g., news/storage/12345.json)
-                    const idMatch = cleanPath.match(/\/(\d+)\.json$/);
+                    // Try to extract an ID from the path (e.g., news/storage/12345.json or news/storage/user_abc.json)
+                    const idMatch = cleanPath.match(/\/([^\/]+)\.json$/);
                     if (idMatch) {
                         const idStr = idMatch[1];
-                        // Use a simple hash-like sum for the ID to support any length
+                        // Use a simple hash-like sum for the ID to support any alphanumeric ID
                         let hash = 0;
                         for (let i = 0; i < idStr.length; i++) {
                             hash = (hash << 5) - hash + idStr.charCodeAt(i);
@@ -154,39 +188,7 @@ const GitHubAPI = {
         return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
     },
 
-    getProxyURL(url) {
-        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
-    },
-
-    async fetchWithProxy(url, options = {}, useProxy = false) {
-        // Use proxy immediately if we've determined it's necessary for this session
-        const shouldProxy = useProxy || this.useProxyAlways;
-        let targetUrl = shouldProxy ? this.getProxyURL(url) : url;
-        
-        try {
-            const res = await fetch(targetUrl, options);
-            
-            // If direct fetch failed (and we weren't already using proxy), try with proxy
-            if (!res.ok && !shouldProxy && res.status !== 404) {
-                console.warn(`Direct fetch failed for ${url}, switching to proxy for this session.`);
-                this.useProxyAlways = true;
-                localStorage.setItem('gh_use_proxy', 'true');
-                return this.fetchWithProxy(url, options, true);
-            }
-            return res;
-        } catch (e) {
-            // If network error occurred and we weren't using proxy, try with proxy
-            if (!shouldProxy) {
-                console.warn(`Network error for ${url}, switching to proxy for this session.`);
-                this.useProxyAlways = true;
-                localStorage.setItem('gh_use_proxy', 'true');
-                return this.fetchWithProxy(url, options, true);
-            }
-            throw e;
-        }
-    },
-
-    async request(path, method = 'GET', body = null, retries = 10, useProxy = false) { // Increased retries from 3 to 10
+    async request(path, method = 'GET', body = null, retries = 10) { // Increased retries from 3 to 10
         const worker = await this.getWorker();
         const pat = worker.token;
         
@@ -207,7 +209,7 @@ const GitHubAPI = {
         if (body) options.body = JSON.stringify(body);
 
         try {
-            const response = await this.fetchWithProxy(url, options, useProxy);
+            const response = await fetch(url, options);
             
             // Handle Rate Limiting (403 or 429) by switching workers immediately
             if ((response.status === 403 || response.status === 429) && retries > 0) {
@@ -216,7 +218,7 @@ const GitHubAPI = {
                     console.warn(`Worker ${worker.token.substring(0, 8)}... rate limited. Swapping...`);
                     // Mark this worker as used far in the future to deprioritize it
                     worker.lastUsed = Date.now() + 3600000; // 1 hour penalty
-                    return this.request(path, method, body, retries - 1, useProxy);
+                    return this.request(path, method, body, retries - 1);
                 }
             }
 
@@ -231,10 +233,10 @@ const GitHubAPI = {
                     if (freshData && body) {
                         const newBody = JSON.parse(options.body);
                         newBody.sha = freshData.sha;
-                        return this.request(path, method, newBody, retries - 1, useProxy);
+                        return this.request(path, method, newBody, retries - 1);
                     }
                 }
-                return this.request(path, method, body, retries - 1, useProxy);
+                return this.request(path, method, body, retries - 1);
             }
 
             if (!response.ok) {
@@ -262,7 +264,7 @@ const GitHubAPI = {
 
             if (retries > 0) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                return this.request(path, method, body, retries - 1, useProxy);
+                return this.request(path, method, body, retries - 1);
             }
             throw e;
         }
@@ -352,14 +354,14 @@ const GitHubAPI = {
         try {
             // Check designated shard first
             const url = this.getRawURL(path);
-            const res = await this.fetchWithProxy(`${url}?t=${Date.now()}`);
+            const res = await fetch(`${url}?t=${Date.now()}`);
             if (res.ok) return await res.text();
 
             // If not found, fallback to main repo
             const { owner, repo } = this.getRepoInfo(path);
             if (owner !== 'Painsel' || repo !== 'Everythingtt') {
                 const mainUrl = `https://raw.githubusercontent.com/Painsel/Everythingtt/main/${path}?t=${Date.now()}`;
-                const mainRes = await this.fetchWithProxy(mainUrl);
+                const mainRes = await fetch(mainUrl);
                 if (mainRes.ok) return await mainRes.text();
             }
             return null;
@@ -462,3 +464,6 @@ const GitHubAPI = {
         return Math.floor(Math.random() * 900000000000000) + 100000000000000;
     }
 };
+
+// Expose to window for console access
+window.GitHubAPI = GitHubAPI;
