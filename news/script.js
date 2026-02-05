@@ -90,6 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     foundUser.joinDate = new Date().toISOString();
                     needsUpdate = true;
                 }
+                
+                // Ensure contributions is a number
+                if (foundUser.contributions === undefined) {
+                    foundUser.contributions = 0;
+                    needsUpdate = true;
+                }
 
                 // Recalculate contributions
                 const articles = await GitHubAPI.listFiles('news/created-articles-storage');
