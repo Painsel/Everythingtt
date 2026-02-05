@@ -67,9 +67,10 @@
 }
 
 .user-badge {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     object-fit: contain;
+    flex-shrink: 0;
 }
 
 .status-bubble {

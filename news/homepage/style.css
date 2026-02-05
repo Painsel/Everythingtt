@@ -76,6 +76,25 @@
     font-size: 1.1rem;
 }
 
+/* User Badge Styles */
+.user-badge {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.side-badge {
+    width: 14px;
+    height: 14px;
+}
+
+.badge-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 .header-right {
     display: flex;
     align-items: center;

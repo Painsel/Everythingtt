@@ -1000,15 +1000,16 @@
 }
 
 .user-badge {
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     object-fit: contain;
     cursor: help;
+    flex-shrink: 0;
 }
 
 .comment-badge {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     margin-left: 4px;
     vertical-align: middle;
 }
