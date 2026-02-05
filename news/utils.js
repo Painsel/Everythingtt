@@ -149,6 +149,9 @@ window.GitHubAPI = {
         return worker;
     },
 
+    // Track shards that have failed write operations to avoid repeated failures
+    failedShards: new Set(),
+
     // Data Sharding Configuration
     shards: {
         'news/created-news-accounts-storage': [
@@ -197,10 +200,25 @@ window.GitHubAPI = {
                             hash |= 0; // Convert to 32bit integer
                         }
                         const shardIndex = Math.abs(hash) % info.length;
-                        return info[shardIndex];
+                        const shard = info[shardIndex];
+                        
+                        // If this shard has failed before, don't use it for writing
+                        if (this.failedShards.has(`${shard.owner}/${shard.repo}`)) {
+                            return { owner: 'Painsel', repo: 'Everythingtt' };
+                        }
+                        
+                        return shard;
                     }
                     // Fallback to first shard if no ID found (e.g., listFiles)
-                    return info[0];
+                    const firstShard = info[0];
+                    if (this.failedShards.has(`${firstShard.owner}/${firstShard.repo}`)) {
+                        return { owner: 'Painsel', repo: 'Everythingtt' };
+                    }
+                    return firstShard;
+                }
+                
+                if (this.failedShards.has(`${info.owner}/${info.repo}`)) {
+                    return { owner: 'Painsel', repo: 'Everythingtt' };
                 }
                 return info;
             }
@@ -246,7 +264,9 @@ window.GitHubAPI = {
             // Handle Rate Limiting (403 or 429) by switching workers immediately
             if ((response.status === 403 || response.status === 429) && retries > 0) {
                 const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
-                if (rateLimitRemaining === '0' || response.status === 429) {
+                const isRateLimit = rateLimitRemaining === '0' || response.status === 429;
+                
+                if (isRateLimit) {
                     console.warn(`Worker ${worker.token.substring(0, 8)}... rate limited. Swapping...`);
                     // Mark this worker as used far in the future to deprioritize it
                     worker.lastUsed = Date.now() + 3600000; // 1 hour penalty
@@ -289,8 +309,15 @@ window.GitHubAPI = {
             }
             return response.json();
         } catch (e) {
-            // Don't retry on 404
-            if (e.status === 404 || e.message.includes('404') || e.message.includes('Not Found')) {
+            // Don't retry on 404 or permanent errors (401, 403, 422)
+            const isPermanentError = e.status === 404 || 
+                                    e.status === 401 || 
+                                    e.status === 403 || 
+                                    e.status === 422 ||
+                                    e.message.includes('404') || 
+                                    e.message.includes('Not Found');
+
+            if (isPermanentError) {
                 throw e;
             }
 
@@ -334,13 +361,28 @@ window.GitHubAPI = {
             }
             return processed;
         } catch (e) {
-            // If the file is not found in the designated shard, check the main repo as a fallback
-            if (e.status === 404 || e.message.includes('404')) {
-                const { owner, repo } = this.getRepoInfo(path);
+            // If the file is not found or inaccessible in the designated shard, check the main repo as a fallback
+            const targetRepo = this.getRepoInfo(path);
+            
+            // Fallback conditions:
+            // 1. 404 Not Found
+            // 2. 403 Forbidden (could be private shard or permission issue)
+            // 3. 401 Unauthorized
+            const shouldFallback = e.status === 404 || e.status === 403 || e.status === 401 || 
+                                  e.message.includes('404') || e.message.includes('Not Found');
+
+            if (shouldFallback) {
+                const { owner, repo } = targetRepo;
                 // Only check main if we didn't just check it
                 if (owner !== 'Painsel' || repo !== 'Everythingtt') {
                     try {
-                        console.log(`File ${path} not found in shard ${owner}/${repo}, falling back to main repo...`);
+                        console.log(`File ${path} not found or inaccessible in shard ${owner}/${repo}, falling back to main repo...`);
+                        
+                        // If it was a 403 or 401, mark the shard as failed for future operations
+                        if (e.status === 403 || e.status === 401) {
+                            this.failedShards.add(`${owner}/${repo}`);
+                        }
+
                         const mainUrl = `https://api.github.com/repos/Painsel/Everythingtt/contents/${path}`;
                         const data = await this.request(mainUrl);
                         const processed = await this._processFileData(data, path);
@@ -436,6 +478,12 @@ window.GitHubAPI = {
             if ((e.status === 404 || e.status === 403 || isLegacyStorage) && 
                 (targetRepo.owner !== 'Painsel' || targetRepo.repo !== 'Everythingtt')) {
                 
+                // Mark this shard as failed so we don't try it again for a while
+                if (e.status !== 404) {
+                    console.warn(`Marking shard ${targetRepo.owner}/${targetRepo.repo} as failed due to error: ${e.message}`);
+                    this.failedShards.add(`${targetRepo.owner}/${targetRepo.repo}`);
+                }
+                
                 console.warn(`Shard ${targetRepo.owner}/${targetRepo.repo} write failed or legacy storage detected, falling back to main repo for ${path}...`);
                 
                 // Try writing to the main repository instead
@@ -525,6 +573,11 @@ window.GitHubAPI = {
                 console.log(`Listing files for ${cleanPath} from sources:`, sources.map(s => `${s.owner}/${s.repo}`));
 
                 const allFilesResults = await Promise.all(sources.map(async (source) => {
+                    // Skip shards that have failed before
+                    if (this.failedShards.has(`${source.owner}/${source.repo}`)) {
+                        return [];
+                    }
+
                     try {
                         const apiUrl = `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${cleanPath}`;
                         const data = await this.request(apiUrl);
@@ -533,6 +586,12 @@ window.GitHubAPI = {
                         return files;
                     } catch (e) {
                         console.warn(`Failed to list files in ${source.owner}/${source.repo}:`, e.message);
+                        
+                        // If it's a permission error, mark the shard as failed
+                        if (e.status === 403 || e.status === 401) {
+                            this.failedShards.add(`${source.owner}/${source.repo}`);
+                        }
+                        
                         return [];
                     }
                 }));
