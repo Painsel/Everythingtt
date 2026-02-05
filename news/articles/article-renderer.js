@@ -1065,6 +1065,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             profileModal.classList.remove('hidden');
         } catch (e) {
             console.error('Error loading profile:', e);
+            console.log('GitHubAPI state:', GitHubAPI);
+            console.log('GitHubAPI.renderNewUserBadge:', GitHubAPI.renderNewUserBadge);
             alert('Error loading profile: ' + e.message);
         }
     }

@@ -2,8 +2,10 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 const GitHubAPI = {
+    version: '1.1.0',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
+        console.log(`GitHubAPI v${this.version} initialized`);
         window.GitHubAPI = this;
     },
     cachedPAT: null,
