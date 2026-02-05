@@ -1604,7 +1604,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (e) {
             console.error('Comment submission failed:', e);
-            alert('Failed to post comment. Your text has been restored.');
+            let alertMsg = 'Failed to post comment. Your text has been restored.';
+            if (e.status === 403 || e.status === 429) {
+                alertMsg = 'You are being rate limited by GitHub. Please wait a moment before trying again.';
+            } else if (e.status === 409) {
+                alertMsg = 'Conflict detected. Someone else might be commenting. Retrying...';
+            }
+            alert(alertMsg);
             commentInput.value = savedText;
             // Re-setup attachment if it existed
             if (savedAttachment) {

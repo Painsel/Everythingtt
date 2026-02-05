@@ -256,8 +256,8 @@ window.GitHubAPI = {
 
             if (response.status === 409 && retries > 0) {
                 console.warn(`Conflict (409) detected for ${path}. Retrying... (${retries} attempts left)`);
-                // Use a smaller jitter for faster retries in a sharded environment
-                await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 500));
+                // Increase backoff for conflicts
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
                 
                 // If it's a PUT request, we need a fresh SHA
                 if (method === 'PUT') {
