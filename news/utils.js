@@ -295,7 +295,7 @@ window.GitHubAPI = {
                     console.log(`Fetching fresh SHA for 409 retry of ${relativePath}...`);
                     const freshData = await this.getFile(relativePath);
                     if (freshData && body) {
-                        const newBody = JSON.parse(options.body);
+                        const newBody = body; // Already parsed or object
                         newBody.sha = freshData.sha;
                         return this.request(path, method, newBody, retries - 1);
                     }
@@ -519,6 +519,9 @@ window.GitHubAPI = {
                     console.log(`Successfully fell back to main repo for ${path}`);
                     return res;
                 } catch (mainError) {
+                    // Log the fallback failure details
+                    console.error(`Main repo fallback failed for ${path}:`, mainError);
+                    
                     // If it's a legacy storage path, we already tried fallback. If that failed, 
                     // and we originally caught a non-404/403 error, throw the original error.
                     if (!isLegacyStorage && e.status !== 404 && e.status !== 403) throw e;
