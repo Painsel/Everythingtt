@@ -3,7 +3,14 @@
  */
 const GitHubAPI = {
     cachedPAT: null,
+    // Swarm of workers (Tokens) for rotation and rate-limit mitigation
     swarm: [], // Array of { token: string, lastUsed: number }
+    
+    // Optional: Hardcoded fallback for your 9 PATs if JSONBin is unreachable
+      local_swarm: [
+          // "github_pat_...",
+          // Add your 9 PATs here locally. GitHub will block them if you try to push them.
+      ],
 
     // Fetches the swarm configuration from an external JSON file
     async getPAT() {
@@ -30,6 +37,14 @@ const GitHubAPI = {
             return localStorage.getItem('gh_pat');
         } catch (e) {
             console.error('Failed to load external swarm:', e);
+            
+            // Try local_swarm fallback
+            if (this.local_swarm && this.local_swarm.length > 0) {
+                console.log(`Using ${this.local_swarm.length} local workers from fallback...`);
+                this.swarm = this.local_swarm.map(t => ({ token: t, lastUsed: 0 }));
+                return this.swarm[0].token;
+            }
+
             const local = localStorage.getItem('gh_pat');
             if (local) this.swarm = [{ token: local, lastUsed: 0 }];
             return local;
@@ -61,10 +76,7 @@ const GitHubAPI = {
             { owner: 'Rahhben20', repo: 'everythingtt-comments-shard-1' },
             { owner: 'Perfecell', repo: 'everythingtt-comments-shard-2' },
             { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' },
-            { owner: 'CommentsShard4', repo: 'everythingtt-comments-shard-4' },
-            { owner: 'CommentsShard5', repo: 'everythingtt-comments-shard-5' },
-            { owner: 'CommentsShard6', repo: 'everythingtt-comments-shard-6' },
-            { owner: 'CommentsShard7', repo: 'everythingtt-comments-shard-7' }
+            { owner: 'CommentsShard4', repo: 'everythingtt-comments-shard-4' }
         ],
         'news/created-articles-storage': { owner: 'Painsel', repo: 'everythingtt-articles-db' },
         'news/notifications-storage': { owner: 'Painsel', repo: 'everythingtt-notifications-db' }
