@@ -47,8 +47,9 @@ const GitHubAPI = {
             }
 
             // Remove duplicates and initialize swarm
-            const uniqueTokens = [...new Set(tokens)];
-            this.swarm = uniqueTokens.map(t => ({ token: t, lastUsed: 0 }));
+        const uniqueTokens = [...new Set(tokens)];
+        console.log(`Loaded ${uniqueTokens.length} unique tokens for swarm.`);
+        this.swarm = uniqueTokens.map(t => ({ token: t, lastUsed: 0 }));
 
             if (this.swarm.length > 0) {
                 this.cachedPAT = this.swarm[0].token;
@@ -421,12 +422,17 @@ const GitHubAPI = {
                     { owner: 'Painsel', repo: 'Everythingtt' }
                 ];
 
+                console.log(`Listing files for ${cleanPath} from sources:`, sources.map(s => `${s.owner}/${s.repo}`));
+
                 const allFilesResults = await Promise.all(sources.map(async (source) => {
                     try {
-                        const path = `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${cleanPath}`;
-                        const data = await this.request(path);
-                        return Array.isArray(data) ? data : [data];
+                        const apiUrl = `https://api.github.com/repos/${source.owner}/${source.repo}/contents/${cleanPath}`;
+                        const data = await this.request(apiUrl);
+                        const files = Array.isArray(data) ? data : [data];
+                        console.log(`Found ${files.length} files in ${source.owner}/${source.repo}`);
+                        return files;
                     } catch (e) {
+                        console.warn(`Failed to list files in ${source.owner}/${source.repo}:`, e.message);
                         return [];
                     }
                 }));
