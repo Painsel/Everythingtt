@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update sidebar and header
     const updateUIWithStatus = (u) => {
-        const statusIcon = (u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png'));
-        const iconPath = `../../User Status Icons/${statusIcon}`;
+        const statusIconName = (u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png'));
+        const iconPath = GitHubAPI.getStatusIconPath(statusIconName);
 
         document.getElementById('side-pfp').src = u.pfp;
         document.getElementById('side-username').innerText = u.username;

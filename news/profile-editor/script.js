@@ -58,9 +58,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // For preview, we show the manual status or Online if auto
-        let iconUrl = '../../User Status Icons/Online.png';
-            if (type === 'dnd') iconUrl = '../../User Status Icons/DoNotDisturb.png';
+        let iconName = 'Online.png';
+        if (type === 'dnd') iconName = 'DoNotDisturb.png';
         
+        const iconUrl = GitHubAPI.getStatusIconPath(iconName);
         icon.style.backgroundImage = `url('${iconUrl}')`;
     }
 

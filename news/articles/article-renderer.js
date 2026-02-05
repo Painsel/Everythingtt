@@ -125,16 +125,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const type = statusInfo.statusType;
         const status = statusInfo.status;
         
-        let icon = 'Offline.png';
+        let iconName = 'Offline.png';
         if (type === 'dnd') {
-            icon = 'DoNotDisturb.png';
+            iconName = 'DoNotDisturb.png';
         } else if (status === 'online') {
-            icon = 'Online.png';
+            iconName = 'Online.png';
         } else if (status === 'idle') {
-            icon = 'Idle.png';
+            iconName = 'Idle.png';
         }
         
-        return `../../User Status Icons/${icon}`;
+        return GitHubAPI.getStatusIconPath(iconName);
     }
 
     async function pollNotifications() {

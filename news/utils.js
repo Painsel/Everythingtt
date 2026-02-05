@@ -84,6 +84,13 @@ const GitHubAPI = {
         return this._loadingSwarm;
     },
 
+    getStatusIconPath(iconName) {
+        // Always point to the main repository's User Status Icons folder
+        // This ensures shards and different subfolders all use the same source
+        const baseUrl = window.location.origin + window.location.pathname.split('/news/')[0];
+        return `${baseUrl}/User Status Icons/${iconName}`;
+    },
+
     /**
      * Helper to create a new PUBLIC JSONBin.io Bin for the swarm.
      * Usage: GitHubAPI.createSwarmBin(['token1', 'token2'], 'OptionalMasterKey')
