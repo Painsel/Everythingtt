@@ -90,7 +90,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userSHA = data.sha;
                 const remoteUser = JSON.parse(data.content);
                 remoteUser.sha = data.sha; // Preserve SHA for exit tracking
-                
+
+                // Fix legacy accounts with missing joinDate
+                if (!remoteUser.joinDate) {
+                    console.log('Legacy account detected, syncing joinDate...');
+                    remoteUser.joinDate = "2025-01-01T00:00:00.000Z";
+                    GitHubAPI.safeUpdateFile(
+                        `news/created-news-accounts-storage/${remoteUser.id}.json`,
+                        JSON.stringify(remoteUser),
+                        `Sync joinDate for legacy user ${remoteUser.username}`
+                    ).then(res => {
+                        if (res) {
+                            remoteUser.sha = res.content.sha;
+                            localStorage.setItem('current_user', JSON.stringify(remoteUser));
+                        }
+                    }).catch(e => console.warn('Failed to sync joinDate:', e));
+                }
+
                 // Update localStorage and UI
                 localStorage.setItem('current_user', JSON.stringify(remoteUser));
                 

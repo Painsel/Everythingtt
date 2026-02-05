@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnLogin.innerText = 'Syncing Profile...';
                 let needsUpdate = false;
                 
+                // Fix legacy accounts with missing joinDate
+                if (!foundUser.joinDate) {
+                    foundUser.joinDate = "2025-01-01T00:00:00.000Z";
+                    needsUpdate = true;
+                }
+
                 // Ensure contributions is a number
                 if (foundUser.contributions === undefined) {
                     foundUser.contributions = 0;
