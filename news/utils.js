@@ -408,23 +408,33 @@ const GitHubAPI = {
         };
         if (sha) body.sha = sha;
 
+        const targetRepo = this.getRepoInfo(path);
+        
         try {
             return await this.request(`/contents/${path}`, 'PUT', body);
         } catch (e) {
-            // If the write fails with 404, it might be because the file exists in the main repo 
-            // but we are trying to write to a shard for the first time.
-            // In this case, we should try to fetch the SHA from the main repo and retry.
-            if (e.status === 404 && !sha) {
-                const { owner, repo } = this.getRepoInfo(path);
-                if (owner !== 'Painsel' || repo !== 'Everythingtt') {
-                    console.log(`File ${path} not found for update in shard, checking main repo for migration...`);
-                    const mainData = await this.getFile(path); // This handles main repo fallback
-                    if (mainData) {
-                        console.log(`Migrating ${path} from main repo to shard...`);
-                        // We don't pass the SHA because it's a new file in the shard
-                        return await this.request(`/contents/${path}`, 'PUT', body);
+            // If the write fails with 404 or 403, it might be because the shard is inaccessible
+            // or we are trying to migrate a file from the main repo but the shard repo itself is missing.
+            if ((e.status === 404 || e.status === 403) && (targetRepo.owner !== 'Painsel' || targetRepo.repo !== 'Everythingtt')) {
+                console.warn(`Shard ${targetRepo.owner}/${targetRepo.repo} write failed (${e.status}), falling back to main repo for ${path}...`);
+                
+                // Try writing to the main repository instead
+                const mainRepoUrl = `https://api.github.com/repos/Painsel/Everythingtt/contents/${path}`;
+                
+                // Always check the main repository for the current SHA if falling back,
+                // as the SHA from the shard (if any) will not be valid for the main repo.
+                try {
+                    const mainData = await this.request(mainRepoUrl);
+                    if (mainData && mainData.sha) {
+                        body.sha = mainData.sha;
+                        console.log(`Using main repo SHA for fallback write: ${body.sha}`);
                     }
+                } catch (readError) {
+                    // File likely doesn't exist in main repo either, which is fine for a new file
+                    delete body.sha;
                 }
+                
+                return await this.request(mainRepoUrl, 'PUT', body);
             }
             throw e;
         }
