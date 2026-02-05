@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const updateStats = (u) => {
         const contributions = u.contributions || 0;
         const joinDate = u.joinDate || u.createdAt;
-        const formattedDate = joinDate ? new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently';
+        const formattedDate = joinDate ? new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Early Member';
         
         document.getElementById('home-contributions').innerText = contributions;
         document.getElementById('home-join-date').innerText = formattedDate;
@@ -91,23 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const remoteUser = JSON.parse(data.content);
                 remoteUser.sha = data.sha; // Preserve SHA for exit tracking
 
-                // Fix legacy accounts with missing joinDate
-                if (!remoteUser.joinDate) {
-                    console.log('Legacy account detected, syncing joinDate...');
-                    remoteUser.joinDate = "2025-01-01T00:00:00.000Z";
-                    GitHubAPI.safeUpdateFile(
-                        `news/created-news-accounts-storage/${remoteUser.id}.json`,
-                        JSON.stringify(remoteUser),
-                        `Sync joinDate for legacy user ${remoteUser.username}`
-                    ).then(res => {
-                        if (res) {
-                            remoteUser.sha = res.content.sha;
-                            localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                        }
-                    }).catch(e => console.warn('Failed to sync joinDate:', e));
-                }
-
-                // Update localStorage and UI
+                // Update localStorage and UI if changed
                 localStorage.setItem('current_user', JSON.stringify(remoteUser));
                 
                 // Update local user reference

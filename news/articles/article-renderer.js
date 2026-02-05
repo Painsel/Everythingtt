@@ -268,22 +268,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userSHA = data.sha;
                 const remoteUser = JSON.parse(data.content);
                 
-                // Fix legacy accounts with missing joinDate
-                if (!remoteUser.joinDate) {
-                    console.log('Legacy account detected, syncing joinDate...');
-                    remoteUser.joinDate = "2025-01-01T00:00:00.000Z";
-                    GitHubAPI.safeUpdateFile(
-                        `news/created-news-accounts-storage/${remoteUser.id}.json`,
-                        JSON.stringify(remoteUser),
-                        `Sync joinDate for legacy user ${remoteUser.username}`
-                    ).then(res => {
-                        if (res) {
-                            remoteUser.sha = res.content.sha;
-                            localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                        }
-                    }).catch(e => console.warn('Failed to sync joinDate:', e));
-                }
-
                 // Update localStorage and UI if changed
                 const localUser = JSON.parse(localStorage.getItem('current_user'));
                 if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {
@@ -1029,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             const joinDateStr = author.joinDate || author.createdAt;
-            const joinDate = joinDateStr ? new Date(joinDateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Unknown';
+            const joinDate = joinDateStr ? new Date(joinDateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Early Member';
 
             // Get status info
             const statusIconPath = getStatusIcon({

@@ -86,12 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnLogin.innerText = 'Syncing Profile...';
                 let needsUpdate = false;
                 
-                // Fix legacy accounts with missing joinDate
-                if (!foundUser.joinDate) {
-                    foundUser.joinDate = "2025-01-01T00:00:00.000Z";
-                    needsUpdate = true;
-                }
-
                 // Ensure contributions is a number
                 if (foundUser.contributions === undefined) {
                     foundUser.contributions = 0;
@@ -202,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(user.joinDate);
 
         // Stats
-        const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently';
+        const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Early Member';
         document.getElementById('profile-contributions-display').innerText = `📚 ${user.contributions || 0} Articles`;
         document.getElementById('profile-join-display').innerText = `🗓️ Joined ${joinDate}`;
 
