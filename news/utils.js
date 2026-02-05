@@ -407,7 +407,27 @@ const GitHubAPI = {
             content: btoa(unescape(encodeURIComponent(content)))
         };
         if (sha) body.sha = sha;
-        return this.request(`/contents/${path}`, 'PUT', body);
+
+        try {
+            return await this.request(`/contents/${path}`, 'PUT', body);
+        } catch (e) {
+            // If the write fails with 404, it might be because the file exists in the main repo 
+            // but we are trying to write to a shard for the first time.
+            // In this case, we should try to fetch the SHA from the main repo and retry.
+            if (e.status === 404 && !sha) {
+                const { owner, repo } = this.getRepoInfo(path);
+                if (owner !== 'Painsel' || repo !== 'Everythingtt') {
+                    console.log(`File ${path} not found for update in shard, checking main repo for migration...`);
+                    const mainData = await this.getFile(path); // This handles main repo fallback
+                    if (mainData) {
+                        console.log(`Migrating ${path} from main repo to shard...`);
+                        // We don't pass the SHA because it's a new file in the shard
+                        return await this.request(`/contents/${path}`, 'PUT', body);
+                    }
+                }
+            }
+            throw e;
+        }
     },
 
     /**

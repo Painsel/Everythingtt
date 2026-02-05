@@ -172,11 +172,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 statusType
             };
 
-            const res = await GitHubAPI.updateFile(
+            const res = await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentUser.id}.json`,
-                JSON.stringify(updatedUser),
-                `Update profile: ${username}`,
-                userSha
+                async () => JSON.stringify(updatedUser),
+                `Update profile: ${username}`
             );
 
             userSha = res.content.sha;
