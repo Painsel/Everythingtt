@@ -281,7 +281,19 @@ window.GitHubAPI = {
                 
                 // If it's a PUT request, we need a fresh SHA
                 if (method === 'PUT') {
-                    const freshData = await this.getFile(path.replace('/contents/', ''));
+                    // Extract relative path correctly even if 'path' is a full URL
+                    let relativePath = path;
+                    if (path.startsWith('http')) {
+                        const parts = path.split('/contents/');
+                        if (parts.length > 1) {
+                            relativePath = parts[1];
+                        }
+                    } else {
+                        relativePath = path.replace(/^\/contents\//, '').replace(/^contents\//, '');
+                    }
+
+                    console.log(`Fetching fresh SHA for 409 retry of ${relativePath}...`);
+                    const freshData = await this.getFile(relativePath);
                     if (freshData && body) {
                         const newBody = JSON.parse(options.body);
                         newBody.sha = freshData.sha;
@@ -503,7 +515,9 @@ window.GitHubAPI = {
                 }
                 
                 try {
-                    return await this.request(mainRepoUrl, 'PUT', body);
+                    const res = await this.request(mainRepoUrl, 'PUT', body);
+                    console.log(`Successfully fell back to main repo for ${path}`);
+                    return res;
                 } catch (mainError) {
                     // If it's a legacy storage path, we already tried fallback. If that failed, 
                     // and we originally caught a non-404/403 error, throw the original error.
@@ -532,15 +546,22 @@ window.GitHubAPI = {
             }
 
             // Determine if the SHA is valid for the target repository
-            const targetRepo = this.getRepoInfo(path);
-            let sha = null;
+            let targetRepo = this.getRepoInfo(path);
             
+            // If the current data came from a shard that is NOT our target, or vice-versa,
+            // we are migrating. However, if our target is a shard but it's failed, 
+            // getRepoInfo will have already returned the main repo.
+            
+            let sha = null;
             if (data) {
-                // Only use the SHA if the file was found in the same repo we are about to write to
+                // If the data was found in a repo, and that repo matches our targetRepo, use its SHA
                 if (data.origin && data.origin.owner === targetRepo.owner && data.origin.repo === targetRepo.repo) {
                     sha = data.sha;
                 } else {
-                    console.log(`Migrating ${path} from ${data.origin.owner}/${data.origin.repo} to ${targetRepo.owner}/${targetRepo.repo} (ignoring old SHA)`);
+                    // Only log migration if the target is NOT the main repo (i.e. we are actually trying to shard it)
+                    if (targetRepo.owner !== 'Painsel' || targetRepo.repo !== 'Everythingtt') {
+                        console.log(`Migrating ${path} from ${data.origin ? data.origin.owner + '/' + data.origin.repo : 'unknown'} to ${targetRepo.owner}/${targetRepo.repo} (ignoring old SHA)`);
+                    }
                 }
             }
 
