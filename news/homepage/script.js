@@ -12,6 +12,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('side-pfp').src = u.pfp;
         document.getElementById('side-username').innerText = u.username;
+        
+        // Add badges to sidebar username row
+        const sideUsername = document.getElementById('side-username');
+        let sideBadgeContainer = sideUsername.nextElementSibling;
+        if (!sideBadgeContainer || !sideBadgeContainer.classList.contains('badge-container')) {
+            sideBadgeContainer = document.createElement('div');
+            sideBadgeContainer.className = 'badge-container';
+            sideBadgeContainer.style.display = 'inline-flex';
+            sideBadgeContainer.style.marginLeft = '4px';
+            sideBadgeContainer.style.verticalAlign = 'middle';
+            sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
+        }
+        sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge');
+
         document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
         
         const sideBubble = document.getElementById('side-status-bubble');
@@ -24,6 +38,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('header-pfp').src = u.pfp;
         document.getElementById('header-username').innerText = u.username;
+        
+        // Add badges to header username row
+        const headerUsername = document.getElementById('header-username');
+        let badgeContainer = headerUsername.nextElementSibling;
+        if (!badgeContainer || !badgeContainer.classList.contains('badge-container')) {
+            badgeContainer = document.createElement('div');
+            badgeContainer.className = 'badge-container';
+            badgeContainer.style.display = 'inline-flex';
+            badgeContainer.style.marginLeft = '8px';
+            badgeContainer.style.verticalAlign = 'middle';
+            headerUsername.parentNode.insertBefore(badgeContainer, headerUsername.nextSibling);
+        }
+        badgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(u.joinDate);
+
         document.getElementById('header-id').innerText = `@${u.id || u.username.toLowerCase().replace(/\s+/g, '')}`;
         document.getElementById('header-status-icon').style.backgroundImage = `url('${iconPath}')`;
 

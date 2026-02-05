@@ -1,12 +1,11 @@
 /**
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
-const GitHubAPI = {
-    version: '1.1.0',
+window.GitHubAPI = {
+    version: '1.1.1',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized`);
-        window.GitHubAPI = this;
     },
     cachedPAT: null,
     // Swarm of workers (Tokens) for rotation and rate-limit mitigation
@@ -603,7 +602,11 @@ const GitHubAPI = {
     }
 };
 
-GitHubAPI._init();
+// Use a self-executing check to ensure it's on window
+if (!window.GitHubAPI._initialized) {
+    window.GitHubAPI._initialized = true;
+    window.GitHubAPI._init();
+}
 
-// Expose to window for console access (legacy support)
-window.GitHubAPI = GitHubAPI;
+// Support the local constant for other scripts that might expect it in this file
+const GitHubAPI = window.GitHubAPI;

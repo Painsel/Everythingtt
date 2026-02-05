@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userStatusCache[userId] = {
                     status: userData.status || 'offline',
                     statusType: userData.statusType || 'auto',
-                    statusMsg: userData.statusMsg || ''
+                    statusMsg: userData.statusMsg || '',
+                    joinDate: userData.joinDate || null
                 };
                 return userStatusCache[userId];
             }
@@ -1226,7 +1227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <div class="comment-status-icon" data-user-id="${c.authorId}"></div>
                             </div>
                             <div class="comment-author-info">
-                                <div class="comment-author-row">
+                                <div class="comment-author-row" data-user-id="${c.authorId}">
                                     <span class="comment-author-name" onclick="window.showAuthorProfile('${c.authorId}')">${c.authorName}</span>
                                     ${GitHubAPI.renderNewUserBadge(c.authorJoinDate, 'user-badge comment-badge')}
                                     <div class="comment-status-bubble" data-user-id="${c.authorId}" style="display: none;"></div>
@@ -1301,6 +1302,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     el.style.display = 'none';
                 }
             });
+
+            // Update badges (for legacy comments that don't have authorJoinDate)
+            if (statusInfo.joinDate) {
+                document.querySelectorAll(`.comment-author-row[data-user-id="${authorId}"]`).forEach(row => {
+                    // Only add if not already present or if we want to ensure it's up to date
+                    const existingBadge = row.querySelector('.user-badge');
+                    if (!existingBadge) {
+                        const badgeHtml = GitHubAPI.renderNewUserBadge(statusInfo.joinDate, 'user-badge comment-badge');
+                        if (badgeHtml) {
+                            const nameEl = row.querySelector('.comment-author-name');
+                            if (nameEl) {
+                                nameEl.insertAdjacentHTML('afterend', badgeHtml);
+                            }
+                        }
+                    }
+                });
+            }
         }
     }
 
