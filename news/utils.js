@@ -60,7 +60,8 @@ const GitHubAPI = {
         'news/article-comments-storage': [
             { owner: 'Rahhben20', repo: 'everythingtt-comments-shard-1' },
             { owner: 'Perfecell', repo: 'everythingtt-comments-shard-2' },
-            { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' }
+            { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' },
+            { owner: 'CommentsShard4', repo: 'everythingtt-comments-shard-4' }
         ],
         'news/created-articles-storage': { owner: 'Painsel', repo: 'everythingtt-articles-db' },
         'news/notifications-storage': { owner: 'Painsel', repo: 'everythingtt-notifications-db' }
