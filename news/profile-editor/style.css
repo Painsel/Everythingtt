@@ -60,6 +60,18 @@
     flex-wrap: wrap;
 }
 
+.badge-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-badge {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
 .status-bubble {
     background: #40444b;
     color: #dcddde;

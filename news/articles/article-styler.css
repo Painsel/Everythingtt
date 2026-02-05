@@ -999,6 +999,13 @@
     flex-wrap: wrap;
 }
 
+.user-badge {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    cursor: help;
+}
+
 .profile-card-status-bubble {
     background: #40444b;
     color: #dcddde;

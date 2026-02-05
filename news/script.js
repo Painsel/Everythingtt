@@ -181,6 +181,23 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-id-display').innerText = `ID: ${user.id}`;
         document.getElementById('profile-bio-display').innerText = user.bio;
         
+        // Badges
+        const existingBadge = document.getElementById('new-user-badge');
+        if (existingBadge) existingBadge.remove();
+        
+        if (GitHubAPI.isNewUser(user.joinDate)) {
+            const badge = document.createElement('img');
+            badge.id = 'new-user-badge';
+            badge.src = GitHubAPI.getBadgePath('new_badge.png');
+            badge.className = 'user-badge';
+            badge.title = 'New User';
+            badge.style.width = '20px';
+            badge.style.height = '20px';
+            badge.style.marginLeft = '8px';
+            badge.style.verticalAlign = 'middle';
+            document.getElementById('profile-username-display').appendChild(badge);
+        }
+
         // Stats
         const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently';
         document.getElementById('profile-contributions-display').innerText = `📚 ${user.contributions || 0} Articles`;

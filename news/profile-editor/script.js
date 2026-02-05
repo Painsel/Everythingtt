@@ -35,6 +35,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('profile-id-display').innerText = `ID: ${user.id}`;
         document.getElementById('profile-bio-display').innerText = user.bio;
 
+        // Badges
+        const badgeContainer = document.getElementById('badge-container');
+        if (badgeContainer) {
+            badgeContainer.innerHTML = '';
+            if (GitHubAPI.isNewUser(user.joinDate)) {
+                const badge = document.createElement('img');
+                badge.src = GitHubAPI.getBadgePath('new_badge.png');
+                badge.className = 'user-badge';
+                badge.title = 'New User';
+                badgeContainer.appendChild(badge);
+            }
+        }
+
         // Form
         document.getElementById('edit-username').value = user.username;
         document.getElementById('edit-bio').value = user.bio;

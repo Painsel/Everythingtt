@@ -1033,6 +1033,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="profile-card-username-row">
                             <span class="profile-card-username">${author.username}</span>
                             ${author.statusMsg ? `<div class="profile-card-status-bubble">${author.statusMsg}</div>` : ''}
+                            ${GitHubAPI.isNewUser(author.joinDate) ? `<img src="${GitHubAPI.getBadgePath('new_badge.png')}" class="user-badge" title="New User">` : ''}
                         </div>
                         <span class="profile-card-id">#${author.id}</span>
                     </div>

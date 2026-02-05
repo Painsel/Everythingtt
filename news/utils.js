@@ -563,6 +563,28 @@ const GitHubAPI = {
 
     generateID() {
         return Math.floor(Math.random() * 900000000000000) + 100000000000000;
+    },
+
+    /**
+     * Helper to get the absolute path to a badge icon.
+     */
+    getBadgePath(badgeName) {
+        const baseUrl = window.location.origin + window.location.pathname.split('/news/')[0];
+        return `${baseUrl}/badges/${badgeName}`;
+    },
+
+    /**
+     * Checks if a user is "new" (account created within the last month).
+     * @param {string|Date} joinDate 
+     * @returns {boolean}
+     */
+    isNewUser(joinDate) {
+        if (!joinDate) return false;
+        const join = new Date(joinDate);
+        const now = new Date();
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(now.getMonth() - 1);
+        return join > oneMonthAgo;
     }
 };
 
