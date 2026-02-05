@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             remoteNotifications.unshift(newNotif); // Newest first
-            if (remoteNotifications.length > 1000) remoteNotifications = remoteNotifications.slice(0, 1000); // Limit to 1000
+            if (remoteNotifications.length > 5000) remoteNotifications = remoteNotifications.slice(0, 5000); // Limit to 5000
 
             await GitHubAPI.updateFile(
                 `news/notifications-storage/${targetUserId}.json`,

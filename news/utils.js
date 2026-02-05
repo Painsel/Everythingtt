@@ -16,18 +16,41 @@ const GitHubAPI = {
     async getPAT() {
         if (this.swarm.length > 0) return this.swarm[0].token;
         
+        const MASTER_KEY = 'Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
+        const SWARM_BIN = 'https://api.jsonbin.io/v3/b/6984fc19d0ea881f40a3b259';
+        const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
+
         try {
-            const response = await fetch('https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988', {
+            // 1. Fetch the Swarm (The 9 identities)
+            const swarmRes = await fetch(SWARM_BIN, {
+                headers: { 
+                    'X-Master-Key': MASTER_KEY,
+                    'X-Bin-Meta': 'false'
+                }
+            });
+            const swarmConfig = await swarmRes.json();
+            
+            // 2. Fetch the Main PAT (Optional/Fallback for main repo)
+            const mainRes = await fetch(MAIN_BIN, {
                 headers: { 'X-Bin-Meta': 'false' }
             });
-            const config = await response.json();
+            const mainConfig = await mainRes.json();
+
+            let tokens = [];
             
-            // Handle both single token and array of tokens (swarm)
-            if (Array.isArray(config.github_swarm)) {
-                this.swarm = config.github_swarm.map(t => ({ token: t, lastUsed: 0 }));
-            } else if (config.github_pat) {
-                this.swarm = [{ token: config.github_pat, lastUsed: 0 }];
+            // Merge tokens from both sources
+            if (Array.isArray(swarmConfig.github_swarm)) {
+                tokens = tokens.concat(swarmConfig.github_swarm);
             }
+            if (mainConfig.github_pat) {
+                tokens.push(mainConfig.github_pat);
+            } else if (Array.isArray(mainConfig.github_swarm)) {
+                tokens = tokens.concat(mainConfig.github_swarm);
+            }
+
+            // Remove duplicates and initialize swarm
+            const uniqueTokens = [...new Set(tokens)];
+            this.swarm = uniqueTokens.map(t => ({ token: t, lastUsed: 0 }));
 
             if (this.swarm.length > 0) {
                 this.cachedPAT = this.swarm[0].token;
@@ -67,19 +90,21 @@ const GitHubAPI = {
     shards: {
         'news/created-news-accounts-storage': [
             { owner: 'GTYSS', repo: 'everythingtt-users-shard-1' },
-            { owner: 'KONAFAAPIER', repo: 'everythingtt-users-shard-2' },
-            { owner: 'Purrofecor', repo: 'everythingtt-users-shard-3' },
-            { owner: 'Toothpainsel', repo: 'everythingtt-users-shard-4' },
-            { owner: 'YUTOP546', repo: 'everythingtt-users-shard-5' }
+            { owner: 'KONAFAAPIER', repo: 'everythingtt-users-shard-2' }
         ],
         'news/article-comments-storage': [
-            { owner: 'Rahhben20', repo: 'everythingtt-comments-shard-1' },
+            { owner: 'Purrofecor', repo: 'everythingtt-comments-shard-3' },
+            { owner: 'Toothpainsel', repo: 'everythingtt-comments-shard-4' }
+        ],
+        'news/created-articles-storage': [
+            { owner: 'YUTOP546', repo: 'everythingtt-users-shard-5' },
+            { owner: 'Rahhben20', repo: 'everythingtt-comments-shard-1' }
+        ],
+        'news/notifications-storage': [
             { owner: 'Perfecell', repo: 'everythingtt-comments-shard-2' },
             { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' },
-            { owner: 'CommentsShard4', repo: 'everythingtt-comments-shard-4' }
-        ],
-        'news/created-articles-storage': { owner: 'Painsel', repo: 'everythingtt-articles-db' },
-        'news/notifications-storage': { owner: 'Painsel', repo: 'everythingtt-notifications-db' }
+            { owner: 'COURTESYCOIL', repo: 'everythingtt-shard-9' }
+        ]
     },
 
     getRepoInfo(path) {
