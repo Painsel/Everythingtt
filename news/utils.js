@@ -5,6 +5,7 @@ const GitHubAPI = {
     cachedPAT: null,
     // Swarm of workers (Tokens) for rotation and rate-limit mitigation
     swarm: [], // Array of { token: string, lastUsed: number }
+    _loadingSwarm: null, // Promise lock for concurrent getPAT calls
     
     // Optional: Hardcoded fallback for your 9 PATs if JSONBin is unreachable
     local_swarm: [],
@@ -12,65 +13,72 @@ const GitHubAPI = {
     // Fetches the swarm configuration from an external JSON file
     async getPAT() {
         if (this.swarm.length > 0) return this.swarm[0].token;
+        if (this._loadingSwarm) return this._loadingSwarm;
 
-        const MASTER_KEY = '$2a$10$Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
-        // Removed proxy from JSONBin URLs
-        const SWARM_BIN = 'https://api.jsonbin.io/v3/b/69850998ae596e708f1434df';
-        const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
+        this._loadingSwarm = (async () => {
+            const MASTER_KEY = '$2a$10$Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
+            // Removed proxy from JSONBin URLs
+            const SWARM_BIN = 'https://api.jsonbin.io/v3/b/69850998ae596e708f1434df';
+            const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
 
-        try {
-            // 1. Fetch the Swarm (The 9 identities)
-            const swarmRes = await fetch(SWARM_BIN, {
-                headers: { 
-                    'X-Master-Key': MASTER_KEY,
-                    'X-Bin-Meta': 'false'
+            try {
+                // 1. Fetch the Swarm (The 9 identities)
+                const swarmRes = await fetch(SWARM_BIN, {
+                    headers: { 
+                        'X-Master-Key': MASTER_KEY,
+                        'X-Bin-Meta': 'false'
+                    }
+                });
+                const swarmConfig = await swarmRes.json();
+                
+                // 2. Fetch the Main PAT (Optional/Fallback for main repo)
+                const mainRes = await fetch(MAIN_BIN, {
+                    headers: { 'X-Bin-Meta': 'false' }
+                });
+                const mainConfig = await mainRes.json();
+
+                let tokens = [];
+                
+                // Merge tokens from both sources
+                if (Array.isArray(swarmConfig.github_swarm)) {
+                    tokens = tokens.concat(swarmConfig.github_swarm);
                 }
-            });
-            const swarmConfig = await swarmRes.json();
-            
-            // 2. Fetch the Main PAT (Optional/Fallback for main repo)
-            const mainRes = await fetch(MAIN_BIN, {
-                headers: { 'X-Bin-Meta': 'false' }
-            });
-            const mainConfig = await mainRes.json();
+                if (mainConfig.github_pat) {
+                    tokens.push(mainConfig.github_pat);
+                } else if (Array.isArray(mainConfig.github_swarm)) {
+                    tokens = tokens.concat(mainConfig.github_swarm);
+                }
 
-            let tokens = [];
-            
-            // Merge tokens from both sources
-            if (Array.isArray(swarmConfig.github_swarm)) {
-                tokens = tokens.concat(swarmConfig.github_swarm);
-            }
-            if (mainConfig.github_pat) {
-                tokens.push(mainConfig.github_pat);
-            } else if (Array.isArray(mainConfig.github_swarm)) {
-                tokens = tokens.concat(mainConfig.github_swarm);
-            }
+                // Remove duplicates and initialize swarm
+                const uniqueTokens = [...new Set(tokens)];
+                console.log(`Loaded ${uniqueTokens.length} unique tokens for swarm.`);
+                this.swarm = uniqueTokens.map(t => ({ token: t, lastUsed: 0 }));
 
-            // Remove duplicates and initialize swarm
-        const uniqueTokens = [...new Set(tokens)];
-        console.log(`Loaded ${uniqueTokens.length} unique tokens for swarm.`);
-        this.swarm = uniqueTokens.map(t => ({ token: t, lastUsed: 0 }));
+                if (this.swarm.length > 0) {
+                    this.cachedPAT = this.swarm[0].token;
+                    localStorage.setItem('gh_pat', this.cachedPAT);
+                    return this.cachedPAT;
+                }
+                return localStorage.getItem('gh_pat');
+            } catch (e) {
+                console.error('Failed to load external swarm:', e);
+                
+                // Try local_swarm fallback
+                if (this.local_swarm && this.local_swarm.length > 0) {
+                    console.log(`Using ${this.local_swarm.length} local workers from fallback...`);
+                    this.swarm = this.local_swarm.map(t => ({ token: t, lastUsed: 0 }));
+                    return this.swarm[0].token;
+                }
 
-            if (this.swarm.length > 0) {
-                this.cachedPAT = this.swarm[0].token;
-                localStorage.setItem('gh_pat', this.cachedPAT);
-                return this.cachedPAT;
+                const local = localStorage.getItem('gh_pat');
+                if (local) this.swarm = [{ token: local, lastUsed: 0 }];
+                return local;
+            } finally {
+                this._loadingSwarm = null;
             }
-            return localStorage.getItem('gh_pat');
-        } catch (e) {
-            console.error('Failed to load external swarm:', e);
-            
-            // Try local_swarm fallback
-            if (this.local_swarm && this.local_swarm.length > 0) {
-                console.log(`Using ${this.local_swarm.length} local workers from fallback...`);
-                this.swarm = this.local_swarm.map(t => ({ token: t, lastUsed: 0 }));
-                return this.swarm[0].token;
-            }
+        })();
 
-            const local = localStorage.getItem('gh_pat');
-            if (local) this.swarm = [{ token: local, lastUsed: 0 }];
-            return local;
-        }
+        return this._loadingSwarm;
     },
 
     /**
@@ -304,15 +312,19 @@ const GitHubAPI = {
                 // Only check main if we didn't just check it
                 if (owner !== 'Painsel' || repo !== 'Everythingtt') {
                     try {
+                        console.log(`File ${path} not found in shard ${owner}/${repo}, falling back to main repo...`);
                         const mainUrl = `https://api.github.com/repos/Painsel/Everythingtt/contents/${path}`;
-                        const data = await this.request(mainUrl.replace('https://api.github.com/repos/Painsel/Everythingtt', ''));
+                        // FIX: Pass the full URL to request() instead of replacing it, which caused infinite routing loops
+                        const data = await this.request(mainUrl);
                         return await this._processFileData(data, path);
                     } catch (innerE) {
+                        console.error(`Fallback failed for ${path}:`, innerE);
                         return null;
                     }
                 }
                 return null;
             }
+            console.error(`Error in getFile for ${path}:`, e);
             throw e;
         }
     },
