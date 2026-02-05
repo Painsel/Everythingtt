@@ -94,23 +94,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Update localStorage and UI
                 localStorage.setItem('current_user', JSON.stringify(remoteUser));
                 
-                // --- LEGACY FIX: Sync joinDate if missing ---
-                if (!remoteUser.joinDate) {
-                    console.log('Legacy account detected, syncing joinDate...');
-                    remoteUser.joinDate = new Date().toISOString();
-                    // Silently update in background
-                    GitHubAPI.safeUpdateFile(
-                        `news/created-news-accounts-storage/${remoteUser.id}.json`,
-                        JSON.stringify(remoteUser),
-                        `Sync joinDate for legacy user ${remoteUser.username}`
-                    ).then(res => {
-                        if (res) {
-                            remoteUser.sha = res.content.sha;
-                            localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                        }
-                    }).catch(e => console.warn('Failed to sync joinDate:', e));
-                }
-                
                 // Update local user reference
                 Object.assign(user, remoteUser);
 

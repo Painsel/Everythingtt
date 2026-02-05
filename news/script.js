@@ -86,11 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnLogin.innerText = 'Syncing Profile...';
                 let needsUpdate = false;
                 
-                if (!foundUser.joinDate) {
-                    foundUser.joinDate = new Date().toISOString();
-                    needsUpdate = true;
-                }
-                
                 // Ensure contributions is a number
                 if (foundUser.contributions === undefined) {
                     foundUser.contributions = 0;
