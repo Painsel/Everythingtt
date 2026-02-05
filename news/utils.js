@@ -164,7 +164,15 @@ const GitHubAPI = {
         ]
     },
 
-    getRepoInfo(path) {
+    /**
+     * Get repository info for a path.
+     * @param {string} path - The file path
+     * @param {boolean} forceMain - Whether to ignore shards and return main repo info
+     * @returns {object} - { owner, repo }
+     */
+    getRepoInfo(path, forceMain = false) {
+        if (forceMain) return { owner: 'Painsel', repo: 'Everythingtt' };
+
         // Remove leading slash if present
         const cleanPath = path.startsWith('/') ? path.substring(1) : path;
         
@@ -415,8 +423,15 @@ const GitHubAPI = {
         } catch (e) {
             // If the write fails with 404 or 403, it might be because the shard is inaccessible
             // or we are trying to migrate a file from the main repo but the shard repo itself is missing.
-            if ((e.status === 404 || e.status === 403) && (targetRepo.owner !== 'Painsel' || targetRepo.repo !== 'Everythingtt')) {
-                console.warn(`Shard ${targetRepo.owner}/${targetRepo.repo} write failed (${e.status}), falling back to main repo for ${path}...`);
+            // We ALWAYS attempt to fallback to the main repo for legacy storage folders.
+            const isLegacyStorage = path.includes('created-news-accounts-storage') || 
+                                   path.includes('article-comments-storage') || 
+                                   path.includes('notifications-storage');
+
+            if ((e.status === 404 || e.status === 403 || isLegacyStorage) && 
+                (targetRepo.owner !== 'Painsel' || targetRepo.repo !== 'Everythingtt')) {
+                
+                console.warn(`Shard ${targetRepo.owner}/${targetRepo.repo} write failed or legacy storage detected, falling back to main repo for ${path}...`);
                 
                 // Try writing to the main repository instead
                 const mainRepoUrl = `https://api.github.com/repos/Painsel/Everythingtt/contents/${path}`;
@@ -434,7 +449,14 @@ const GitHubAPI = {
                     delete body.sha;
                 }
                 
-                return await this.request(mainRepoUrl, 'PUT', body);
+                try {
+                    return await this.request(mainRepoUrl, 'PUT', body);
+                } catch (mainError) {
+                    // If it's a legacy storage path, we already tried fallback. If that failed, 
+                    // and we originally caught a non-404/403 error, throw the original error.
+                    if (!isLegacyStorage && e.status !== 404 && e.status !== 403) throw e;
+                    throw mainError;
+                }
             }
             throw e;
         }
