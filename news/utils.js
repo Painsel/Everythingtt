@@ -82,7 +82,10 @@ const GitHubAPI = {
         // Sort by lastUsed ascending to find the most idle worker
         this.swarm.sort((a, b) => a.lastUsed - b.lastUsed);
         const worker = this.swarm[0];
-        worker.lastUsed = Date.now();
+        
+        // Update lastUsed to NOW + a small offset to prevent immediate reuse 
+        // by another concurrent request before this one even starts.
+        worker.lastUsed = Date.now() + 50; 
         return worker;
     },
 
@@ -119,10 +122,14 @@ const GitHubAPI = {
                     // Try to extract an ID from the path (e.g., news/storage/12345.json)
                     const idMatch = cleanPath.match(/\/(\d+)\.json$/);
                     if (idMatch) {
-                        const id = idMatch[1];
-                        // Routing Algorithm: simpleId % totalShards
-                        const simpleId = parseInt(id.toString().slice(-6));
-                        const shardIndex = simpleId % info.length;
+                        const idStr = idMatch[1];
+                        // Use a simple hash-like sum for the ID to support any length
+                        let hash = 0;
+                        for (let i = 0; i < idStr.length; i++) {
+                            hash = (hash << 5) - hash + idStr.charCodeAt(i);
+                            hash |= 0; // Convert to 32bit integer
+                        }
+                        const shardIndex = Math.abs(hash) % info.length;
                         return info[shardIndex];
                     }
                     // Fallback to first shard if no ID found (e.g., listFiles)
@@ -292,6 +299,26 @@ const GitHubAPI = {
         return this.request(`/contents/${path}`, 'PUT', body);
     },
 
+    /**
+     * Atomic-like fetch-modify-write operation to prevent data loss.
+     * @param {string} path - The file path
+     * @param {function} transformFn - Function that takes current content (string) and returns new content (string)
+     * @param {string} message - Commit message
+     */
+    async safeUpdateFile(path, transformFn, message) {
+        return this.queuedWrite(path, async () => {
+            const data = await this.getFile(path);
+            const currentContent = data ? data.content : "";
+            const newContent = await transformFn(currentContent);
+            
+            if (newContent === currentContent && data) {
+                return { skipped: true, message: "No changes detected" };
+            }
+
+            return await this.updateFile(path, newContent, message, data ? data.sha : null);
+        });
+    },
+
     async listFiles(path) {
         // Remove leading slash if present
         const cleanPath = path.startsWith('/') ? path.substring(1) : path;
@@ -324,7 +351,15 @@ const GitHubAPI = {
                         return [];
                     }
                 }));
-                return allFilesResults.flat();
+                const flatFiles = allFilesResults.flat();
+                
+                // Deduplicate by path to prevent issues if shards overlap
+                const seen = new Set();
+                return flatFiles.filter(file => {
+                    const isDuplicate = seen.has(file.path);
+                    seen.add(file.path);
+                    return !isDuplicate;
+                });
             } catch (e) {
                 console.error('Failed to list files across shards:', e);
                 return [];
