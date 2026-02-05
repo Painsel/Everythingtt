@@ -153,11 +153,31 @@ const GitHubAPI = {
         return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
     },
 
-    async request(path, method = 'GET', body = null, retries = 10) { // Increased retries from 3 to 10
+    getProxyURL(url) {
+        return `https://corsproxy.io/?${encodeURIComponent(url)}`;
+    },
+
+    async fetchWithProxy(url, options = {}, useProxy = false) {
+        let targetUrl = useProxy ? this.getProxyURL(url) : url;
+        try {
+            const res = await fetch(targetUrl, options);
+            if (!res.ok && !useProxy && res.status !== 404) {
+                return this.fetchWithProxy(url, options, true);
+            }
+            return res;
+        } catch (e) {
+            if (!useProxy) {
+                return this.fetchWithProxy(url, options, true);
+            }
+            throw e;
+        }
+    },
+
+    async request(path, method = 'GET', body = null, retries = 10, useProxy = false) { // Increased retries from 3 to 10
         const worker = await this.getWorker();
         const pat = worker.token;
         
-        const url = this.getAPIURL(path);
+        let url = this.getAPIURL(path);
         
         const headers = {
             'Authorization': `token ${pat}`,
@@ -169,7 +189,7 @@ const GitHubAPI = {
         if (body) options.body = JSON.stringify(body);
 
         try {
-            const response = await fetch(url, options);
+            const response = await this.fetchWithProxy(url, options, useProxy);
             
             // Handle Rate Limiting (403 or 429) by switching workers immediately
             if ((response.status === 403 || response.status === 429) && retries > 0) {
@@ -178,7 +198,7 @@ const GitHubAPI = {
                     console.warn(`Worker ${worker.token.substring(0, 8)}... rate limited. Swapping...`);
                     // Mark this worker as used far in the future to deprioritize it
                     worker.lastUsed = Date.now() + 3600000; // 1 hour penalty
-                    return this.request(path, method, body, retries - 1);
+                    return this.request(path, method, body, retries - 1, useProxy);
                 }
             }
 
@@ -193,10 +213,10 @@ const GitHubAPI = {
                     if (freshData && body) {
                         const newBody = JSON.parse(options.body);
                         newBody.sha = freshData.sha;
-                        return this.request(path, method, newBody, retries - 1);
+                        return this.request(path, method, newBody, retries - 1, useProxy);
                     }
                 }
-                return this.request(path, method, body, retries - 1);
+                return this.request(path, method, body, retries - 1, useProxy);
             }
 
             if (!response.ok) {
@@ -206,16 +226,25 @@ const GitHubAPI = {
                     errorMessage = errorData.message || errorMessage;
                 } catch (e) {}
                 
+                // Add status to error message to help with catch logic
+                const error = new Error(errorMessage);
+                error.status = response.status;
+                
                 if (response.status !== 404) {
                     console.error('GitHub API Error:', errorMessage);
                 }
-                throw new Error(errorMessage);
+                throw error;
             }
             return response.json();
         } catch (e) {
-            if (retries > 0 && !e.message.includes('404')) {
+            // Don't retry on 404
+            if (e.status === 404 || e.message.includes('404') || e.message.includes('Not Found')) {
+                throw e;
+            }
+
+            if (retries > 0) {
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                return this.request(path, method, body, retries - 1);
+                return this.request(path, method, body, retries - 1, useProxy);
             }
             throw e;
         }
@@ -281,7 +310,7 @@ const GitHubAPI = {
     async getFileRaw(path) {
         try {
             const url = this.getRawURL(path);
-            const res = await fetch(`${url}?t=${Date.now()}`);
+            const res = await this.fetchWithProxy(`${url}?t=${Date.now()}`);
             if (!res.ok) return null;
             const content = await res.text();
             return content;
@@ -343,7 +372,7 @@ const GitHubAPI = {
                             'Authorization': `token ${worker.token}`,
                             'Accept': 'application/vnd.github.v3+json'
                         };
-                        const res = await fetch(url, { headers });
+                        const res = await this.fetchWithProxy(url, { headers });
                         if (!res.ok) return [];
                         const data = await res.json();
                         return Array.isArray(data) ? data : [data];
