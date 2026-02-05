@@ -16,9 +16,9 @@ const GitHubAPI = {
     async getPAT() {
         if (this.swarm.length > 0) return this.swarm[0].token;
 
-        const MASTER_KEY = 'Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
-        const SWARM_BIN = 'https://api.jsonbin.io/v3/b/6984fc19d0ea881f40a3b259';
-        const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
+        const MASTER_KEY = '$2a$10$Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
+        const SWARM_BIN = 'https://corsproxy.io/?' + encodeURIComponent('https://api.jsonbin.io/v3/b/6984fc19d0ea881f40a3b259');
+        const MAIN_BIN = 'https://corsproxy.io/?' + encodeURIComponent('https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988');
 
         try {
             // 1. Fetch the Swarm (The 9 identities)
