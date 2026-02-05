@@ -51,13 +51,16 @@ const GitHubAPI = {
     // Data Sharding Configuration
     shards: {
         'news/created-news-accounts-storage': [
-            { owner: 'Painsel', repo: 'everythingtt-users-alpha' },
-            { owner: 'Painsel', repo: 'everythingtt-users-beta' },
-            { owner: 'Painsel', repo: 'everythingtt-users-gamma' }
+            { owner: 'GTYSS', repo: 'everythingtt-users-shard-1' },
+            { owner: 'KONAFAAPIER', repo: 'everythingtt-users-shard-2' },
+            { owner: 'Purrofecor', repo: 'everythingtt-users-shard-3' },
+            { owner: 'Toothpainsel', repo: 'everythingtt-users-shard-4' },
+            { owner: 'YUTOP546', repo: 'everythingtt-users-shard-5' }
         ],
         'news/article-comments-storage': [
-            { owner: 'Painsel', repo: 'everythingtt-comments-alpha' },
-            { owner: 'Painsel', repo: 'everythingtt-comments-beta' }
+            { owner: 'Rahhben20', repo: 'everythingtt-comments-shard-1' },
+            { owner: 'Perfecell', repo: 'everythingtt-comments-shard-2' },
+            { owner: 'CommentsShard3', repo: 'everythingtt-comments-shard-3' }
         ],
         'news/created-articles-storage': { owner: 'Painsel', repo: 'everythingtt-articles-db' },
         'news/notifications-storage': { owner: 'Painsel', repo: 'everythingtt-notifications-db' }
