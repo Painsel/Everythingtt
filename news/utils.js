@@ -2,6 +2,10 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 const GitHubAPI = {
+    // Initialized at the bottom of the object to ensure all methods are available
+    _init() {
+        window.GitHubAPI = this;
+    },
     cachedPAT: null,
     // Swarm of workers (Tokens) for rotation and rate-limit mitigation
     swarm: [], // Array of { token: string, lastUsed: number }
@@ -597,5 +601,7 @@ const GitHubAPI = {
     }
 };
 
-// Expose to window for console access
+GitHubAPI._init();
+
+// Expose to window for console access (legacy support)
 window.GitHubAPI = GitHubAPI;
