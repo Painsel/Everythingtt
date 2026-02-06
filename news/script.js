@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loginForm = document.getElementById('login-form');
 
+    // Handle security errors from redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'ip_mismatch') {
+        alert('Security Alert: You have been logged out because your IP address changed. This account is restricted to its original IP for security.');
+    }
+
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('login-username').value;
@@ -30,6 +36,13 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             btnLogin.disabled = true;
             btnLogin.innerText = 'Connecting...';
+
+            // Get client IP for security
+            btnLogin.innerText = 'Verifying IP...';
+            const currentIp = await GitHubAPI.getClientIP();
+            if (!currentIp) {
+                throw new Error('Could not verify your IP address. Please check your connection or disable ad-blockers.');
+            }
 
             // Check if user exists
             const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
@@ -53,6 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (user.username === username) {
                         if (user.password === password) {
+                            // Security check: IP Address restriction
+                            if (user.allowedIp && user.allowedIp !== currentIp) {
+                                btnLogin.disabled = false;
+                                btnLogin.innerText = 'Login / Sign Up';
+                                return alert('Security Error: This account is restricted to a different IP address for security reasons.');
+                            }
                             foundUser = user;
                             // We still need the SHA for the actual login sync later, so fetch it now
                             const data = await GitHubAPI.getFile(file.path);
@@ -78,7 +97,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     banner: '#7289da',
                     bio: 'Welcome to my profile!',
                     joinDate: new Date().toISOString(),
-                    contributions: 0
+                    contributions: 0,
+                    allowedIp: currentIp // Lock account to this IP
                 };
                 const res = await GitHubAPI.updateFile(`news/created-news-accounts-storage/${newUser.id}.json`, JSON.stringify(newUser), `Create user ${username}`);
                 userSha = res.content.sha; // Capture SHA for future updates
@@ -88,6 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 btnLogin.innerText = 'Syncing Profile...';
                 let needsUpdate = false;
                 
+                // Migration: Set allowedIp if not present
+                if (!foundUser.allowedIp) {
+                    foundUser.allowedIp = currentIp;
+                    needsUpdate = true;
+                }
+
                 // Ensure contributions is a number
                 if (foundUser.contributions === undefined) {
                     foundUser.contributions = 0;

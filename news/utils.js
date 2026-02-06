@@ -55,6 +55,17 @@ window.GitHubAPI = {
         return this._loadingPAT;
     },
 
+    async getClientIP() {
+        try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            return data.ip;
+        } catch (e) {
+            console.error('Failed to fetch IP:', e);
+            return null;
+        }
+    },
+
     getStatusIconPath(iconName) {
         const baseUrl = window.location.origin + window.location.pathname.split('/news/')[0];
         return `${baseUrl}/User Status Icons/${iconName}`;

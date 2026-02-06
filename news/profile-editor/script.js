@@ -22,6 +22,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let userSha = null;
 
+    // Security check: IP Address restriction
+    async function checkIP() {
+        if (!currentUser) return;
+        try {
+            const currentIp = await GitHubAPI.getClientIP();
+            if (currentIp && currentUser.allowedIp && currentIp !== currentUser.allowedIp) {
+                console.error('IP Mismatch detected. Logging out.');
+                localStorage.removeItem('current_user');
+                window.location.href = '../index.html?error=ip_mismatch';
+            }
+        } catch (e) {
+            console.error('Failed to verify IP during session:', e);
+        }
+    }
+
     // Initialize sidebar and fields
     function updateUI(user) {
         document.getElementById('side-pfp').src = user.pfp;
@@ -72,6 +87,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     updateUI(currentUser);
+    checkIP(); // Initial IP check
+    setInterval(checkIP, 60000); // Check IP every 60s
 
     // Fetch latest SHA for updates
     try {

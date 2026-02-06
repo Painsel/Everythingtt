@@ -80,12 +80,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     let user = JSON.parse(localStorage.getItem('current_user'));
     let userSHA = null;
 
+    // Security check: IP Address restriction
+    async function checkIP() {
+        if (!user) return;
+        try {
+            const currentIp = await GitHubAPI.getClientIP();
+            if (currentIp && user.allowedIp && currentIp !== user.allowedIp) {
+                console.error('IP Mismatch detected. Logging out.');
+                localStorage.removeItem('current_user');
+                window.location.href = '../index.html?error=ip_mismatch';
+            }
+        } catch (e) {
+            console.error('Failed to verify IP during session:', e);
+        }
+    }
+
     if (user) {
         const loggedInDiv = document.getElementById('logged-in-user');
         loggedInDiv.classList.remove('hidden');
         updateSideProfileWithStatus(user);
         pollUserProfile(); // Initial fetch
         pollNotifications(); // Initial notifications fetch
+        checkIP(); // Initial IP check
     }
 
     async function addNotification(targetUserId, type, data) {
@@ -437,6 +453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.pollingInterval = setInterval(pollReactions, 15000);
                 window.profilePollingInterval = setInterval(pollUserProfile, 30000); // Check profile every 30s
                 window.notificationPollingInterval = setInterval(pollNotifications, 20000); // Check notifications every 20s
+                window.ipPollingInterval = setInterval(checkIP, 60000); // Check IP every 60s
             }
         } catch (e) {
             articlesList.innerHTML = `<p>Error loading articles: ${e.message}. Make sure you have set your PAT in the Dashboard.</p>`;

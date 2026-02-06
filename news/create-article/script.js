@@ -19,6 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
     sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(user.joinDate, 'user-badge side-badge');
 
     let userSHA = null;
+
+    // Security check: IP Address restriction
+    async function checkIP() {
+        if (!user) return;
+        try {
+            const currentIp = await GitHubAPI.getClientIP();
+            if (currentIp && user.allowedIp && currentIp !== user.allowedIp) {
+                console.error('IP Mismatch detected. Logging out.');
+                localStorage.removeItem('current_user');
+                window.location.href = '../index.html?error=ip_mismatch';
+            }
+        } catch (e) {
+            console.error('Failed to verify IP during session:', e);
+        }
+    }
+
     async function pollUserProfile() {
         if (!user) return;
         try {
@@ -52,7 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     pollUserProfile(); // Initial check
+    checkIP(); // Initial IP check
     setInterval(pollUserProfile, 30000); // Poll every 30s
+    setInterval(checkIP, 60000); // Poll IP every 60s
 
     const titleInput = document.getElementById('article-title');
     const contentInput = document.getElementById('article-content');

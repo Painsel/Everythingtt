@@ -74,9 +74,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('home-join-date').innerText = formattedDate;
     };
 
+    // Security check: IP Address restriction
+    async function checkIP() {
+        if (!user) return;
+        try {
+            const currentIp = await GitHubAPI.getClientIP();
+            if (currentIp && user.allowedIp && currentIp !== user.allowedIp) {
+                console.error('IP Mismatch detected. Logging out.');
+                localStorage.removeItem('current_user');
+                window.location.href = '../index.html?error=ip_mismatch';
+            }
+        } catch (e) {
+            console.error('Failed to verify IP during session:', e);
+        }
+    }
+
     updateUIWithStatus(user);
     updateStats(user);
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
+
+    // Perform initial IP check
+    await checkIP();
 
     let userSHA = null;
     let notifications = [];
@@ -221,6 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Start background polling
     setInterval(pollUserProfile, 30000); // Poll every 30s
+    setInterval(checkIP, 60000); // Poll IP every 60s
     
     pollNotifications(); // Initial check
     setInterval(pollNotifications, 20000); // Poll every 20s
