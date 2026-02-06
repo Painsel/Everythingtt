@@ -2,7 +2,7 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.3.2',
+    version: '1.3.3',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (Main Repo Only)`);
@@ -104,8 +104,8 @@ window.GitHubAPI = {
                 'Content-Type': 'application/json'
             };
 
-            // If middleware is available, use it instead of direct GitHub API calls
-            if (this.middlewareURL) {
+            // Disable middleware for now as it's causing 404s
+            if (false && this.middlewareURL) {
                 let base = this.middlewareURL;
                 if (!base.endsWith('/')) base += '/';
                 
