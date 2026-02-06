@@ -120,91 +120,103 @@ window.GitHubAPI = {
         return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
     },
 
-    // Global request queue to serialize all API calls and avoid 409/429 errors
-    _requestQueue: Promise.resolve(),
-    async _enqueue(operation) {
-        const result = this._requestQueue.then(async () => {
+    // Global request queues to serialize API calls per host/service
+    _queues: {},
+    async _enqueue(operation, queueName = 'default') {
+        if (!this._queues[queueName]) {
+            this._queues[queueName] = Promise.resolve();
+        }
+
+        const result = this._queues[queueName].then(async () => {
             try {
                 return await operation();
             } catch (e) {
                 throw e;
             }
         });
+
         // Update the queue to wait for this result, but don't let a failure block the next request
-        this._requestQueue = result.catch(() => {});
+        this._queues[queueName] = result.catch(() => {});
         return result;
     },
 
+    /**
+     * Get the current status of the request queues.
+     */
+    getQueueStatus() {
+        const status = {};
+        for (const [name, queue] of Object.entries(this._queues)) {
+            status[name] = "active"; // Simplified as we can't easily peek promise state in JS
+        }
+        return status;
+    },
+
     async request(path, method = 'GET', body = null, retries = 5) {
-        // Enqueue the request to ensure serial execution
-        return this._enqueue(async () => {
-            const pat = await this.getPAT();
+        const pat = await this.getPAT();
+        let url;
+        let headers = {
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        };
+
+        const mainRepoPath = '/repos/Painsel/Everythingtt';
+        const criticalRepoPath = '/repos/Painsel/Everything-TT-Critical-Data';
+        
+        let apiPath;
+        if (path.startsWith('http')) {
+            const urlObj = new URL(path);
+            apiPath = urlObj.pathname;
+        } else {
+            apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
+        }
+
+        let queueName = 'github';
+
+        // Middleware logic
+        if (this.middlewareURL) {
+            let base = this.middlewareURL;
+            if (!base.endsWith('/')) base += '/';
             
-            let url;
-            let headers = {
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            };
-
-            // Middleware is now confirmed working at the root URL
-            if (this.middlewareURL) {
-                let base = this.middlewareURL;
-                if (!base.endsWith('/')) base += '/';
-                
-                let apiPath;
-                if (path.startsWith('http')) {
-                    // Only allow requests to the main repository
-                    const mainRepoPath = '/repos/Painsel/Everythingtt';
-                    const urlObj = new URL(path);
-                    apiPath = urlObj.pathname;
-                    
-                    if (!apiPath.startsWith(mainRepoPath)) {
-                        console.error(`Middleware restricted: Attempted to access non-main repo: ${apiPath}`);
-                        // Fallback to direct API for other repos if PAT exists, or throw
-                        if (pat) {
-                            url = path;
-                            headers['Authorization'] = `token ${pat}`;
-                            // Skip the middleware block
-                            return this._proceedWithFetch(url, options, method, body, retries, path);
-                        } else {
-                            throw new Error('Middleware is restricted to the main repository and no token is available for other repositories.');
-                        }
-                    }
-                } else {
-                    // It's a relative path like /contents/...
-                    apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
-                }
-
+            // Check authorization for the middleware
+            const isAuthorized = apiPath.startsWith(mainRepoPath) || apiPath.startsWith(criticalRepoPath);
+            
+            if (isAuthorized) {
                 url = `${base}?path=${encodeURIComponent(apiPath)}`;
+                queueName = 'middleware';
             } else {
-                // Fallback to direct GitHub API
-                if (!pat) throw new Error('No GitHub token available.');
+                console.warn(`Middleware restricted: Attempted to access non-authorized path: ${apiPath}. Falling back to direct API.`);
+                if (!pat) throw new Error('Middleware restricted and no GitHub token available for direct access.');
                 
-                if (path.startsWith('http')) {
-                    url = path;
-                } else {
-                    url = this.getAPIURL(path);
-                }
+                url = path.startsWith('http') ? path : this.getAPIURL(path);
                 headers['Authorization'] = `token ${pat}`;
             }
+        } else {
+            // Direct GitHub API
+            if (!pat) throw new Error('No GitHub token available.');
+            url = path.startsWith('http') ? path : this.getAPIURL(path);
+            headers['Authorization'] = `token ${pat}`;
+        }
 
-            // Add cache buster for GET requests
-            if (method === 'GET') {
-                const separator = url.includes('?') ? '&' : '?';
-                url += `${separator}t=${Date.now()}`;
-            }
-            
-            const options = { method, headers };
-            if (body) options.body = JSON.stringify(body);
+        // Add cache buster for GET requests
+        if (method === 'GET') {
+            const separator = url.includes('?') ? '&' : '?';
+            url += `${separator}t=${Date.now()}`;
+        }
+        
+        const options = { method, headers };
+        if (body) options.body = JSON.stringify(body);
 
+        // Enqueue the request based on the target service
+        return this._enqueue(async () => {
             return this._proceedWithFetch(url, options, method, body, retries, path);
-        });
+        }, queueName);
     },
 
     async _proceedWithFetch(url, options, method, body, retries, originalPath) {
         try {
             const response = await fetch(url, options);
             
+            // Handle 409 Conflict (Git state mismatch)
             if (response.status === 409 && retries > 0) {
                 await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
                 
@@ -223,6 +235,13 @@ window.GitHubAPI = {
                         return this.request(originalPath, method, body, retries - 1);
                     }
                 }
+                return this.request(originalPath, method, body, retries - 1);
+            }
+
+            // Handle 504 Gateway Timeout (Common for Middleware/Vercel)
+            if (response.status === 504 && retries > 0) {
+                console.warn(`[GitHubAPI] Middleware timeout (504). Retrying... (${retries} left)`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
                 return this.request(originalPath, method, body, retries - 1);
             }
 
