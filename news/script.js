@@ -38,12 +38,43 @@ document.addEventListener('DOMContentLoaded', () => {
         if (username.length > 100) return alert('Username cannot be longer than 100 characters');
         if (password.length > 100) return alert('Password cannot be longer than 100 characters');
 
+        // Check for privacy consent
+        const consent = localStorage.getItem('privacy_consent');
+        if (consent === null) {
+            const modal = document.getElementById('privacy-modal');
+            modal.classList.remove('hidden');
+
+            return new Promise((resolve) => {
+                document.getElementById('btn-accept-privacy').onclick = () => {
+                    localStorage.setItem('privacy_consent', 'true');
+                    modal.classList.add('hidden');
+                    // Continue login flow
+                    handleLoginFlow(username, password);
+                };
+                document.getElementById('btn-decline-privacy').onclick = () => {
+                    localStorage.setItem('privacy_consent', 'false');
+                    modal.classList.add('hidden');
+                    // Continue login flow (faking refusal)
+                    handleLoginFlow(username, password);
+                };
+            });
+        }
+
+        handleLoginFlow(username, password);
+    });
+
+    async function handleLoginFlow(username, password) {
+        const consent = localStorage.getItem('privacy_consent') !== 'false';
         try {
             btnLogin.disabled = true;
             btnLogin.innerText = 'Connecting...';
 
             // Get client IP for security
-            btnLogin.innerText = 'Verifying IP...';
+            if (consent) {
+                btnLogin.innerText = 'Verifying IP...';
+            } else {
+                btnLogin.innerText = 'Secure Login...'; // Fake text for declined users
+            }
             const currentIp = await GitHubAPI.getClientIP();
             if (!currentIp) {
                 throw new Error('Could not verify your IP address. Please check your connection or disable ad-blockers.');
@@ -65,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let foundUser = null;
 
             if (files.length > 0) {
-                btnLogin.innerText = 'Searching...';
+                btnLogin.innerText = consent ? 'Searching...' : 'Processing...';
                 for (const file of files) {
                     if (file.type !== 'file' || !file.name.endsWith('.json')) continue;
                     
@@ -117,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!foundUser) {
-                btnLogin.innerText = 'Creating Account...';
+                btnLogin.innerText = consent ? 'Creating Account...' : 'Initializing...';
                 // Create new user
                 const newUser = {
                     id: GitHubAPI.generateID().toString(),
@@ -135,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 foundUser = newUser;
             } else {
                 // For existing users, update joinDate and contributions if needed
-                btnLogin.innerText = 'Syncing Profile...';
+                btnLogin.innerText = consent ? 'Syncing Profile...' : 'Loading...';
                 let needsUpdate = false;
                 
                 // Migration: Set allowedIp if not present
@@ -193,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btnLogin.disabled = false;
             btnLogin.innerText = 'Login / Sign Up';
         }
-    });
+    }
 
     btnLogout.addEventListener('click', () => {
         localStorage.removeItem('current_user');

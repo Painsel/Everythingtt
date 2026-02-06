@@ -72,7 +72,30 @@
         </main>
     </div>
 
-    <script src="utils.js?v=1.5.5"></script>
-    <script src="script.js?v=1.1.1"></script>
+    <script src="utils.js?v=1.5.6"></script>
+    <script src="script.js?v=1.1.2"></script>
+
+    <!-- Privacy Notice Modal -->
+    <div id="privacy-modal" class="modal hidden">
+        <div class="modal-content privacy-content">
+            <h3>Privacy Notice & Data Collection</h3>
+            <div class="privacy-body">
+                <p>To provide a secure and personalized experience, EverythingTT collects and processes the following information:</p>
+                <ul>
+                    <li><b>IP Address:</b> Used for security auditing, preventing account unauthorized access, and enforcing bans.</li>
+                    <li><b>Email/Credentials:</b> Used to identify your account and allow you to log back in.</li>
+                    <li><b>Profile Data:</b> Information you voluntarily provide (Bio, PFP) to customize your community presence.</li>
+                </ul>
+                <p>We do not sell your data. Information is stored securely in our private repositories.</p>
+                <div class="consent-check">
+                    <p>Are you okay with your IP address being collected for security purposes?</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="btn-decline-privacy" class="btn-secondary">I Decline</button>
+                <button id="btn-accept-privacy" class="btn-primary">I Accept</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
