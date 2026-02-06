@@ -1413,6 +1413,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
     window.togglePinComment = async function(commentId) {
+        // --- OPTIMISTIC UPDATE ---
+        const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+        const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup
+        
+        const commentToPin = cachedComments.find(c => c.id === commentId);
+        if (commentToPin) {
+            const isCurrentlyPinned = commentToPin.pinned;
+            if (!isCurrentlyPinned) {
+                cachedComments.forEach(c => c.pinned = false);
+            }
+            commentToPin.pinned = !isCurrentlyPinned;
+            
+            // Apply immediate UI change
+            localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(cachedComments));
+            renderComments(cachedComments);
+        }
+
         try {
             const res = await GitHubAPI.safeUpdateFile(
                 `news/article-comments-storage/${currentArticleIdForComments}.json`,
@@ -1432,11 +1449,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Toggle pin on comment ${commentId}`
             );
             
-            if (res.content) {
+            if (res.content && res.content.content) {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
-                const pinnedComment = finalComments.find(c => c.id === commentId);
                 
+                const pinnedComment = finalComments.find(c => c.id === commentId);
                 if (pinnedComment && pinnedComment.pinned) {
                     const article = articleData[currentArticleIdForComments];
                     addNotification(pinnedComment.authorId, 'pin', {
@@ -1448,6 +1465,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 renderComments(finalComments);
             }
         } catch (e) {
+            console.error('Pin failed:', e);
+            // Revert on failure
+            localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(originalComments));
+            renderComments(originalComments);
             alert('Failed to pin comment: ' + e.message);
         }
     };
@@ -1519,12 +1540,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!newText && !comment.attachment) return alert('Comment cannot be empty');
             if (newText === originalText) {
                 currentEditingCommentId = null;
-                renderComments(articleComments);
+                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                renderComments(cachedComments);
                 return;
             }
 
             saveBtn.disabled = true;
             saveBtn.innerText = 'Saving...';
+
+            // --- OPTIMISTIC UPDATE ---
+            const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+            const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup for revert
+            
+            const commentToUpdate = cachedComments.find(x => x.id === commentId);
+            if (commentToUpdate) {
+                commentToUpdate.text = newText;
+                commentToUpdate.edited = true;
+                commentToUpdate.lastEdited = new Date().toISOString();
+                
+                // Show update immediately in UI
+                localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(cachedComments));
+                renderComments(cachedComments);
+                currentEditingCommentId = null;
+            }
 
             try {
                 const res = await GitHubAPI.safeUpdateFile(
@@ -1543,21 +1581,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `Edit comment ${commentId}`
                 );
 
-                currentEditingCommentId = null;
                 if (res.content && res.content.content) {
                     const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
                     localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                     renderComments(finalComments);
-                } else if (res.skipped) {
-                    const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
-                    renderComments(cachedComments);
-                } else {
-                    // Fallback: reload comments if format is unexpected but write was successful
-                    const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
-                    renderComments(cachedComments);
                 }
             } catch (e) {
+                console.error('Failed to save edit:', e);
                 alert('Failed to save edit: ' + e.message);
+                
+                // --- REVERT OPTIMISTIC UPDATE ---
+                localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(originalComments));
+                renderComments(originalComments);
+                
                 saveBtn.disabled = false;
                 saveBtn.innerText = 'Save';
             }
@@ -1567,6 +1603,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.handleCommentVote = async function(commentId, type) {
         if (!user) return alert('You must be logged in to vote');
         
+        // --- OPTIMISTIC UPDATE ---
+        const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+        const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup
+        
+        const commentToVote = cachedComments.find(c => c.id === commentId);
+        if (commentToVote) {
+            if (!commentToVote.votes) commentToVote.votes = { up: [], down: [] };
+            if (!commentToVote.votes.up) commentToVote.votes.up = [];
+            if (!commentToVote.votes.down) commentToVote.votes.down = [];
+
+            const upIndex = commentToVote.votes.up.indexOf(user.id);
+            const downIndex = commentToVote.votes.down.indexOf(user.id);
+
+            if (type === 'up') {
+                if (upIndex > -1) {
+                    commentToVote.votes.up.splice(upIndex, 1);
+                } else {
+                    commentToVote.votes.up.push(user.id);
+                    if (downIndex > -1) commentToVote.votes.down.splice(downIndex, 1);
+                }
+            } else if (type === 'down') {
+                if (downIndex > -1) {
+                    commentToVote.votes.down.splice(downIndex, 1);
+                } else {
+                    commentToVote.votes.down.push(user.id);
+                    if (upIndex > -1) commentToVote.votes.up.splice(upIndex, 1);
+                }
+            }
+            
+            // Apply immediate UI change
+            localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(cachedComments));
+            renderComments(cachedComments);
+        }
+
         try {
             const res = await GitHubAPI.safeUpdateFile(
                 `news/article-comments-storage/${currentArticleIdForComments}.json`,
@@ -1607,12 +1677,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
-            } else {
-                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
-                renderComments(cachedComments);
             }
         } catch (e) {
             console.error('Vote failed:', e);
+            // Revert on failure
+            localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(originalComments));
+            renderComments(originalComments);
         }
     };
 

@@ -248,6 +248,12 @@ window.GitHubAPI = {
         } else {
             url = this.getAPIURL(path);
         }
+
+        // Add cache buster for GET requests to bypass GitHub's CDN cache
+        if (method === 'GET') {
+            const separator = url.includes('?') ? '&' : '?';
+            url += `${separator}t=${Date.now()}`;
+        }
         
         const headers = {
             'Authorization': `token ${pat}`,
