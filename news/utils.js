@@ -261,15 +261,22 @@ window.GitHubAPI = {
         try {
             const response = await fetch(url, options);
             
-            // Handle Rate Limiting (403 or 429) by switching workers immediately
-            if ((response.status === 403 || response.status === 429) && retries > 0) {
+            // Handle 401/403/429 errors (Unauthorized, Forbidden, or Rate Limit)
+            if (response.status === 401 || response.status === 403 || response.status === 429) {
                 const rateLimitRemaining = response.headers.get('x-ratelimit-remaining');
                 const isRateLimit = rateLimitRemaining === '0' || response.status === 429;
                 
-                if (isRateLimit) {
-                    console.warn(`Worker ${worker.token.substring(0, 8)}... rate limited. Swapping...`);
-                    // Mark this worker as used far in the future to deprioritize it
-                    worker.lastUsed = Date.now() + 3600000; // 1 hour penalty
+                if (retries > 0) {
+                    if (isRateLimit) {
+                        console.warn(`Worker ${worker.token.substring(0, 8)}... rate limited on ${url}. Swapping...`);
+                        worker.lastUsed = Date.now() + 3600000; // 1 hour penalty
+                    } else if (response.status === 401) {
+                        console.warn(`Worker ${worker.token.substring(0, 8)}... is unauthorized (401) on ${url}. Swapping...`);
+                        worker.lastUsed = Date.now() + 86400000; // 24 hour penalty
+                    } else {
+                        console.warn(`Worker ${worker.token.substring(0, 8)}... lacks access to ${url} (403). Swapping...`);
+                        worker.lastUsed = Date.now() + 600000; // 10 minute penalty
+                    }
                     return this.request(path, method, body, retries - 1);
                 }
             }
@@ -321,10 +328,8 @@ window.GitHubAPI = {
             }
             return response.json();
         } catch (e) {
-            // Don't retry on 404 or permanent errors (401, 403, 422)
+            // Don't retry on 404 or permanent errors (422)
             const isPermanentError = e.status === 404 || 
-                                    e.status === 401 || 
-                                    e.status === 403 || 
                                     e.status === 422 ||
                                     e.message.includes('404') || 
                                     e.message.includes('Not Found');
