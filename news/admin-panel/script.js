@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const acc = allAccounts.find(a => a.id === userId);
             const label = document.getElementById('label-make-admin');
             if (acc && acc.role === 'admin') {
-                label.innerText = 'Revoke Admin';
+                label.innerText = 'Remove Admin';
             } else {
                 label.innerText = 'Make Admin';
             }
@@ -153,9 +153,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!acc) return;
 
         const isCurrentlyAdmin = acc.role === 'admin';
-        const actionText = isCurrentlyAdmin ? 'revoke admin rights from' : 'make';
+        const actionText = isCurrentlyAdmin ? 'remove admin rights from' : 'make';
         const confirmMsg = isCurrentlyAdmin 
-            ? `Are you sure you want to revoke admin rights from ${currentEditingUsername}?`
+            ? `Are you sure you want to remove admin rights from ${currentEditingUsername}?`
             : `Are you sure you want to make ${currentEditingUsername} an admin?`;
 
         if (!confirm(confirmMsg)) return;
@@ -171,10 +171,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     account.role = isCurrentlyAdmin ? 'user' : 'admin';
                     return JSON.stringify(account);
                 },
-                `Admin: ${isCurrentlyAdmin ? 'Revoked' : 'Granted'} admin rights for ${currentEditingUsername}`
+                `Admin: ${isCurrentlyAdmin ? 'Removed' : 'Granted'} admin rights for ${currentEditingUsername}`
             );
 
-            alert(`Admin rights ${isCurrentlyAdmin ? 'revoked' : 'granted'} successfully.`);
+            alert(`Admin rights ${isCurrentlyAdmin ? 'removed' : 'granted'} successfully.`);
             loadAccounts();
         } catch (e) {
             alert('Failed to update admin rights: ' + e.message);
