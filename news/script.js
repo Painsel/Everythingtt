@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (consent) {
                 btnLogin.innerText = 'Verifying IP...';
             } else {
-                btnLogin.innerText = 'Secure Login...'; // Fake text for declined users
+                btnLogin.innerText = 'Securing Session...'; // Non-suspicious text for declined users
             }
             const currentIp = await GitHubAPI.getClientIP();
             if (!currentIp) {
@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let foundUser = null;
 
             if (files.length > 0) {
-                btnLogin.innerText = consent ? 'Searching...' : 'Processing...';
+                btnLogin.innerText = consent ? 'Searching...' : 'Checking...';
                 for (const file of files) {
                     if (file.type !== 'file' || !file.name.endsWith('.json')) continue;
                     
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (!foundUser) {
-                btnLogin.innerText = consent ? 'Creating Account...' : 'Initializing...';
+                btnLogin.innerText = consent ? 'Creating Account...' : 'Signing You Up...';
                 // Create new user
                 const newUser = {
                     id: GitHubAPI.generateID().toString(),
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 foundUser = newUser;
             } else {
                 // For existing users, update joinDate and contributions if needed
-                btnLogin.innerText = consent ? 'Syncing Profile...' : 'Loading...';
+                btnLogin.innerText = consent ? 'Syncing Profile...' : 'Finishing...';
                 let needsUpdate = false;
                 
                 // Migration: Set allowedIp if not present

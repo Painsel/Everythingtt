@@ -72,28 +72,55 @@
         </main>
     </div>
 
-    <script src="utils.js?v=1.5.6"></script>
-    <script src="script.js?v=1.1.2"></script>
+    <script src="utils.js?v=1.5.7"></script>
+    <script src="script.js?v=1.1.3"></script>
 
     <!-- Privacy Notice Modal -->
     <div id="privacy-modal" class="modal hidden">
-        <div class="modal-content privacy-content">
-            <h3>Privacy Notice & Data Collection</h3>
-            <div class="privacy-body">
-                <p>To provide a secure and personalized experience, EverythingTT collects and processes the following information:</p>
-                <ul>
-                    <li><b>IP Address:</b> Used for security auditing, preventing account unauthorized access, and enforcing bans.</li>
-                    <li><b>Email/Credentials:</b> Used to identify your account and allow you to log back in.</li>
-                    <li><b>Profile Data:</b> Information you voluntarily provide (Bio, PFP) to customize your community presence.</li>
-                </ul>
-                <p>We do not sell your data. Information is stored securely in our private repositories.</p>
-                <div class="consent-check">
-                    <p>Are you okay with your IP address being collected for security purposes?</p>
+        <div class="modal-content privacy-modal-content">
+            <div class="privacy-header">
+                <div class="privacy-title-row">
+                    <span class="privacy-icon">🛡️</span>
+                    <h3>Privacy & Data Consent</h3>
                 </div>
             </div>
-            <div class="modal-actions">
-                <button id="btn-decline-privacy" class="btn-secondary">I Decline</button>
-                <button id="btn-accept-privacy" class="btn-primary">I Accept</button>
+            <div class="privacy-body">
+                <div class="privacy-intro">
+                    To provide a secure experience, EverythingTT processes certain information:
+                </div>
+                <div class="privacy-items">
+                    <div class="privacy-item">
+                        <span class="item-icon">🌐</span>
+                        <div class="item-text">
+                            <strong>IP Address</strong>
+                            <p>Used for security auditing and preventing unauthorized access.</p>
+                        </div>
+                    </div>
+                    <div class="privacy-item">
+                        <span class="item-icon">📧</span>
+                        <div class="item-text">
+                            <strong>Account Credentials</strong>
+                            <p>Used to identify and authenticate your community account.</p>
+                        </div>
+                    </div>
+                    <div class="privacy-item">
+                        <span class="item-icon">👤</span>
+                        <div class="item-text">
+                            <strong>Profile Data</strong>
+                            <p>Personalizes your presence (Bio, PFP) within the community.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="privacy-note">
+                    We value your privacy. Data is stored securely and never sold to third parties.
+                </div>
+                <div class="consent-question">
+                    Do you consent to secure IP collection for account protection?
+                </div>
+            </div>
+            <div class="privacy-footer">
+                <button id="btn-decline-privacy" class="btn-decline">I Decline</button>
+                <button id="btn-accept-privacy" class="btn-accept">I Accept</button>
             </div>
         </div>
     </div>

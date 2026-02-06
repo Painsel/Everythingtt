@@ -591,8 +591,141 @@ button:hover {
 }
 
 @media (max-width: 600px) {
-    .changelog-modal-content {
+    .changelog-modal-content, .privacy-modal-content {
         width: 90%;
         margin: 20px auto;
     }
+}
+
+/* Privacy Modal Styling */
+.privacy-modal-content {
+    background-color: #36393f;
+    color: #dcddde;
+    width: 440px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    border: 1px solid #202225;
+}
+
+.privacy-header {
+    padding: 24px 16px 8px 24px;
+}
+
+.privacy-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.privacy-icon {
+    font-size: 1.5rem;
+}
+
+.privacy-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.privacy-body {
+    padding: 0 24px 24px 24px;
+}
+
+.privacy-intro {
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: #b9bbbe;
+}
+
+.privacy-items {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.privacy-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.item-icon {
+    font-size: 1.2rem;
+    padding-top: 2px;
+}
+
+.item-text strong {
+    display: block;
+    color: #fff;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.item-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #b9bbbe;
+    line-height: 1.3;
+}
+
+.privacy-note {
+    background: #2f3136;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #a3a6aa;
+    margin-bottom: 20px;
+    border-left: 3px solid #5865f2;
+}
+
+.consent-question {
+    color: #fff;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-align: center;
+    padding-top: 8px;
+}
+
+.privacy-footer {
+    padding: 16px 24px;
+    background-color: #2f3136;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-decline {
+    background: transparent;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-decline:hover {
+    text-decoration: underline;
+}
+
+.btn-accept {
+    background: #5865f2;
+    color: #fff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 3px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-accept:hover {
+    background: #4752c4;
 }
