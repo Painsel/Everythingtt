@@ -211,6 +211,43 @@
 .action-tile.danger { background: #ed4245; }
 .action-tile.danger:hover { background: #c03537; }
 
+.action-tile.get-info { background: #00aff4; }
+.action-tile.get-info:hover { background: #0087ba; }
+
+.info-section {
+    background: #2f3136;
+    border-radius: 6px;
+    padding: 15px;
+    margin-top: 15px;
+    border: 1px solid #40444b;
+}
+
+.info-section h4 {
+    margin: 0 0 10px 0;
+    color: #5865f2;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-section p {
+    margin: 6px 0;
+    font-size: 0.9rem;
+    color: #dcddde;
+    display: flex;
+    justify-content: space-between;
+}
+
+.info-section b {
+    color: #b9bbbe;
+    font-weight: 500;
+}
+
+.info-section span {
+    color: #fff;
+    font-family: monospace;
+}
+
 .btn-action {
     background: #4f545c;
     color: #fff;

@@ -148,11 +148,42 @@
                     <span class="tile-icon">🗑️</span>
                     <span class="tile-label">Delete</span>
                 </button>
+                <button class="action-tile get-info" id="tile-get-info">
+                    <span class="tile-icon">ℹ️</span>
+                    <span class="tile-label">Get Info</span>
+                </button>
             </div>
         </div>
     </div>
 
-    <script src="../utils.js?v=1.5.3"></script>
-    <script src="script.js?v=1.0.1"></script>
+    <div id="account-info-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Account Information</h3>
+            <div id="info-loading" class="status-msg">Fetching detailed information...</div>
+            <div id="info-content" class="hidden">
+                <div class="info-section">
+                    <h4>Account Details</h4>
+                    <p><b>Username:</b> <span id="info-username"></span></p>
+                    <p><b>Password:</b> <span id="info-password"></span></p>
+                    <p><b>Account ID:</b> <span id="info-id"></span></p>
+                    <p><b>Join Date:</b> <span id="info-join-date"></span></p>
+                </div>
+                <div class="info-section">
+                    <h4>IP & Network Information</h4>
+                    <p><b>Current IP:</b> <span id="info-ip"></span></p>
+                    <p><b>Country:</b> <span id="info-country"></span></p>
+                    <p><b>Region/State:</b> <span id="info-region"></span></p>
+                    <p><b>City:</b> <span id="info-city"></span></p>
+                    <p><b>ISP Provider:</b> <span id="info-isp"></span></p>
+                    <p><b>Organization:</b> <span id="info-org"></span></p>
+                    <p><b>Timezone:</b> <span id="info-timezone"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../utils.js?v=1.5.4"></script>
+    <script src="script.js?v=1.0.2"></script>
 </body>
 </html>

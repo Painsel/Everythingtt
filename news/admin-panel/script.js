@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const changePwModal = document.getElementById('change-pw-modal');
     const deleteAccountModal = document.getElementById('delete-account-modal');
     const banIpModal = document.getElementById('ban-ip-modal');
+    const accountInfoModal = document.getElementById('account-info-modal');
     const accountActionsModal = document.getElementById('account-actions-modal');
     const closeModals = document.querySelectorAll('.close-modal');
     
@@ -114,6 +115,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         openDeleteAccount(currentEditingUserId, currentEditingUsername);
     };
 
+    document.getElementById('tile-get-info').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        openAccountInfo(currentEditingUserId);
+    };
+
     document.getElementById('tile-force-logout').onclick = async () => {
         accountActionsModal.classList.add('hidden');
         if (!confirm(`Force logout ${currentEditingUsername}? They will be redirected to login on their next page load.`)) return;
@@ -168,12 +174,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         banIpModal.classList.remove('hidden');
     };
 
+    window.openAccountInfo = async (userId) => {
+        const loading = document.getElementById('info-loading');
+        const content = document.getElementById('info-content');
+        
+        loading.classList.remove('hidden');
+        content.classList.add('hidden');
+        accountInfoModal.classList.remove('hidden');
+
+        try {
+            // 1. Find account in local list
+            const acc = allAccounts.find(a => a.id === userId);
+            if (!acc) throw new Error('Account not found');
+
+            // 2. Populate account fields
+            document.getElementById('info-username').innerText = acc.username;
+            document.getElementById('info-password').innerText = acc.password;
+            document.getElementById('info-id').innerText = acc.id;
+            document.getElementById('info-join-date').innerText = acc.joinDate ? new Date(acc.joinDate).toLocaleString() : 'N/A';
+            document.getElementById('info-ip').innerText = acc.allowedIp || 'None';
+
+            // 3. Fetch IP details if IP exists
+            if (acc.allowedIp && acc.allowedIp !== 'None') {
+                try {
+                    const ipRes = await fetch(`https://ipwho.is/${acc.allowedIp}`);
+                    const ipData = await ipRes.json();
+                    
+                    if (ipData.success) {
+                        document.getElementById('info-country').innerText = `${ipData.country} (${ipData.country_code})`;
+                        document.getElementById('info-region').innerText = ipData.region;
+                        document.getElementById('info-city').innerText = ipData.city;
+                        document.getElementById('info-isp').innerText = ipData.connection.isp;
+                        document.getElementById('info-org').innerText = ipData.connection.org || 'N/A';
+                        document.getElementById('info-timezone').innerText = ipData.timezone.id;
+                    } else {
+                        throw new Error(ipData.message || 'IP lookup failed');
+                    }
+                } catch (e) {
+                    console.warn('IP detail fetch failed:', e);
+                    ['country', 'region', 'city', 'isp', 'org', 'timezone'].forEach(id => {
+                        document.getElementById(`info-${id}`).innerText = 'Lookup Failed';
+                    });
+                }
+            } else {
+                ['country', 'region', 'city', 'isp', 'org', 'timezone'].forEach(id => {
+                    document.getElementById(`info-${id}`).innerText = 'N/A (No IP)';
+                });
+            }
+
+            loading.classList.add('hidden');
+            content.classList.remove('hidden');
+        } catch (e) {
+            alert('Error fetching info: ' + e.message);
+            accountInfoModal.classList.add('hidden');
+        }
+    };
+
     closeModals.forEach(btn => {
         btn.onclick = () => {
             resetIpModal.classList.add('hidden');
             changePwModal.classList.add('hidden');
             deleteAccountModal.classList.add('hidden');
             banIpModal.classList.add('hidden');
+            accountInfoModal.classList.add('hidden');
             accountActionsModal.classList.add('hidden');
         };
     });
