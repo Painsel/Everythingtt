@@ -73,77 +73,96 @@ window.GitHubAPI = {
         return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
     },
 
+    // Global request queue to serialize all API calls and avoid 409/429 errors
+    _requestQueue: Promise.resolve(),
+    async _enqueue(operation) {
+        const result = this._requestQueue.then(async () => {
+            try {
+                return await operation();
+            } catch (e) {
+                throw e;
+            }
+        });
+        // Update the queue to wait for this result, but don't let a failure block the next request
+        this._requestQueue = result.catch(() => {});
+        return result;
+    },
+
     async request(path, method = 'GET', body = null, retries = 5) {
-        const pat = await this.getPAT();
-        if (!pat) throw new Error('No GitHub token available.');
-        
-        let url;
-        if (path.startsWith('http')) {
-            url = path;
-        } else {
-            url = this.getAPIURL(path);
-        }
-
-        // Add cache buster for GET requests
-        if (method === 'GET') {
-            const separator = url.includes('?') ? '&' : '?';
-            url += `${separator}t=${Date.now()}`;
-        }
-        
-        const headers = {
-            'Authorization': `token ${pat}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-        };
-
-        const options = { method, headers };
-        if (body) options.body = JSON.stringify(body);
-
-        try {
-            const response = await fetch(url, options);
+        // Enqueue the request to ensure serial execution
+        return this._enqueue(async () => {
+            const pat = await this.getPAT();
+            if (!pat) throw new Error('No GitHub token available.');
             
-            if (response.status === 409 && retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-                
-                if (method === 'PUT') {
-                    let relativePath = path;
-                    if (path.startsWith('http')) {
-                        const parts = path.split('/contents/');
-                        if (parts.length > 1) relativePath = parts[1];
-                    } else {
-                        relativePath = path.replace(/^\/contents\//, '').replace(/^contents\//, '');
-                    }
+            let url;
+            if (path.startsWith('http')) {
+                url = path;
+            } else {
+                url = this.getAPIURL(path);
+            }
 
-                    const freshData = await this.getFile(relativePath);
-                    if (freshData && body) {
-                        body.sha = freshData.sha;
-                        return this.request(path, method, body, retries - 1);
+            // Add cache buster for GET requests
+            if (method === 'GET') {
+                const separator = url.includes('?') ? '&' : '?';
+                url += `${separator}t=${Date.now()}`;
+            }
+            
+            const headers = {
+                'Authorization': `token ${pat}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            };
+
+            const options = { method, headers };
+            if (body) options.body = JSON.stringify(body);
+
+            try {
+                const response = await fetch(url, options);
+                
+                if (response.status === 409 && retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                    
+                    if (method === 'PUT') {
+                        let relativePath = path;
+                        if (path.startsWith('http')) {
+                            const parts = path.split('/contents/');
+                            if (parts.length > 1) relativePath = parts[1];
+                        } else {
+                            relativePath = path.replace(/^\/contents\//, '').replace(/^contents\//, '');
+                        }
+
+                        const freshData = await this.getFile(relativePath);
+                        if (freshData && body) {
+                            body.sha = freshData.sha;
+                            // Note: We don't re-enqueue here because we are already inside the queue
+                            return this.request(path, method, body, retries - 1);
+                        }
                     }
+                    return this.request(path, method, body, retries - 1);
                 }
-                return this.request(path, method, body, retries - 1);
-            }
 
-            if (!response.ok) {
-                let errorMessage = `GitHub API request failed with status ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorMessage = errorData.message || errorMessage;
-                } catch (e) {}
-                
-                const error = new Error(errorMessage);
-                error.status = response.status;
-                throw error;
-            }
-            return response.json();
-        } catch (e) {
-            if (e.status === 404 || e.status === 422) throw e;
+                if (!response.ok) {
+                    let errorMessage = `GitHub API request failed with status ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {}
+                    
+                    const error = new Error(errorMessage);
+                    error.status = response.status;
+                    throw error;
+                }
+                return response.json();
+            } catch (e) {
+                if (e.status === 404 || e.status === 422) throw e;
 
-            if (retries > 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                return this.request(path, method, body, retries - 1);
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    return this.request(path, method, body, retries - 1);
+                }
+                throw e;
             }
-            throw e;
-        }
+        });
     },
 
     // A simple queue to serialize write operations per-file
