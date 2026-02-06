@@ -1,0 +1,7 @@
+{
+    "version": "1.4.0",
+    "date": "2026-02-06",
+    "updates": [
+        "Added built-in Account Protection using the IP address. Anyone who tries to login to your account will be blocked."
+    ]
+}

@@ -382,3 +382,123 @@ button:hover {
     background-color: #ed4245;
     color: #fff;
 }
+
+/* Changelog Modal Styles */
+.changelog-modal-content {
+    max-width: 450px;
+    background: #36393f;
+    border-radius: 12px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #4f545c;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.changelog-header {
+    background: #2f3136;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #202225;
+}
+
+.changelog-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.changelog-icon {
+    font-size: 1.5rem;
+}
+
+.changelog-header h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.25rem;
+}
+
+.changelog-header .close-modal {
+    color: #b9bbbe !important;
+    font-size: 28px;
+    cursor: pointer;
+    transition: color 0.2s;
+    background: transparent;
+    border: none;
+    width: auto;
+    padding: 0;
+}
+
+.changelog-header .close-modal:hover {
+    color: #fff !important;
+}
+
+.changelog-body {
+    padding: 1.5rem;
+}
+
+.changelog-version-tag {
+    background: #5865f2;
+    color: #fff;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 1.25rem;
+}
+
+.changelog-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.changelog-list li {
+    color: #dcddde;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+    text-align: left;
+}
+
+.changelog-list li::before {
+    content: "•";
+    color: #5865f2;
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.changelog-footer {
+    padding: 1.5rem;
+    background: #2f3136;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.changelog-footer .btn-primary {
+    background: #5865f2;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: auto;
+}
+
+.changelog-footer .btn-primary:hover {
+    background: #4752c4;
+}
+
+@media (max-width: 600px) {
+    .changelog-modal-content {
+        width: 90%;
+        margin: 20px auto;
+    }
+}

@@ -241,6 +241,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(pollUserProfile, 30000); // Poll every 30s
     setInterval(checkIP, 60000); // Poll IP every 60s
     
+    // Changelog Logic
+    async function checkChangelog() {
+        try {
+            const response = await fetch('../changelog.json?t=' + Date.now());
+            if (!response.ok) return;
+            const changelog = await response.json();
+            const lastSeen = localStorage.getItem('last_seen_changelog');
+
+            if (lastSeen !== changelog.version) {
+                // Show modal
+                const modal = document.getElementById('changelog-modal');
+                const list = document.getElementById('changelog-updates-list');
+                const versionTag = document.getElementById('changelog-version');
+
+                versionTag.innerText = `Version ${changelog.version}`;
+                list.innerHTML = changelog.updates.map(update => `<li>${update}</li>`).join('');
+                
+                modal.classList.remove('hidden');
+
+                const closeBtn = document.getElementById('btn-close-changelog');
+                const closeX = document.getElementById('close-changelog');
+
+                const markAsSeen = () => {
+                    localStorage.setItem('last_seen_changelog', changelog.version);
+                    modal.classList.add('hidden');
+                };
+
+                closeBtn.onclick = markAsSeen;
+                closeX.onclick = markAsSeen;
+            }
+        } catch (e) {
+            console.error('Failed to check changelog:', e);
+        }
+    }
+
+    // Check changelog on load and every 5 minutes
+    checkChangelog();
+    setInterval(checkChangelog, 300000);
+
     pollNotifications(); // Initial check
     setInterval(pollNotifications, 20000); // Poll every 20s
 
