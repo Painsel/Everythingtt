@@ -17,76 +17,53 @@ window.GitHubAPI = {
 
     // Fetches the swarm configuration from an external JSON file
     async getPAT() {
-        if (this.swarm.length > 0) return this.swarm[0].token;
+        // --- BYPASS SWARM: Only use main PAT ---
+        if (this.cachedPAT) return this.cachedPAT;
         if (this._loadingSwarm) return this._loadingSwarm;
 
         this._loadingSwarm = (async () => {
-            const MASTER_KEY = '$2a$10$Vs16Z0OqCvNYPh5JLOKkLe1.TxIWpuZv15SCQ0wxbXL3HUsFuYLHO';
-            // Removed proxy from JSONBin URLs
-            const SWARM_BIN = 'https://api.jsonbin.io/v3/b/69850998ae596e708f1434df';
             const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
-
             try {
-                // 1. Fetch the Swarm (The 10 identities)
-                const swarmRes = await fetch(SWARM_BIN, {
-                    headers: { 
-                        'X-Master-Key': MASTER_KEY,
-                        'X-Bin-Meta': 'false'
-                    }
-                });
-                const swarmData = await swarmRes.json();
-                // Support both with and without metadata formats
-                const swarmConfig = swarmData.record || swarmData;
-                
-                // 2. Fetch the Main PAT (Optional/Fallback for main repo)
                 const mainRes = await fetch(MAIN_BIN, {
                     headers: { 'X-Bin-Meta': 'false' }
                 });
                 const mainData = await mainRes.json();
                 const mainConfig = mainData.record || mainData;
 
-                let tokens = [];
-                
-                // Merge tokens from both sources
-                if (Array.isArray(swarmConfig.github_swarm)) {
-                    tokens = tokens.concat(swarmConfig.github_swarm);
-                }
                 if (mainConfig.github_pat) {
-                    tokens.push(mainConfig.github_pat);
-                } else if (Array.isArray(mainConfig.github_swarm)) {
-                    tokens = tokens.concat(mainConfig.github_swarm);
-                }
-
-                // Remove duplicates and initialize swarm
-                const uniqueTokens = [...new Set(tokens)];
-                console.log(`Loaded ${uniqueTokens.length} unique tokens for swarm.`);
-                this.swarm = uniqueTokens.map(t => ({ token: t, lastUsed: 0 }));
-
-                if (this.swarm.length > 0) {
-                    this.cachedPAT = this.swarm[0].token;
+                    this.cachedPAT = mainConfig.github_pat;
+                    this.swarm = [{ token: this.cachedPAT, lastUsed: 0 }];
                     localStorage.setItem('gh_pat', this.cachedPAT);
                     return this.cachedPAT;
                 }
-                return localStorage.getItem('gh_pat');
-            } catch (e) {
-                console.error('Failed to load external swarm:', e);
                 
-                // Try local_swarm fallback
-                if (this.local_swarm && this.local_swarm.length > 0) {
-                    console.log(`Using ${this.local_swarm.length} local workers from fallback...`);
-                    this.swarm = this.local_swarm.map(t => ({ token: t, lastUsed: 0 }));
-                    return this.swarm[0].token;
-                }
-
                 const local = localStorage.getItem('gh_pat');
-                if (local) this.swarm = [{ token: local, lastUsed: 0 }];
-                return local;
+                if (local) {
+                    this.cachedPAT = local;
+                    this.swarm = [{ token: local, lastUsed: 0 }];
+                    return local;
+                }
+                return null;
+            } catch (e) {
+                console.error('Failed to load main PAT:', e);
+                const local = localStorage.getItem('gh_pat');
+                if (local) {
+                    this.cachedPAT = local;
+                    this.swarm = [{ token: local, lastUsed: 0 }];
+                    return local;
+                }
+                return null;
             } finally {
                 this._loadingSwarm = null;
             }
         })();
-
         return this._loadingSwarm;
+
+        /* Original Swarm Logic (Preserved but not used)
+        if (this.swarm.length > 0) return this.swarm[0].token;
+        if (this._loadingSwarm) return this._loadingSwarm;
+        ...
+        */
     },
 
     getStatusIconPath(iconName) {
@@ -179,53 +156,13 @@ window.GitHubAPI = {
      * @returns {object} - { owner, repo }
      */
     getRepoInfo(path, forceMain = false) {
-        if (forceMain) return { owner: 'Painsel', repo: 'Everythingtt' };
-
-        // Remove leading slash if present
-        const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-        
-        // Find if this path belongs to a shard
-        for (const [prefix, info] of Object.entries(this.shards)) {
-            if (cleanPath.startsWith(prefix)) {
-                // Check if this prefix has multiple shards (Horizontal Partitioning)
-                if (Array.isArray(info)) {
-                    // Try to extract an ID from the path (e.g., news/storage/12345.json or news/storage/user_abc.json)
-                    const idMatch = cleanPath.match(/\/([^\/]+)\.json$/);
-                    if (idMatch) {
-                        const idStr = idMatch[1];
-                        // Use a simple hash-like sum for the ID to support any alphanumeric ID
-                        let hash = 0;
-                        for (let i = 0; i < idStr.length; i++) {
-                            hash = (hash << 5) - hash + idStr.charCodeAt(i);
-                            hash |= 0; // Convert to 32bit integer
-                        }
-                        const shardIndex = Math.abs(hash) % info.length;
-                        const shard = info[shardIndex];
-                        
-                        // If this shard has failed before, don't use it for writing
-                        if (this.failedShards.has(`${shard.owner}/${shard.repo}`)) {
-                            return { owner: 'Painsel', repo: 'Everythingtt' };
-                        }
-                        
-                        return shard;
-                    }
-                    // Fallback to first shard if no ID found (e.g., listFiles)
-                    const firstShard = info[0];
-                    if (this.failedShards.has(`${firstShard.owner}/${firstShard.repo}`)) {
-                        return { owner: 'Painsel', repo: 'Everythingtt' };
-                    }
-                    return firstShard;
-                }
-                
-                if (this.failedShards.has(`${info.owner}/${info.repo}`)) {
-                    return { owner: 'Painsel', repo: 'Everythingtt' };
-                }
-                return info;
-            }
-        }
-        
-        // Default to main repo
+        // --- BYPASS SHARDS: Always use main repo ---
         return { owner: 'Painsel', repo: 'Everythingtt' };
+
+        /* Original Shard Logic (Preserved but not used)
+        if (forceMain) return { owner: 'Painsel', repo: 'Everythingtt' };
+        ...
+        */
     },
 
     getAPIURL(path) {
