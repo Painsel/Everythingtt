@@ -61,14 +61,13 @@ export default async function handler(req, res) {
     const response = await fetch(url, options);
     const contentType = response.headers.get('content-type');
     
-    let data;
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
+    // Set the same content type as GitHub's response
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
     }
 
-    return res.status(response.status).json(data);
+    const data = await response.text();
+    return res.status(response.status).send(data);
   } catch (error) {
     console.error('Middleware Error:', error);
     return res.status(500).json({ 

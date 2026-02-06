@@ -2,7 +2,7 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.2.0',
+    version: '1.3.0',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (Main Repo Only)`);
@@ -98,12 +98,17 @@ window.GitHubAPI = {
         return this._enqueue(async () => {
             const pat = await this.getPAT();
             
+            let url;
+            let headers = {
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            };
+
             // If middleware is available, use it instead of direct GitHub API calls
             if (this.middlewareURL) {
-                let url = this.middlewareURL;
-                if (!url.endsWith('/')) url += '/';
+                let base = this.middlewareURL;
+                if (!base.endsWith('/')) base += '/';
                 
-                // Construct the path for the middleware
                 let apiPath = path;
                 if (!path.startsWith('http')) {
                     apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
@@ -111,40 +116,17 @@ window.GitHubAPI = {
                     apiPath = path.replace('https://api.github.com', '');
                 }
 
-                const middlewareUrl = `${url}?path=${encodeURIComponent(apiPath)}`;
-                
-                const options = {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                };
-                if (body) options.body = JSON.stringify(body);
-
-                try {
-                    const response = await fetch(middlewareUrl, options);
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.message || `Middleware request failed with status ${response.status}`);
-                    }
-                    return response.json();
-                } catch (e) {
-                    if (retries > 0) {
-                        await new Promise(resolve => setTimeout(resolve, 1000));
-                        return this.request(path, method, body, retries - 1);
-                    }
-                    throw e;
-                }
-            }
-
-            // Fallback to direct GitHub API if no middleware
-            if (!pat) throw new Error('No GitHub token available.');
-            
-            let url;
-            if (path.startsWith('http')) {
-                url = path;
+                url = `${base}?path=${encodeURIComponent(apiPath)}`;
             } else {
-                url = this.getAPIURL(path);
+                // Fallback to direct GitHub API
+                if (!pat) throw new Error('No GitHub token available.');
+                
+                if (path.startsWith('http')) {
+                    url = path;
+                } else {
+                    url = this.getAPIURL(path);
+                }
+                headers['Authorization'] = `token ${pat}`;
             }
 
             // Add cache buster for GET requests
@@ -153,12 +135,6 @@ window.GitHubAPI = {
                 url += `${separator}t=${Date.now()}`;
             }
             
-            const headers = {
-                'Authorization': `token ${pat}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            };
-
             const options = { method, headers };
             if (body) options.body = JSON.stringify(body);
 
@@ -180,7 +156,6 @@ window.GitHubAPI = {
                         const freshData = await this.getFile(relativePath);
                         if (freshData && body) {
                             body.sha = freshData.sha;
-                            // Note: We don't re-enqueue here because we are already inside the queue
                             return this.request(path, method, body, retries - 1);
                         }
                     }
@@ -188,7 +163,7 @@ window.GitHubAPI = {
                 }
 
                 if (!response.ok) {
-                    let errorMessage = `GitHub API request failed with status ${response.status}`;
+                    let errorMessage = `API request failed with status ${response.status}`;
                     try {
                         const errorData = await response.json();
                         errorMessage = errorData.message || errorMessage;
