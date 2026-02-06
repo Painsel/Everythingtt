@@ -444,7 +444,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Initial load
-    loadArticles();
+    loadArticles().then(() => {
+        // Migration: Sync comment counts for all loaded articles if needed
+        if (user) {
+            console.log('Starting background comment count migration...');
+            const articlesToSync = Object.values(articleData);
+            articlesToSync.forEach(article => {
+                // Check if commentCount is missing
+                if (article.commentCount === undefined) {
+                    (async () => {
+                        try {
+                            const data = await GitHubAPI.getFile(`news/article-comments-storage/${article.id}.json`);
+                            const count = data ? JSON.parse(data.content).length : 0;
+                            console.log(`Migrating article ${article.id}: setting count to ${count}`);
+                            await syncCommentCount(article.id, count);
+                        } catch (e) {
+                            // File might not exist, which means 0 comments
+                            console.log(`Migrating article ${article.id}: setting count to 0 (no comments file)`);
+                            await syncCommentCount(article.id, 0);
+                        }
+                    })();
+                }
+            });
+        }
+    });
 
     // Article Management Modal
     // Article Management Modal Logic
