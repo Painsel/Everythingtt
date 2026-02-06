@@ -72,6 +72,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (content) remoteNotifications = JSON.parse(content);
                     } catch (e) {}
 
+                    // 1. Avoid duplicate notifications for same type/user/article
+                    const isDuplicate = remoteNotifications.some(n => 
+                        n.type === type && 
+                        n.fromUser.id === user.id && 
+                        n.articleId === data.articleId &&
+                        (type !== 'reply' || n.commentId === data.commentId)
+                    );
+                    
+                    if (isDuplicate) {
+                        // Update timestamp of existing notification instead of adding new one
+                        const existingIndex = remoteNotifications.findIndex(n => 
+                            n.type === type && 
+                            n.fromUser.id === user.id && 
+                            n.articleId === data.articleId &&
+                            (type !== 'reply' || n.commentId === data.commentId)
+                        );
+                        if (existingIndex !== -1) {
+                            remoteNotifications[existingIndex].timestamp = new Date().toISOString();
+                            remoteNotifications[existingIndex].read = false;
+                            // Move to top
+                            const updatedNotif = remoteNotifications.splice(existingIndex, 1)[0];
+                            remoteNotifications.unshift(updatedNotif);
+                        }
+                        return JSON.stringify(remoteNotifications);
+                    }
+
                     const newNotif = {
                         id: GitHubAPI.generateID().toString(),
                         type: type,
@@ -89,8 +115,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     };
 
                     remoteNotifications.unshift(newNotif); // Newest first
-                    if (remoteNotifications.length > 5000) {
-                        remoteNotifications = remoteNotifications.slice(0, 5000);
+                    
+                    // 2. Limit notification storage to 100 items (more than enough for most users)
+                    if (remoteNotifications.length > 100) {
+                        remoteNotifications = remoteNotifications.slice(0, 100);
                     }
                     return JSON.stringify(remoteNotifications);
                 },
