@@ -104,20 +104,49 @@ window.GitHubAPI = {
 
     /**
      * Get repository info for a path.
-     * Always returns the main Everythingtt repository.
      */
     getRepoInfo(path) {
+        const storageFolders = [
+            'article-comments-storage',
+            'created-articles-storage',
+            'created-news-accounts-storage',
+            'notifications-storage'
+        ];
+        
+        const isStorage = storageFolders.some(folder => path.includes(folder));
+        
+        if (isStorage) {
+            return { owner: 'Painsel', repo: 'Everything-TT-Critical-Data' };
+        }
         return { owner: 'Painsel', repo: 'Everythingtt' };
     },
 
     getAPIURL(path) {
-        const { owner, repo } = this.getRepoInfo(path.replace('/contents/', ''));
-        return `https://api.github.com/repos/${owner}/${repo}${path}`;
+        let cleanPath = path.replace('/contents/', '');
+        const { owner, repo } = this.getRepoInfo(cleanPath);
+        
+        // If it's a storage path in the private repo, flatten it to the root
+        if (repo === 'Everything-TT-Critical-Data') {
+            // Remove 'news/' prefix and any storage folder name
+            cleanPath = cleanPath.replace(/^news\//, '');
+            cleanPath = cleanPath.replace(/^(article-comments|created-articles|created-news-accounts|notifications)-storage\//, '');
+        }
+        
+        return `https://api.github.com/repos/${owner}/${repo}/contents/${cleanPath}`;
     },
 
     getRawURL(path) {
-        const { owner, repo } = this.getRepoInfo(path);
-        return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
+        let cleanPath = path;
+        const { owner, repo } = this.getRepoInfo(cleanPath);
+        
+        // If it's a storage path in the private repo, flatten it to the root
+        if (repo === 'Everything-TT-Critical-Data') {
+            // Remove 'news/' prefix and any storage folder name
+            cleanPath = cleanPath.replace(/^news\//, '');
+            cleanPath = cleanPath.replace(/^(article-comments|created-articles|created-news-accounts|notifications)-storage\//, '');
+        }
+        
+        return `https://raw.githubusercontent.com/${owner}/${repo}/main/${cleanPath}`;
     },
 
     // Global request queues to serialize API calls per host/service
@@ -322,6 +351,15 @@ window.GitHubAPI = {
 
     async getFileRaw(path) {
         try {
+            const { repo } = this.getRepoInfo(path);
+            
+            // For private repo, use getFile() to ensure we go through the middleware with PAT
+            if (repo === 'Everything-TT-Critical-Data') {
+                const data = await this.getFile(path);
+                return data ? data.content : null;
+            }
+
+            // For public repo, direct raw fetch is faster and bypasses middleware queuing
             const url = this.getRawURL(path);
             const res = await fetch(`${url}?t=${Date.now()}`);
             if (res.ok) return await res.text();
