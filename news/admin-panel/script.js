@@ -1,7 +1,8 @@
 const user = JSON.parse(localStorage.getItem('current_user'));
+const DEVELOPER_ID = '382156063438888';
 
 // Top-level Security Check (Backup to inline check)
-if (!user || user.role !== 'admin') {
+if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {
     window.location.replace('../homepage/');
 }
 
@@ -92,13 +93,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingUserIp = ip;
         document.getElementById('actions-target-user').innerText = username;
         
-        // Update Make Admin tile based on current role
-        const acc = allAccounts.find(a => a.id === userId);
-        const label = document.getElementById('label-make-admin');
-        if (acc && acc.role === 'admin') {
-            label.innerText = 'Revoke Admin';
+        // Developer-only check for "Make Admin" tile
+        const DEVELOPER_ID = '382156063438888';
+        const makeAdminTile = document.getElementById('tile-make-admin');
+        
+        if (user.id !== DEVELOPER_ID) {
+            makeAdminTile.classList.add('hidden');
         } else {
-            label.innerText = 'Make Admin';
+            makeAdminTile.classList.remove('hidden');
+            // Update Make Admin tile based on current role
+            const acc = allAccounts.find(a => a.id === userId);
+            const label = document.getElementById('label-make-admin');
+            if (acc && acc.role === 'admin') {
+                label.innerText = 'Revoke Admin';
+            } else {
+                label.innerText = 'Make Admin';
+            }
         }
         
         accountActionsModal.classList.remove('hidden');
@@ -131,6 +141,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('tile-make-admin').onclick = async () => {
         accountActionsModal.classList.add('hidden');
+        
+        // Final security check: Only the developer can manage admin roles
+        const DEVELOPER_ID = '382156063438888';
+        if (user.id !== DEVELOPER_ID) {
+            alert('Unauthorized: Only the Developer can manage admin roles.');
+            return;
+        }
+
         const acc = allAccounts.find(a => a.id === currentEditingUserId);
         if (!acc) return;
 
