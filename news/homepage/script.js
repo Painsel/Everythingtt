@@ -112,14 +112,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== `${user.id}.json`);
             
-            const alts = [];
+            let alts = [];
             const ADMIN_ID = '382156063438888';
             const isUserAdmin = user.id === ADMIN_ID;
-            const limit = isUserAdmin ? Infinity : 3;
 
+            // Fetch ALL accounts with the same IP first
             for (const file of accountFiles) {
-                if (alts.length >= limit) break;
-
                 const content = await GitHubAPI.getFileRaw(file.path);
                 if (content) {
                     const acc = JSON.parse(content);
@@ -127,6 +125,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                         alts.push(acc);
                     }
                 }
+            }
+
+            // Enforce limits for non-admins
+            if (!isUserAdmin && alts.length > 3) {
+                console.warn(`[Security] Non-admin user ${user.username} has ${alts.length} alts. Enforcing limit of 3.`);
+                const toKeep = alts.slice(0, 3);
+                const toDelete = alts.slice(3);
+                
+                for (const extra of toDelete) {
+                    console.log(`[Security] Deleting extra alt account: ${extra.username} (${extra.id})`);
+                    await GitHubAPI.safeDeleteFile(
+                        `news/created-news-accounts-storage/${extra.id}.json`,
+                        `Security: Automatically removed extra alt account for IP enforcement (${extra.username})`
+                    );
+                }
+                alts = toKeep;
             }
 
             if (alts.length > 0) {
