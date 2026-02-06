@@ -2,7 +2,7 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.5.1',
+    version: '1.5.2',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (Multi-Repo Support)`);
@@ -328,7 +328,8 @@ window.GitHubAPI = {
         try {
             let content;
             if (!data.content && data.download_url) {
-                const rawRes = await fetch(`${data.download_url}?t=${Date.now()}`);
+                const sep = data.download_url.includes('?') ? '&' : '?';
+                const rawRes = await fetch(`${data.download_url}${sep}t=${Date.now()}`);
                 content = await rawRes.text();
             } else if (data.content) {
                 content = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
@@ -359,7 +360,8 @@ window.GitHubAPI = {
 
             // For public repo, direct raw fetch is faster and bypasses middleware queuing
             const url = this.getRawURL(path);
-            const res = await fetch(`${url}?t=${Date.now()}`);
+            const sep = url.includes('?') ? '&' : '?';
+            const res = await fetch(`${url}${sep}t=${Date.now()}`);
             if (res.ok) return await res.text();
             return null;
         } catch (e) {
