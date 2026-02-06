@@ -609,14 +609,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Update article: ${editTitle.value.trim()}`
             );
             
-            if (res.content) {
-                // Correctly decode UTF-8 content from GitHub response
-                const b64 = res.content.content.replace(/\s/g, '');
-                const jsonStr = decodeURIComponent(Array.prototype.map.call(atob(b64), function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                
-                const finalArticle = JSON.parse(jsonStr);
+            if (res.finalContent) {
+                const finalArticle = JSON.parse(res.finalContent);
                 
                 // Update local state
                 articleData[currentEditingArticleId] = finalArticle;
@@ -980,8 +974,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `${isRemoving ? 'Remove' : 'Add'} reaction ${emoji}`
             );
 
-            if (res.content) {
-                const finalArticle = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+            if (res.finalContent) {
+                const finalArticle = JSON.parse(res.finalContent);
                 articleData[articleId] = finalArticle;
                 articleSHAs[articleId] = res.content.sha;
                 updateReactionUI(finalArticle);
@@ -1476,8 +1470,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Delete comment ${commentId}`
             );
             
-            if (res.content && res.content.content) {
-                const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+            if (res.finalContent) {
+                const finalComments = JSON.parse(res.finalContent);
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
             } else {
@@ -1538,11 +1532,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Toggle pin on comment ${commentId}`
             );
             
-            if (res.content && res.content.content) {
-                const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+            if (res.finalContent) {
+                const finalComments = JSON.parse(res.finalContent);
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 
-                const pinnedComment = finalComments.find(c => c.id === commentId);
+                const pinnedComment = finalComments.find(c => String(c.id) === String(commentId));
                 if (pinnedComment && pinnedComment.pinned) {
                     const article = articleData[currentArticleIdForComments];
                     addNotification(pinnedComment.authorId, 'pin', {
@@ -1670,8 +1664,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     `Edit comment ${commentId}`
                 );
 
-                if (res.content && res.content.content) {
-                    const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+                if (res.finalContent) {
+                    const finalComments = JSON.parse(res.finalContent);
                     localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                     renderComments(finalComments);
                 }
@@ -1773,8 +1767,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Vote ${type} on comment ${commentId}`
             );
             
-            if (res.content && res.content.content) {
-                const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+            if (res.finalContent) {
+                const finalComments = JSON.parse(res.finalContent);
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
             }
@@ -1845,8 +1839,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `New comment on article ${currentArticleIdForComments}`
             );
 
-            if (res.content) {
-                const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+            if (res.finalContent) {
+                const finalComments = JSON.parse(res.finalContent);
                 commentsSHA = res.content.sha;
                 renderComments(finalComments);
 

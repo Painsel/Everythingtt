@@ -226,10 +226,12 @@ window.GitHubAPI = {
             const newContent = await transformFn(currentContent);
             
             if (newContent === currentContent && data) {
-                return { skipped: true, content: data, message: "No changes detected" };
+                return { skipped: true, content: data, message: "No changes detected", finalContent: currentContent };
             }
 
-            return await this.updateFile(path, newContent, message, data ? data.sha : null);
+            const res = await this.updateFile(path, newContent, message, data ? data.sha : null);
+            // Attach the final content to the response so callers don't try to parse it from the metadata
+            return { ...res, finalContent: newContent };
         });
     },
 
