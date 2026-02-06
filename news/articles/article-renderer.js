@@ -764,28 +764,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
 
-        // Process line by line for block-level elements
-        let lines = formatted.split('\n');
-        let processedLines = lines.map(line => {
-            // Headers: # Big Text
-            if (line.startsWith('# ')) {
-                return `<h1>${line.substring(2)}</h1>`;
-            }
-            // Quotes: > Quote
-            if (line.startsWith('&gt; ')) {
-                return `<blockquote>${line.substring(5)}</blockquote>`;
-            }
-            return line;
-        });
-
-        formatted = processedLines.join('\n');
-
-        // Inline elements
-        // Bold: **Text**
-        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Italic: *Text*
-        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Inline elements (before block elements to handle content within blocks)
         
         // Custom Colors: /color text
         const colors = ['red', 'blue', 'violet', 'yellow', 'green'];
@@ -793,6 +772,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             const regex = new RegExp(`/${color} (.*?)(?=\\s/|\\s$|$)`, 'g');
             formatted = formatted.replace(regex, `<span class="text-${color}">$1</span>`);
         });
+
+        // Bold: **Text**
+        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        
+        // Italic: *Text*
+        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Images: ![Alt](URL)
+        formatted = formatted.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="article-embedded-image">');
+
+        // Links: [Text](URL)
+        formatted = formatted.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="article-link">$1</a>');
+
+        // Horizontal Rules: ---
+        formatted = formatted.replace(/^---$/gm, '<hr class="article-divider">');
+
+        // Process line by line for block-level elements
+        let lines = formatted.split('\n');
+        let processedLines = lines.map(line => {
+            const trimmedLine = line.trim();
+            // Headers: # Big Text
+            if (trimmedLine.startsWith('# ')) {
+                return `<h1>${trimmedLine.substring(2)}</h1>`;
+            }
+            if (trimmedLine.startsWith('## ')) {
+                return `<h2>${trimmedLine.substring(3)}</h2>`;
+            }
+            if (trimmedLine.startsWith('### ')) {
+                return `<h3>${trimmedLine.substring(4)}</h3>`;
+            }
+            // Quotes: > Quote
+            if (trimmedLine.startsWith('&gt; ')) {
+                return `<blockquote>${trimmedLine.substring(5)}</blockquote>`;
+            }
+            // Bullet lists: - item or * item
+            if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('* ')) {
+                return `<li class="article-list-item">${trimmedLine.substring(2)}</li>`;
+            }
+            return line;
+        });
+
+        formatted = processedLines.join('\n');
 
         // Newlines to <br>
         formatted = formatted.replace(/\n/g, '<br>');

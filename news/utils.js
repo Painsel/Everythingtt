@@ -109,11 +109,28 @@ window.GitHubAPI = {
                 let base = this.middlewareURL;
                 if (!base.endsWith('/')) base += '/';
                 
-                let apiPath = path;
-                if (!path.startsWith('http')) {
-                    apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
+                let apiPath;
+                if (path.startsWith('http')) {
+                    // Only allow requests to the main repository
+                    const mainRepoPath = '/repos/Painsel/Everythingtt';
+                    const urlObj = new URL(path);
+                    apiPath = urlObj.pathname;
+                    
+                    if (!apiPath.startsWith(mainRepoPath)) {
+                        console.error(`Middleware restricted: Attempted to access non-main repo: ${apiPath}`);
+                        // Fallback to direct API for other repos if PAT exists, or throw
+                        if (pat) {
+                            url = path;
+                            headers['Authorization'] = `token ${pat}`;
+                            // Skip the middleware block
+                            return this._proceedWithFetch(url, options, method, body, retries, path);
+                        } else {
+                            throw new Error('Middleware is restricted to the main repository and no token is available for other repositories.');
+                        }
+                    }
                 } else {
-                    apiPath = path.replace('https://api.github.com', '');
+                    // It's a relative path like /contents/...
+                    apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
                 }
 
                 url = `${base}?path=${encodeURIComponent(apiPath)}`;
@@ -138,52 +155,56 @@ window.GitHubAPI = {
             const options = { method, headers };
             if (body) options.body = JSON.stringify(body);
 
-            try {
-                const response = await fetch(url, options);
-                
-                if (response.status === 409 && retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-                    
-                    if (method === 'PUT') {
-                        let relativePath = path;
-                        if (path.startsWith('http')) {
-                            const parts = path.split('/contents/');
-                            if (parts.length > 1) relativePath = parts[1];
-                        } else {
-                            relativePath = path.replace(/^\/contents\//, '').replace(/^contents\//, '');
-                        }
-
-                        const freshData = await this.getFile(relativePath);
-                        if (freshData && body) {
-                            body.sha = freshData.sha;
-                            return this.request(path, method, body, retries - 1);
-                        }
-                    }
-                    return this.request(path, method, body, retries - 1);
-                }
-
-                if (!response.ok) {
-                    let errorMessage = `API request failed with status ${response.status}`;
-                    try {
-                        const errorData = await response.json();
-                        errorMessage = errorData.message || errorMessage;
-                    } catch (e) {}
-                    
-                    const error = new Error(errorMessage);
-                    error.status = response.status;
-                    throw error;
-                }
-                return response.json();
-            } catch (e) {
-                if (e.status === 404 || e.status === 422) throw e;
-
-                if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    return this.request(path, method, body, retries - 1);
-                }
-                throw e;
-            }
+            return this._proceedWithFetch(url, options, method, body, retries, path);
         });
+    },
+
+    async _proceedWithFetch(url, options, method, body, retries, originalPath) {
+        try {
+            const response = await fetch(url, options);
+            
+            if (response.status === 409 && retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                
+                if (method === 'PUT') {
+                    let relativePath = originalPath;
+                    if (originalPath.startsWith('http')) {
+                        const parts = originalPath.split('/contents/');
+                        if (parts.length > 1) relativePath = parts[1];
+                    } else {
+                        relativePath = originalPath.replace(/^\/contents\//, '').replace(/^contents\//, '');
+                    }
+
+                    const freshData = await this.getFile(relativePath);
+                    if (freshData && body) {
+                        body.sha = freshData.sha;
+                        return this.request(originalPath, method, body, retries - 1);
+                    }
+                }
+                return this.request(originalPath, method, body, retries - 1);
+            }
+
+            if (!response.ok) {
+                let errorMessage = `API request failed with status ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {}
+                
+                const error = new Error(errorMessage);
+                error.status = response.status;
+                throw error;
+            }
+            return response.json();
+        } catch (e) {
+            if (e.status === 404 || e.status === 422) throw e;
+
+            if (retries > 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return this.request(originalPath, method, body, retries - 1);
+            }
+            throw e;
+        }
     },
 
     // A simple queue to serialize write operations per-file
