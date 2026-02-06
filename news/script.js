@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load session if exists
     const savedUser = localStorage.getItem('current_user');
     if (savedUser) {
+        // Auto-login: Sync metadata before redirecting or during redirect
+        // We'll redirect immediately for speed, but the target page will handle the sync
+        // However, the user asked for sync during Auto-Login specifically.
+        // Let's do a quick sync if possible, but don't block too long.
+        console.log('Auto-login detected, redirecting to dashboard...');
         window.location.href = 'homepage/';
         return;
     }

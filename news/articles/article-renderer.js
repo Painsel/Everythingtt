@@ -334,28 +334,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function pollUserProfile() {
         if (!user) return;
-        try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
-            if (data && data.sha !== userSHA) {
-                userSHA = data.sha;
-                const remoteUser = JSON.parse(data.content);
-                
-                // Update localStorage and UI if changed
-                const localUser = JSON.parse(localStorage.getItem('current_user'));
-                if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {
-                    localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                    
-                    // Update sidebar UI
-                    updateSideProfileWithStatus(remoteUser);
-                    
-                    // Update local user reference properties
-                    Object.assign(user, remoteUser);
-                    console.log('Profile updated from remote');
-                }
-            }
-        } catch (e) {
-            // Background polling - ignore errors
-        }
+        await GitHubAPI.syncUserProfile((remoteUser) => {
+            // Update local user reference properties
+            Object.assign(user, remoteUser);
+            
+            // Update sidebar UI
+            updateSideProfileWithStatus(remoteUser);
+            
+            console.log('Profile updated from remote');
+        });
     }
 
     // Load articles

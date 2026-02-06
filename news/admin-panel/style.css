@@ -1,0 +1,185 @@
+.admin-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+    background: #2f3136;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #40444b;
+}
+
+.admin-section {
+    background: #36393f;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid #40444b;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.search-box input {
+    background: #202225;
+    border: 1px solid #202225;
+    color: #dcddde;
+    padding: 8px 12px;
+    border-radius: 4px;
+    width: 300px;
+}
+
+.accounts-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.account-card {
+    background: #2f3136;
+    border: 1px solid #40444b;
+    border-radius: 6px;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.account-info-main {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.account-pfp {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.account-details h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.account-details p {
+    margin: 2px 0 0;
+    font-size: 0.85rem;
+    color: #b9bbbe;
+}
+
+.account-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    background: #4f545c;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-action:hover {
+    background: #686d73;
+}
+
+.btn-action.reset-ip {
+    background: #5865f2;
+}
+
+.btn-action.reset-ip:hover {
+    background: #4752c4;
+}
+
+.btn-action.change-pw {
+    background: #ed4245;
+}
+
+.btn-action.change-pw:hover {
+    background: #c03537;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: #36393f;
+    padding: 2rem;
+    border-radius: 8px;
+    width: 400px;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #b9bbbe;
+}
+
+.input-group {
+    margin: 1.5rem 0;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #b9bbbe;
+}
+
+.input-group input {
+    width: 100%;
+    background: #202225;
+    border: 1px solid #202225;
+    color: #dcddde;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-primary {
+    background: #5865f2;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.status-msg {
+    text-align: center;
+    color: #b9bbbe;
+    padding: 2rem;
+}

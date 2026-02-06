@@ -37,34 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function pollUserProfile() {
         if (!user) return;
-        try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
-            if (data && data.sha !== userSHA) {
-                userSHA = data.sha;
-                const remoteUser = JSON.parse(data.content);
-                
-                // Update localStorage and UI if changed
-                const localUser = JSON.parse(localStorage.getItem('current_user'));
-                if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {
-                    localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                    
-                    // Update UI elements
-                    document.getElementById('side-pfp').src = remoteUser.pfp;
-                    document.getElementById('side-username').innerText = remoteUser.username;
-                    
-                    // Update badge
-                    if (sideBadgeContainer) {
-                        sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(remoteUser.joinDate, 'user-badge side-badge');
-                    }
-                    
-                    // Update local user reference properties
-                    Object.assign(user, remoteUser);
-                    console.log('Profile updated from remote');
-                }
+        await GitHubAPI.syncUserProfile((remoteUser) => {
+            // Update local user reference properties
+            Object.assign(user, remoteUser);
+            
+            // Update UI elements
+            document.getElementById('side-pfp').src = remoteUser.pfp;
+            document.getElementById('side-username').innerText = remoteUser.username;
+            
+            // Update badge
+            if (sideBadgeContainer) {
+                sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(remoteUser.joinDate, 'user-badge side-badge');
             }
-        } catch (e) {
-            console.error('Profile polling failed:', e);
-        }
+            
+            console.log('Profile updated from remote');
+        });
     }
 
     pollUserProfile(); // Initial check

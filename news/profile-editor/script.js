@@ -86,26 +86,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         icon.style.backgroundImage = `url('${iconUrl}')`;
     }
 
-    updateUI(currentUser);
-    checkIP(); // Initial IP check
+    // Initial check and background sync
+    checkIP(); 
     setInterval(checkIP, 60000); // Check IP every 60s
 
-    // Fetch latest SHA for updates
-    try {
-        const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${currentUser.id}.json`);
-        if (data) {
-            userSha = data.sha;
-            // Optionally update local user if remote changed
-            const remoteUser = JSON.parse(data.content);
-            if (JSON.stringify(remoteUser) !== JSON.stringify(currentUser)) {
-                currentUser = remoteUser;
-                localStorage.setItem('current_user', JSON.stringify(currentUser));
-                updateUI(currentUser);
-            }
-        }
-    } catch (e) {
-        console.warn('Could not fetch remote profile SHA:', e);
+    // Background profile sync
+    async function pollUserProfile() {
+        await GitHubAPI.syncUserProfile((remoteUser) => {
+            currentUser = remoteUser;
+            updateUI(currentUser);
+            console.log('Profile synced in editor background');
+        });
     }
+    
+    // Initial sync
+    pollUserProfile();
+    // Poll every 30s
+    setInterval(pollUserProfile, 30000);
 
     const btnSave = document.getElementById('btn-save-profile');
     const btnLogout = document.getElementById('btn-logout');

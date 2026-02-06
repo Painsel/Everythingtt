@@ -2,7 +2,7 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.4.0',
+    version: '1.4.1',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (Main Repo Only)`);
@@ -10,8 +10,39 @@ window.GitHubAPI = {
     cachedPAT: null,
     _loadingPAT: null, // Promise lock for concurrent getPAT calls
     middlewareURL: null, // Set this to use a Vercel middleware instead of direct GitHub API calls
+    _userSHA: null, // Store current user's SHA globally
     
-    // Fetches the Main PAT or Middleware URL from JSONBin
+    /**
+     * Synchronize the current user's profile metadata from remote storage.
+     * @param {Function} onUpdate Optional callback when data is updated
+     */
+    async syncUserProfile(onUpdate = null) {
+        const localUserStr = localStorage.getItem('current_user');
+        if (!localUserStr) return null;
+        
+        try {
+            const localUser = JSON.parse(localUserStr);
+            const data = await this.getFile(`news/created-news-accounts-storage/${localUser.id}.json`);
+            
+            if (data) {
+                this._userSHA = data.sha;
+                const remoteUser = JSON.parse(data.content);
+                remoteUser.sha = data.sha; // Preserve SHA
+
+                // Compare and update if changed
+                if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {
+                    localStorage.setItem('current_user', JSON.stringify(remoteUser));
+                    console.log(`[GitHubAPI] Profile metadata synced for ${remoteUser.username}`);
+                    if (onUpdate) onUpdate(remoteUser);
+                    return remoteUser;
+                }
+                return localUser;
+            }
+        } catch (e) {
+            console.error('[GitHubAPI] Profile sync failed:', e);
+        }
+        return null;
+    },
     async getPAT() {
         if (this.cachedPAT) return this.cachedPAT;
         if (this._loadingPAT) return this._loadingPAT;

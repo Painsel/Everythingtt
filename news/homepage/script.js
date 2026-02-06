@@ -93,6 +93,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateStats(user);
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
 
+    // Show admin panel if user is admin
+    if (user.id === '382156063438888') {
+        const adminNavItem = document.getElementById('admin-nav-item');
+        if (adminNavItem) adminNavItem.classList.remove('hidden');
+    }
+
     // Perform initial IP check
     await checkIP();
 
@@ -102,29 +108,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function pollUserProfile() {
         if (!user) return;
-        try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
-            if (data) {
-                userSHA = data.sha;
-                const remoteUser = JSON.parse(data.content);
-                remoteUser.sha = data.sha; // Preserve SHA for exit tracking
+        await GitHubAPI.syncUserProfile((remoteUser) => {
+            // Update local user reference
+            Object.assign(user, remoteUser);
 
-                // Update localStorage and UI if changed
-                localStorage.setItem('current_user', JSON.stringify(remoteUser));
-                
-                // Update local user reference
-                Object.assign(user, remoteUser);
-
-                // Update UI elements with fresh data
-                updateUIWithStatus(remoteUser);
-                updateStats(remoteUser);
-                document.getElementById('welcome-title').innerText = `Welcome back, ${remoteUser.username}!`;
-                
-                console.log('Account data synced from remote');
-            }
-        } catch (e) {
-            // Profile sync failure - ignore
-        }
+            // Update UI elements with fresh data
+            updateUIWithStatus(remoteUser);
+            updateStats(remoteUser);
+            document.getElementById('welcome-title').innerText = `Welcome back, ${remoteUser.username}!`;
+            
+            console.log('Account data synced from remote');
+        });
     }
 
     async function pollNotifications() {

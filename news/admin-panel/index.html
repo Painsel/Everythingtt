@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverythingTT - Admin Panel</title>
+    <script>
+        // Immediate security check before page render
+        (function() {
+            const ADMIN_ID = '382156063438888';
+            try {
+                const user = JSON.parse(localStorage.getItem('current_user'));
+                if (!user || user.id !== ADMIN_ID) {
+                    window.location.replace('../homepage/');
+                }
+            } catch (e) {
+                window.location.replace('../homepage/');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container admin-container">
+        <aside class="sidebar">
+            <div id="logged-in-user" class="user-info">
+                <div class="side-pfp-wrapper">
+                    <img id="side-pfp" src="" alt="PFP">
+                    <div id="side-status-icon" class="status-icon"></div>
+                </div>
+                <div class="side-user-details">
+                    <div class="side-username-row">
+                        <span id="side-username"></span>
+                    </div>
+                </div>
+            </div>
+            <nav>
+                <a href="../homepage/" class="nav-item">Dashboard</a>
+                <a href="#" class="nav-item active" id="nav-accounts">Accounts</a>
+            </nav>
+            <button id="btn-logout" class="logout-btn">Logout</button>
+        </aside>
+
+        <main class="content">
+            <header class="admin-header">
+                <div class="header-left">
+                    <h1>Admin Panel</h1>
+                    <p>Manage users and system settings.</p>
+                </div>
+            </header>
+
+            <section id="accounts-section" class="admin-section">
+                <div class="section-header">
+                    <h3>User Accounts</h3>
+                    <div class="search-box">
+                        <input type="text" id="account-search" placeholder="Search by Username or ID...">
+                    </div>
+                </div>
+                <div id="accounts-list" class="accounts-list">
+                    <p class="status-msg">Loading accounts...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals for Reset IP and Change Password -->
+    <div id="reset-ip-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Reset Allowed IP</h3>
+            <p>Target User: <span id="ip-target-user" style="font-weight: bold;"></span></p>
+            <div class="input-group">
+                <label for="new-ip">New Allowed IP (Leave empty to clear):</label>
+                <input type="text" id="new-ip" placeholder="e.g. 192.168.1.1">
+            </div>
+            <div class="modal-actions">
+                <button id="btn-confirm-ip" class="btn-primary">Update IP</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="change-pw-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Change Password</h3>
+            <p>Target User: <span id="pw-target-user" style="font-weight: bold;"></span></p>
+            <div class="input-group">
+                <label for="new-pw">New Password:</label>
+                <input type="password" id="new-pw" placeholder="Enter new password">
+            </div>
+            <div class="modal-actions">
+                <button id="btn-confirm-pw" class="btn-primary">Change Password</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../utils.js?v=1.4.1"></script>
+    <script src="script.js?v=1.0.0"></script>
+</body>
+</html>
