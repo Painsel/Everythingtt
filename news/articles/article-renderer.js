@@ -1215,9 +1215,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const replies = !isReply ? getReplies(c.id) : [];
             const upvotes = (c.votes && c.votes.up) ? c.votes.up.length : 0;
             const downvotes = (c.votes && c.votes.down) ? c.votes.down.length : 0;
-            const userUpvoted = user && c.votes && c.votes.up && c.votes.up.includes(user.id);
-            const userDownvoted = user && c.votes && c.votes.down && c.votes.down.includes(user.id);
-            const isCommentOwner = user && c.authorId === user.id;
+            const userUpvoted = user && c.votes && c.votes.up && c.votes.up.map(id => String(id)).includes(String(user.id));
+            const userDownvoted = user && c.votes && c.votes.down && c.votes.down.map(id => String(id)).includes(String(user.id));
+            const isCommentOwner = user && String(c.authorId) === String(user.id);
 
             return `
                 <div class="comment-thread">
@@ -1248,24 +1248,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="comment-actions">
                             <div class="comment-votes">
-                                <button class="vote-btn upvote ${userUpvoted ? 'upvoted' : ''}" onclick="handleCommentVote('${c.id}', 'up')">
+                                <button class="vote-btn upvote ${userUpvoted ? 'upvoted' : ''}" onclick="window.handleCommentVote('${c.id}', 'up')">
                                     ▲ <span class="vote-count">${upvotes}</span>
                                 </button>
-                                <button class="vote-btn downvote ${userDownvoted ? 'downvoted' : ''}" onclick="handleCommentVote('${c.id}', 'down')">
+                                <button class="vote-btn downvote ${userDownvoted ? 'downvoted' : ''}" onclick="window.handleCommentVote('${c.id}', 'down')">
                                     ▼ <span class="vote-count">${downvotes}</span>
                                 </button>
                             </div>
-                            <span class="action-link" onclick="setupReply('${c.id}', '${c.authorName}')">Reply</span>
+                            <span class="action-link" onclick="window.setupReply('${c.id}', '${c.authorName}')">Reply</span>
                             ${isArticleAuthor ? `
-                                <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="togglePinComment('${c.id}')">
+                                <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="window.togglePinComment('${c.id}')">
                                     ${c.pinned ? 'Unpin' : 'Pin'}
                                 </span>
                             ` : ''}
                             ${(isArticleAuthor || isCommentOwner) ? `
-                                <span class="action-link delete-comment-btn" onclick="handleDeleteComment('${c.id}')">Delete</span>
+                                <span class="action-link delete-comment-btn" onclick="window.handleDeleteComment('${c.id}')">Delete</span>
                             ` : ''}
                             ${isCommentOwner ? `
-                                <span class="action-link edit-comment-btn" onclick="setupEditComment('${c.id}')">Edit</span>
+                                <span class="action-link edit-comment-btn" onclick="window.setupEditComment('${c.id}')">Edit</span>
                             ` : ''}
                         </div>
                     </div>
@@ -1368,20 +1368,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (content) => {
                     if (!content) return "";
                     let comments = JSON.parse(content);
-                    const index = comments.findIndex(c => c.id === commentId);
+                    const index = comments.findIndex(c => String(c.id) === String(commentId));
                     if (index === -1) return content;
                     
                     const commentToDelete = comments[index];
                     const article = articleData[currentArticleIdForComments];
-                    const isArticleAuthor = user && article && article.authorId === user.id;
-                    const isCommentOwner = user && commentToDelete.authorId === user.id;
+                    const isArticleAuthor = user && article && String(article.authorId) === String(user.id);
+                    const isCommentOwner = user && String(commentToDelete.authorId) === String(user.id);
 
                     if (!isArticleAuthor && !isCommentOwner) {
                         throw new Error('You do not have permission to delete this comment.');
                     }
 
                     // Remove the comment and all its replies
-                    const updatedComments = comments.filter(c => c.id !== commentId && c.replyToId !== commentId);
+                    const updatedComments = comments.filter(c => String(c.id) !== String(commentId) && String(c.replyToId) !== String(commentId));
                     return JSON.stringify(updatedComments);
                 },
                 `Delete comment ${commentId}`
@@ -1417,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
         const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup
         
-        const commentToPin = cachedComments.find(c => c.id === commentId);
+        const commentToPin = cachedComments.find(c => String(c.id) === String(commentId));
         if (commentToPin) {
             const isCurrentlyPinned = commentToPin.pinned;
             if (!isCurrentlyPinned) {
@@ -1436,7 +1436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (content) => {
                     if (!content) return "";
                     let comments = JSON.parse(content);
-                    const comment = comments.find(c => c.id === commentId);
+                    const comment = comments.find(c => String(c.id) === String(commentId));
                     if (!comment) return content;
                     
                     const isCurrentlyPinned = comment.pinned;
@@ -1604,37 +1604,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!user) return alert('You must be logged in to vote');
         
         // --- OPTIMISTIC UPDATE ---
-        const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+        const cachedCommentsStr = localStorage.getItem(`comments_${currentArticleIdForComments}`);
+        if (!cachedCommentsStr) return; // Should not happen if UI is showing comments
+
+        const cachedComments = JSON.parse(cachedCommentsStr);
         const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup
         
-        const commentToVote = cachedComments.find(c => c.id === commentId);
+        // Use loose comparison or string conversion for IDs
+        const commentToVote = cachedComments.find(c => String(c.id) === String(commentId));
         if (commentToVote) {
             if (!commentToVote.votes) commentToVote.votes = { up: [], down: [] };
             if (!commentToVote.votes.up) commentToVote.votes.up = [];
             if (!commentToVote.votes.down) commentToVote.votes.down = [];
 
-            const upIndex = commentToVote.votes.up.indexOf(user.id);
-            const downIndex = commentToVote.votes.down.indexOf(user.id);
+            // Ensure all IDs in the arrays are strings for comparison
+            const userIdStr = String(user.id);
+            const upIndex = commentToVote.votes.up.map(id => String(id)).indexOf(userIdStr);
+            const downIndex = commentToVote.votes.down.map(id => String(id)).indexOf(userIdStr);
 
             if (type === 'up') {
                 if (upIndex > -1) {
                     commentToVote.votes.up.splice(upIndex, 1);
                 } else {
-                    commentToVote.votes.up.push(user.id);
+                    commentToVote.votes.up.push(userIdStr);
                     if (downIndex > -1) commentToVote.votes.down.splice(downIndex, 1);
                 }
             } else if (type === 'down') {
                 if (downIndex > -1) {
                     commentToVote.votes.down.splice(downIndex, 1);
                 } else {
-                    commentToVote.votes.down.push(user.id);
+                    commentToVote.votes.down.push(userIdStr);
                     if (upIndex > -1) commentToVote.votes.up.splice(upIndex, 1);
                 }
             }
             
             // Apply immediate UI change
-            localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(cachedComments));
-            renderComments(cachedComments);
+            try {
+                localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(cachedComments));
+                renderComments(cachedComments);
+            } catch (renderError) {
+                console.error('Optimistic render failed:', renderError);
+            }
         }
 
         try {
@@ -1643,28 +1653,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (content) => {
                     if (!content) return "";
                     let comments = JSON.parse(content);
-                    const comment = comments.find(c => c.id === commentId);
+                    const comment = comments.find(c => String(c.id) === String(commentId));
                     if (!comment) return content;
                     
                     if (!comment.votes) comment.votes = { up: [], down: [] };
                     if (!comment.votes.up) comment.votes.up = [];
                     if (!comment.votes.down) comment.votes.down = [];
 
-                    const upIndex = comment.votes.up.indexOf(user.id);
-                    const downIndex = comment.votes.down.indexOf(user.id);
+                    const userIdStr = String(user.id);
+                    const upIndex = comment.votes.up.map(id => String(id)).indexOf(userIdStr);
+                    const downIndex = comment.votes.down.map(id => String(id)).indexOf(userIdStr);
 
                     if (type === 'up') {
                         if (upIndex > -1) {
                             comment.votes.up.splice(upIndex, 1);
                         } else {
-                            comment.votes.up.push(user.id);
+                            comment.votes.up.push(userIdStr);
                             if (downIndex > -1) comment.votes.down.splice(downIndex, 1);
                         }
                     } else if (type === 'down') {
                         if (downIndex > -1) {
                             comment.votes.down.splice(downIndex, 1);
                         } else {
-                            comment.votes.down.push(user.id);
+                            comment.votes.down.push(userIdStr);
                             if (upIndex > -1) comment.votes.up.splice(upIndex, 1);
                         }
                     }
