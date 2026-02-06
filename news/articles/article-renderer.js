@@ -1387,10 +1387,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Delete comment ${commentId}`
             );
             
-            if (res.content) {
+            if (res.content && res.content.content) {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
+            } else {
+                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                renderComments(cachedComments);
             }
         } catch (e) {
             console.error('Delete comment failed:', e);
@@ -1541,10 +1544,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 );
 
                 currentEditingCommentId = null;
-                if (res.content) {
+                if (res.content && res.content.content) {
                     const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
                     localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                     renderComments(finalComments);
+                } else if (res.skipped) {
+                    const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                    renderComments(cachedComments);
+                } else {
+                    // Fallback: reload comments if format is unexpected but write was successful
+                    const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                    renderComments(cachedComments);
                 }
             } catch (e) {
                 alert('Failed to save edit: ' + e.message);
@@ -1593,10 +1603,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Vote ${type} on comment ${commentId}`
             );
             
-            if (res.content) {
+            if (res.content && res.content.content) {
                 const finalComments = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
+            } else {
+                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                renderComments(cachedComments);
             }
         } catch (e) {
             console.error('Vote failed:', e);

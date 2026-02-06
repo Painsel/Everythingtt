@@ -550,7 +550,7 @@ window.GitHubAPI = {
             const newContent = await transformFn(currentContent);
             
             if (newContent === currentContent && data) {
-                return { skipped: true, message: "No changes detected" };
+                return { skipped: true, content: data, message: "No changes detected" };
             }
 
             // Determine if the SHA is valid for the target repository
