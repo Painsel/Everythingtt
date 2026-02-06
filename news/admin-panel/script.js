@@ -1,8 +1,7 @@
-const ADMIN_ID = '382156063438888';
 const user = JSON.parse(localStorage.getItem('current_user'));
 
 // Top-level Security Check (Backup to inline check)
-if (!user || user.id !== ADMIN_ID) {
+if (!user || user.role !== 'admin') {
     window.location.replace('../homepage/');
 }
 
@@ -65,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="account-info-main">
                     <img src="${acc.pfp}" class="account-pfp">
                     <div class="account-details">
-                        <h4>${acc.username}</h4>
+                        <h4>${acc.username} ${acc.role === 'admin' ? '<span class="admin-badge">ADMIN</span>' : ''}</h4>
                         <p>ID: ${acc.id} | IP: ${acc.allowedIp || 'None'}</p>
                     </div>
                 </div>
@@ -92,6 +91,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingUsername = username;
         currentEditingUserIp = ip;
         document.getElementById('actions-target-user').innerText = username;
+        
+        // Update Make Admin tile based on current role
+        const acc = allAccounts.find(a => a.id === userId);
+        const label = document.getElementById('label-make-admin');
+        if (acc && acc.role === 'admin') {
+            label.innerText = 'Revoke Admin';
+        } else {
+            label.innerText = 'Make Admin';
+        }
+        
         accountActionsModal.classList.remove('hidden');
     };
 
@@ -118,6 +127,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('tile-get-info').onclick = () => {
         accountActionsModal.classList.add('hidden');
         openAccountInfo(currentEditingUserId);
+    };
+
+    document.getElementById('tile-make-admin').onclick = async () => {
+        accountActionsModal.classList.add('hidden');
+        const acc = allAccounts.find(a => a.id === currentEditingUserId);
+        if (!acc) return;
+
+        const isCurrentlyAdmin = acc.role === 'admin';
+        const actionText = isCurrentlyAdmin ? 'revoke admin rights from' : 'make';
+        const confirmMsg = isCurrentlyAdmin 
+            ? `Are you sure you want to revoke admin rights from ${currentEditingUsername}?`
+            : `Are you sure you want to make ${currentEditingUsername} an admin?`;
+
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const btn = document.getElementById('tile-make-admin');
+            btn.disabled = true;
+
+            await GitHubAPI.safeUpdateFile(
+                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                (content) => {
+                    const account = JSON.parse(content);
+                    account.role = isCurrentlyAdmin ? 'user' : 'admin';
+                    return JSON.stringify(account);
+                },
+                `Admin: ${isCurrentlyAdmin ? 'Revoked' : 'Granted'} admin rights for ${currentEditingUsername}`
+            );
+
+            alert(`Admin rights ${isCurrentlyAdmin ? 'revoked' : 'granted'} successfully.`);
+            loadAccounts();
+        } catch (e) {
+            alert('Failed to update admin rights: ' + e.message);
+        } finally {
+            document.getElementById('tile-make-admin').disabled = false;
+        }
     };
 
     document.getElementById('tile-force-logout').onclick = async () => {

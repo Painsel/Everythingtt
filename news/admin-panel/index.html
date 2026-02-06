@@ -7,10 +7,9 @@
     <script>
         // Immediate security check before page render
         (function() {
-            const ADMIN_ID = '382156063438888';
             try {
                 const user = JSON.parse(localStorage.getItem('current_user'));
-                if (!user || user.id !== ADMIN_ID) {
+                if (!user || user.role !== 'admin') {
                     window.location.replace('../homepage/');
                 }
             } catch (e) {
@@ -152,6 +151,10 @@
                     <span class="tile-icon">ℹ️</span>
                     <span class="tile-label">Get Info</span>
                 </button>
+                <button class="action-tile make-admin" id="tile-make-admin">
+                    <span class="tile-icon">🛡️</span>
+                    <span class="tile-label" id="label-make-admin">Make Admin</span>
+                </button>
             </div>
         </div>
     </div>
@@ -183,7 +186,7 @@
         </div>
     </div>
 
-    <script src="../utils.js?v=1.5.4"></script>
-    <script src="script.js?v=1.0.2"></script>
+    <script src="../utils.js?v=1.5.5"></script>
+    <script src="script.js?v=1.0.3"></script>
 </body>
 </html>
