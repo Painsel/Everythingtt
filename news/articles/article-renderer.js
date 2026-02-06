@@ -870,8 +870,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             displayContent = formatArticleContent(article.content);
         }
 
+        // Slideshow logic for banner
+        const banners = Array.isArray(article.banner) ? article.banner : [article.banner || 'https://via.placeholder.com/400x150'];
+        let bannerHTML = '';
+        if (banners.length > 1) {
+            bannerHTML = `
+                <div class="article-banner slideshow" id="slideshow-${article.id}">
+                    ${banners.map((b, i) => `
+                        <div class="slide ${i === 0 ? 'active' : ''}" style="background-image: ${b.startsWith('#') ? 'none' : `url(${b})`}; background-color: ${b.startsWith('#') ? b : 'transparent'}"></div>
+                    `).join('')}
+                    <div class="slideshow-nav">
+                        <button class="ss-prev">❮</button>
+                        <div class="ss-dots">
+                            ${banners.map((_, i) => `<span class="ss-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
+                        </div>
+                        <button class="ss-next">❯</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            const b = banners[0];
+            bannerHTML = `<div class="article-banner" style="background-image: ${b.startsWith('#') ? 'none' : `url(${b})`}; background-color: ${b.startsWith('#') ? b : 'transparent'}"></div>`;
+        }
+
         card.innerHTML = `
-            <div class="article-banner" style="background-image: url(${article.banner || 'https://via.placeholder.com/400x150'})"></div>
+            ${bannerHTML}
             <div class="article-info">
                 ${(user && user.id === article.authorId) ? `
                     <div class="article-settings-trigger" title="Article Settings" data-article-id="${article.id}">
@@ -911,6 +934,47 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `;
+
+        // Initialize slideshow events if multiple banners
+        if (banners.length > 1) {
+            let currentIndex = 0;
+            const slides = card.querySelectorAll('.slide');
+            const dots = card.querySelectorAll('.ss-dot');
+
+            const showSlide = (index) => {
+                slides.forEach(s => s.classList.remove('active'));
+                dots.forEach(d => d.classList.remove('active'));
+                slides[index].classList.add('active');
+                dots[index].classList.add('active');
+                currentIndex = index;
+            };
+
+            card.querySelector('.ss-prev').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showSlide((currentIndex - 1 + banners.length) % banners.length);
+            });
+
+            card.querySelector('.ss-next').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showSlide((currentIndex + 1) % banners.length);
+            });
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showSlide(parseInt(dot.dataset.index));
+                });
+            });
+
+            // Auto-advance slideshow every 5 seconds
+            const autoSlide = setInterval(() => {
+                if (!document.contains(card)) {
+                    clearInterval(autoSlide);
+                    return;
+                }
+                showSlide((currentIndex + 1) % banners.length);
+            }, 5000);
+        }
 
         // Settings trigger
         const settingsBtn = card.querySelector('.article-settings-trigger');

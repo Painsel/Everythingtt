@@ -61,10 +61,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPublish = document.getElementById('btn-publish');
     const bannerFileInput = document.getElementById('article-banner-file');
     const bannerPreviewContainer = document.getElementById('banner-preview-container');
-    const bannerPreview = document.getElementById('banner-preview');
+    const slideshowPreview = document.getElementById('banner-slideshow-preview');
+    const bannerCountText = document.getElementById('banner-count');
+    const btnPrevBanner = document.getElementById('btn-prev-banner');
+    const btnNextBanner = document.getElementById('btn-next-banner');
     const btnRemoveBanner = document.getElementById('btn-remove-banner');
 
-    let currentBannerBase64 = '';
+    let currentBannersBase64 = [];
+    let currentSlideshowIndex = 0;
 
     const TITLE_LIMIT = 50;
     const CONTENT_LIMIT = 3000;
@@ -106,46 +110,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateSlideshowPreview() {
+        slideshowPreview.innerHTML = '';
+        if (currentBannersBase64.length === 0) {
+            bannerPreviewContainer.classList.add('hidden');
+            return;
+        }
+
+        currentBannersBase64.forEach((base64, index) => {
+            const img = document.createElement('img');
+            img.src = base64;
+            if (index === currentSlideshowIndex) img.classList.add('active');
+            slideshowPreview.appendChild(img);
+        });
+
+        bannerCountText.innerText = `${currentSlideshowIndex + 1} / ${currentBannersBase64.length}`;
+        bannerPreviewContainer.classList.remove('hidden');
+    }
+
+    btnPrevBanner.addEventListener('click', () => {
+        if (currentBannersBase64.length <= 1) return;
+        currentSlideshowIndex = (currentSlideshowIndex - 1 + currentBannersBase64.length) % currentBannersBase64.length;
+        updateSlideshowPreview();
+    });
+
+    btnNextBanner.addEventListener('click', () => {
+        if (currentBannersBase64.length <= 1) return;
+        currentSlideshowIndex = (currentSlideshowIndex + 1) % currentBannersBase64.length;
+        updateSlideshowPreview();
+    });
+
     // Banner handling
     bannerFileInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (file) {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
             const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
-            if (file.size > MAX_SIZE) {
-                alert('Banner image is too large (max 2MB)');
-                bannerFileInput.value = '';
-                return;
-            }
-            if (file.type === 'image/gif') {
-                alert('GIFs are not allowed for Article Banners');
-                bannerFileInput.value = '';
-                return;
-            }
-
+            
             try {
                 btnPublish.disabled = true;
-                btnPublish.innerText = 'Processing Image...';
+                btnPublish.innerText = 'Processing Images...';
                 
-                // Allow larger banners for higher quality
-                currentBannerBase64 = await optimizeImage(file, 1920, 1080);
-                bannerPreview.src = currentBannerBase64;
-                bannerPreviewContainer.classList.remove('hidden');
-                
-                updateCounters();
+                const newBanners = [];
+                for (const file of files) {
+                    if (file.size > MAX_SIZE) {
+                        alert(`Image "${file.name}" is too large (max 2MB)`);
+                        continue;
+                    }
+                    if (file.type === 'image/gif') {
+                        alert(`GIFs are not allowed: "${file.name}"`);
+                        continue;
+                    }
+                    const base64 = await optimizeImage(file, 1920, 1080);
+                    newBanners.push(base64);
+                }
+
+                if (newBanners.length > 0) {
+                    currentBannersBase64 = [...currentBannersBase64, ...newBanners];
+                    currentSlideshowIndex = currentBannersBase64.length - newBanners.length;
+                    updateSlideshowPreview();
+                }
             } catch (err) {
                 console.error('Banner processing failed:', err);
                 alert('Failed to process image');
             } finally {
                 btnPublish.innerText = 'Publish Article';
+                updateCounters();
             }
         }
     });
 
     btnRemoveBanner.addEventListener('click', () => {
-        currentBannerBase64 = '';
+        currentBannersBase64 = [];
+        currentSlideshowIndex = 0;
         bannerFileInput.value = '';
-        bannerPreviewContainer.classList.add('hidden');
-        bannerPreview.src = '';
+        updateSlideshowPreview();
     });
 
     // Weighted count logic: Markdown counts for 2 characters per character
@@ -197,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnPublish.addEventListener('click', async () => {
         const title = titleInput.value;
-        const banner = currentBannerBase64 || '#7289da'; // Fallback to default color if no banner
+        const banner = currentBannersBase64.length > 0 ? currentBannersBase64 : ['#7289da']; // Store array of banners or fallback color
         const content = contentInput.value;
 
         const titleCount = calculateCount(title, false);

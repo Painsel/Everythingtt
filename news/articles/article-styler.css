@@ -221,6 +221,90 @@
     height: 150px;
     background-size: cover;
     background-position: center;
+    background-color: #18191c;
+    position: relative;
+}
+
+.article-banner.slideshow {
+    overflow: hidden;
+}
+
+.article-banner .slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.article-banner .slide.active {
+    opacity: 1;
+}
+
+.slideshow-nav {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.article-banner:hover .slideshow-nav {
+    opacity: 1;
+}
+
+.ss-prev, .ss-next {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    pointer-events: auto;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+}
+
+.ss-prev:hover, .ss-next:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.ss-dots {
+    display: flex;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 4px 8px;
+    border-radius: 10px;
+    pointer-events: auto;
+}
+
+.ss-dot {
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.ss-dot:hover {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(1.2);
+}
+
+.ss-dot.active {
+    background: white;
+    transform: scale(1.2);
 }
 
 .article-info {

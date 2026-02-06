@@ -36,12 +36,17 @@
                 
                 <div class="banner-upload-container">
                     <label for="article-banner-file" class="upload-label">
-                        <span>Upload Article Banner</span>
-                        <input type="file" id="article-banner-file" accept="image/jpeg,image/png,image/webp">
-                        <small class="limit-hint">Max 2MB, no GIFs</small>
+                        <span>Upload Article Banners (Slideshow)</span>
+                        <input type="file" id="article-banner-file" accept="image/jpeg,image/png,image/webp" multiple>
+                        <small class="limit-hint">Max 2MB per image, no GIFs</small>
                     </label>
                     <div id="banner-preview-container" class="hidden">
-                        <img id="banner-preview" src="" alt="Banner Preview">
+                        <div id="banner-slideshow-preview" class="slideshow-preview"></div>
+                        <div class="slideshow-controls">
+                            <button id="btn-prev-banner" class="slideshow-btn">❮</button>
+                            <span id="banner-count">0 / 0</span>
+                            <button id="btn-next-banner" class="slideshow-btn">❯</button>
+                        </div>
                         <button id="btn-remove-banner">×</button>
                     </div>
                 </div>
