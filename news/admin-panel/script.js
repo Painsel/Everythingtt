@@ -19,10 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const changePwModal = document.getElementById('change-pw-modal');
     const deleteAccountModal = document.getElementById('delete-account-modal');
     const banIpModal = document.getElementById('ban-ip-modal');
+    const accountActionsModal = document.getElementById('account-actions-modal');
     const closeModals = document.querySelectorAll('.close-modal');
     
     let allAccounts = [];
     let currentEditingUserId = null;
+    let currentEditingUsername = null;
+    let currentEditingUserIp = null;
 
     // Fetch all accounts
     async function loadAccounts() {
@@ -66,15 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
                 <div class="account-actions">
-                    <div class="options-dropdown">
-                        <button class="btn-options" onclick="toggleDropdown(event, '${acc.id}')">Options</button>
-                        <div id="dropdown-${acc.id}" class="dropdown-menu">
-                            <button class="dropdown-item" onclick="openResetIp('${acc.id}', '${acc.username}')">Reset IP</button>
-                            <button class="dropdown-item" onclick="openBanIp('${acc.id}', '${acc.username}', '${acc.allowedIp || ''}')">Ban IP</button>
-                            <button class="dropdown-item" onclick="openChangePw('${acc.id}', '${acc.username}')">Change Password</button>
-                            <button class="dropdown-item danger" onclick="openDeleteAccount('${acc.id}', '${acc.username}')">Delete Account</button>
-                        </div>
-                    </div>
+                    <button class="btn-options" onclick="openAccountActions('${acc.id}', '${acc.username}', '${acc.allowedIp || ''}')">Options</button>
                 </div>
             </div>
         `).join('');
@@ -91,6 +86,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Modal logic
+    window.openAccountActions = (userId, username, ip) => {
+        currentEditingUserId = userId;
+        currentEditingUsername = username;
+        currentEditingUserIp = ip;
+        document.getElementById('actions-target-user').innerText = username;
+        accountActionsModal.classList.remove('hidden');
+    };
+
+    document.getElementById('tile-reset-ip').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        openResetIp(currentEditingUserId, currentEditingUsername);
+    };
+
+    document.getElementById('tile-ban-ip').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        openBanIp(currentEditingUserId, currentEditingUsername, currentEditingUserIp);
+    };
+
+    document.getElementById('tile-change-pw').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        openChangePw(currentEditingUserId, currentEditingUsername);
+    };
+
+    document.getElementById('tile-delete-acc').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        openDeleteAccount(currentEditingUserId, currentEditingUsername);
+    };
+
     window.openResetIp = (userId, username) => {
         currentEditingUserId = userId;
         document.getElementById('ip-target-user').innerText = username;
@@ -125,6 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             changePwModal.classList.add('hidden');
             deleteAccountModal.classList.add('hidden');
             banIpModal.classList.add('hidden');
+            accountActionsModal.classList.add('hidden');
         };
     });
 
@@ -274,29 +298,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial Load
     loadAccounts();
-
-    // Dropdown Logic
-    window.toggleDropdown = (event, id) => {
-        event.stopPropagation();
-        const menu = document.getElementById(`dropdown-${id}`);
-        const allMenus = document.querySelectorAll('.dropdown-menu');
-        
-        allMenus.forEach(m => {
-            if (m.id !== `dropdown-${id}`) m.classList.remove('show');
-        });
-        
-        menu.classList.toggle('show');
-    };
-
-    window.onclick = (event) => {
-        if (!event.target.matches('.btn-options')) {
-            const dropdowns = document.getElementsByClassName("dropdown-menu");
-            for (let i = 0; i < dropdowns.length; i++) {
-                const openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    };
 });

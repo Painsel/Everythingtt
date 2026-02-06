@@ -154,6 +154,60 @@
     color: #fff;
 }
 
+/* Actions Modal Tiles */
+.actions-modal-content {
+    width: 350px;
+    text-align: center;
+}
+
+.actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.action-tile {
+    background: #4f545c;
+    border: none;
+    border-radius: 12px;
+    padding: 20px 10px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+}
+
+.action-tile:hover {
+    transform: translateY(-3px);
+    background: #5d6269;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.action-tile .tile-icon {
+    font-size: 24px;
+}
+
+.action-tile .tile-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.action-tile.reset-ip { background: #5865f2; }
+.action-tile.reset-ip:hover { background: #4752c4; }
+
+.action-tile.ban-ip { background: #faa61a; }
+.action-tile.ban-ip:hover { background: #d48d15; }
+
+.action-tile.change-pw { background: #3ba55d; }
+.action-tile.change-pw:hover { background: #2d7d46; }
+
+.action-tile.danger { background: #ed4245; }
+.action-tile.danger:hover { background: #c03537; }
+
 .btn-action {
     background: #4f545c;
     color: #fff;

@@ -122,6 +122,32 @@
         </div>
     </div>
 
+    <div id="account-actions-modal" class="modal hidden">
+        <div class="modal-content actions-modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Account Actions</h3>
+            <p>Managing: <span id="actions-target-user" style="font-weight: bold;"></span></p>
+            <div class="actions-grid">
+                <button class="action-tile reset-ip" id="tile-reset-ip">
+                    <span class="tile-icon">🌐</span>
+                    <span class="tile-label">Reset IP</span>
+                </button>
+                <button class="action-tile ban-ip" id="tile-ban-ip">
+                    <span class="tile-icon">🚫</span>
+                    <span class="tile-label">Ban IP</span>
+                </button>
+                <button class="action-tile change-pw" id="tile-change-pw">
+                    <span class="tile-icon">🔑</span>
+                    <span class="tile-label">Password</span>
+                </button>
+                <button class="action-tile delete-acc danger" id="tile-delete-acc">
+                    <span class="tile-icon">🗑️</span>
+                    <span class="tile-label">Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="../utils.js?v=1.5.2"></script>
     <script src="script.js?v=1.0.1"></script>
 </body>
