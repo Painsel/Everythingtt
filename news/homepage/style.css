@@ -76,6 +76,21 @@
     font-size: 1.1rem;
 }
 
+.admin-badge {
+    background: #9b59b6;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    height: fit-content;
+    vertical-align: middle;
+}
+
 /* User Badge Styles */
 .user-badge {
     width: 40px !important;

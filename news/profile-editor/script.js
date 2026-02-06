@@ -53,7 +53,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Badges
         const badgeContainer = document.getElementById('badge-container');
         if (badgeContainer) {
-            badgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(user.joinDate);
+            badgeContainer.innerHTML = `
+                ${user.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+                ${GitHubAPI.renderNewUserBadge(user.joinDate)}
+            `;
         }
 
         // Form

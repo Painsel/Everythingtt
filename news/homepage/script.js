@@ -24,7 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             sideBadgeContainer.style.verticalAlign = 'middle';
             sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
         }
-        sideBadgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge');
+        sideBadgeContainer.innerHTML = `
+            ${u.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+            ${GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge')}
+        `;
 
         document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
         
@@ -50,7 +53,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             badgeContainer.style.verticalAlign = 'middle';
             headerUsername.parentNode.insertBefore(badgeContainer, headerUsername.nextSibling);
         }
-        badgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(u.joinDate);
+        badgeContainer.innerHTML = `
+            ${u.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+            ${GitHubAPI.renderNewUserBadge(u.joinDate)}
+        `;
 
         document.getElementById('header-id').innerText = `@${u.id || u.username.toLowerCase().replace(/\s+/g, '')}`;
         document.getElementById('header-status-icon').style.backgroundImage = `url('${iconPath}')`;

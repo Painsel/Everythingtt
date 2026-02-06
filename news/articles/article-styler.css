@@ -1251,10 +1251,26 @@
     z-index: 2;
 }
 
+.admin-badge {
+    background: #9b59b6;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    height: fit-content;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
 .profile-card-username-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 

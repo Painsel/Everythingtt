@@ -1350,6 +1350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="profile-card-names">
                         <div class="profile-card-username-row">
                             <span class="profile-card-username">${author.username}</span>
+                            ${author.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
                             ${author.statusMsg ? `<div class="profile-card-status-bubble">${author.statusMsg}</div>` : ''}
                             ${GitHubAPI.renderNewUserBadge(author.joinDate)}
                         </div>
