@@ -227,6 +227,9 @@
 .action-tile.get-info { background: #00aff4; }
 .action-tile.get-info:hover { background: #0087ba; }
 
+.action-tile.get-ip { background: #1abc9c; }
+.action-tile.get-ip:hover { background: #16a085; }
+
 .action-tile.make-admin { background: #9b59b6; }
 .action-tile.make-admin:hover { background: #8e44ad; }
 

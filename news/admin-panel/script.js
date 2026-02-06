@@ -139,6 +139,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         openAccountInfo(currentEditingUserId);
     };
 
+    document.getElementById('tile-get-ip').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        const acc = allAccounts.find(a => a.id === currentEditingUserId);
+        const ip = (acc && acc.allowedIp) ? acc.allowedIp : 'No IP recorded for this user.';
+        
+        // Create a custom styled alert or just use a standard one for now
+        // Standard alert is easier for "copying" on most browsers
+        alert(`User: ${currentEditingUsername}\nIP Address: ${ip}`);
+    };
+
     document.getElementById('tile-make-admin').onclick = async () => {
         accountActionsModal.classList.add('hidden');
         
