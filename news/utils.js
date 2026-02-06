@@ -2,10 +2,10 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.5.0',
+    version: '1.5.1',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
-        console.log(`GitHubAPI v${this.version} initialized (Main Repo Only)`);
+        console.log(`GitHubAPI v${this.version} initialized (Multi-Repo Support)`);
     },
     cachedPAT: null,
     _loadingPAT: null, // Promise lock for concurrent getPAT calls
@@ -125,11 +125,10 @@ window.GitHubAPI = {
         let cleanPath = path.replace('/contents/', '');
         const { owner, repo } = this.getRepoInfo(cleanPath);
         
-        // If it's a storage path in the private repo, flatten it to the root
+        // If it's a storage path in the private repo, remove the 'news/' prefix
+        // The storage folders themselves exist in the root of the private repo.
         if (repo === 'Everything-TT-Critical-Data') {
-            // Remove 'news/' prefix and any storage folder name
             cleanPath = cleanPath.replace(/^news\//, '');
-            cleanPath = cleanPath.replace(/^(article-comments|created-articles|created-news-accounts|notifications)-storage\//, '');
         }
         
         return `https://api.github.com/repos/${owner}/${repo}/contents/${cleanPath}`;
@@ -139,11 +138,10 @@ window.GitHubAPI = {
         let cleanPath = path;
         const { owner, repo } = this.getRepoInfo(cleanPath);
         
-        // If it's a storage path in the private repo, flatten it to the root
+        // If it's a storage path in the private repo, remove the 'news/' prefix
+        // The storage folders themselves exist in the root of the private repo.
         if (repo === 'Everything-TT-Critical-Data') {
-            // Remove 'news/' prefix and any storage folder name
             cleanPath = cleanPath.replace(/^news\//, '');
-            cleanPath = cleanPath.replace(/^(article-comments|created-articles|created-news-accounts|notifications)-storage\//, '');
         }
         
         return `https://raw.githubusercontent.com/${owner}/${repo}/main/${cleanPath}`;
