@@ -75,8 +75,83 @@
 }
 
 .account-actions {
+    position: relative;
     display: flex;
     gap: 0.5rem;
+}
+
+/* Options Dropdown Styling */
+.options-dropdown {
+    position: relative;
+}
+
+.btn-options {
+    background: #4f545c;
+    color: #fff;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-options:hover {
+    background: #686d73;
+}
+
+.btn-options::after {
+    content: '▼';
+    font-size: 0.7rem;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 5px;
+    background: #18191c;
+    border: 1px solid #202225;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 100;
+    min-width: 160px;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.dropdown-menu.show {
+    display: flex;
+}
+
+.dropdown-item {
+    background: transparent;
+    border: none;
+    color: #dcddde;
+    padding: 10px 15px;
+    text-align: left;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.1s, color 0.1s;
+}
+
+.dropdown-item:hover {
+    background: #5865f2;
+    color: #fff;
+}
+
+.dropdown-item.danger {
+    color: #ed4245;
+}
+
+.dropdown-item.danger:hover {
+    background: #ed4245;
+    color: #fff;
 }
 
 .btn-action {

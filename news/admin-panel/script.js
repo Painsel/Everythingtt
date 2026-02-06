@@ -66,10 +66,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
                 <div class="account-actions">
-                    <button class="btn-action reset-ip" onclick="openResetIp('${acc.id}', '${acc.username}')">Reset IP</button>
-                    <button class="btn-action ban-ip" onclick="openBanIp('${acc.id}', '${acc.username}', '${acc.allowedIp || ''}')">Ban IP</button>
-                    <button class="btn-action change-pw" onclick="openChangePw('${acc.id}', '${acc.username}')">Change Password</button>
-                    <button class="btn-action delete-acc" onclick="openDeleteAccount('${acc.id}', '${acc.username}')">Delete</button>
+                    <div class="options-dropdown">
+                        <button class="btn-options" onclick="toggleDropdown(event, '${acc.id}')">Options</button>
+                        <div id="dropdown-${acc.id}" class="dropdown-menu">
+                            <button class="dropdown-item" onclick="openResetIp('${acc.id}', '${acc.username}')">Reset IP</button>
+                            <button class="dropdown-item" onclick="openBanIp('${acc.id}', '${acc.username}', '${acc.allowedIp || ''}')">Ban IP</button>
+                            <button class="dropdown-item" onclick="openChangePw('${acc.id}', '${acc.username}')">Change Password</button>
+                            <button class="dropdown-item danger" onclick="openDeleteAccount('${acc.id}', '${acc.username}')">Delete Account</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `).join('');
@@ -269,4 +274,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initial Load
     loadAccounts();
+
+    // Dropdown Logic
+    window.toggleDropdown = (event, id) => {
+        event.stopPropagation();
+        const menu = document.getElementById(`dropdown-${id}`);
+        const allMenus = document.querySelectorAll('.dropdown-menu');
+        
+        allMenus.forEach(m => {
+            if (m.id !== `dropdown-${id}`) m.classList.remove('show');
+        });
+        
+        menu.classList.toggle('show');
+    };
+
+    window.onclick = (event) => {
+        if (!event.target.matches('.btn-options')) {
+            const dropdowns = document.getElementsByClassName("dropdown-menu");
+            for (let i = 0; i < dropdowns.length; i++) {
+                const openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    };
 });
