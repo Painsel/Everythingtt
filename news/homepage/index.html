@@ -33,6 +33,7 @@
                 <a href="../create-article/" class="nav-item">Publish News</a>
                 <a href="../profile-editor/index.html" class="nav-item">Profile Settings</a>
                 <a href="../admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">Admin Panel</a>
+                <a href="#" id="nav-switch-accounts" class="nav-item hidden">Switch Accounts</a>
             </nav>
             <button id="btn-logout" class="logout-btn">Logout</button>
         </aside>
@@ -159,6 +160,18 @@
             </div>
             <div class="changelog-footer">
                 <button id="btn-close-changelog" class="btn-primary">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Switch Accounts Modal -->
+    <div id="switch-accounts-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" id="close-switch-modal">&times;</span>
+            <h3>Switch Accounts</h3>
+            <p style="color: #b9bbbe; font-size: 0.9em; margin-bottom: 1rem;">Select an account associated with your current IP to auto-login.</p>
+            <div id="alts-list" class="alts-list">
+                <!-- Alts will be loaded here -->
             </div>
         </div>
     </div>

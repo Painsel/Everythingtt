@@ -209,6 +209,53 @@
     color: #fff;
 }
 
+.alts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.alt-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #36393f;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.alt-item:hover {
+    border-color: #5865f2;
+    background: #40444b;
+    transform: translateX(5px);
+}
+
+.alt-pfp {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.alt-info {
+    flex-grow: 1;
+}
+
+.alt-username {
+    color: #fff;
+    font-weight: 600;
+    display: block;
+}
+
+.alt-id {
+    color: #b9bbbe;
+    font-size: 0.75rem;
+}
+
 .notifications-list {
     max-height: 400px;
     overflow-y: auto;

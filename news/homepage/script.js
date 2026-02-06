@@ -102,6 +102,89 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Perform initial IP check
     await checkIP();
 
+    // Scan for Alt accounts with same IP
+    async function scanAlts() {
+        if (!user) return;
+        const currentIp = await GitHubAPI.getClientIP();
+        if (!currentIp) return;
+
+        try {
+            const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+            const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== `${user.id}.json`);
+            
+            const alts = [];
+            const ADMIN_ID = '382156063438888';
+            const isUserAdmin = user.id === ADMIN_ID;
+            const limit = isUserAdmin ? Infinity : 3;
+
+            for (const file of accountFiles) {
+                if (alts.length >= limit) break;
+
+                const content = await GitHubAPI.getFileRaw(file.path);
+                if (content) {
+                    const acc = JSON.parse(content);
+                    if (acc.allowedIp === currentIp) {
+                        alts.push(acc);
+                    }
+                }
+            }
+
+            if (alts.length > 0) {
+                const switchBtn = document.getElementById('nav-switch-accounts');
+                if (switchBtn) {
+                    switchBtn.classList.remove('hidden');
+                    switchBtn.onclick = (e) => {
+                        e.preventDefault();
+                        showSwitchModal(alts);
+                    };
+                }
+            }
+        } catch (e) {
+            console.error('Failed to scan for alts:', e);
+        }
+    }
+
+    function showSwitchModal(alts) {
+        const modal = document.getElementById('switch-accounts-modal');
+        const list = document.getElementById('alts-list');
+        const closeBtn = document.getElementById('close-switch-modal');
+
+        list.innerHTML = alts.map(alt => `
+            <div class="alt-item" onclick="switchAccount('${alt.id}')">
+                <img src="${alt.pfp}" class="alt-pfp">
+                <div class="alt-info">
+                    <span class="alt-username">${alt.username}</span>
+                    <span class="alt-id">@${alt.id}</span>
+                </div>
+            </div>
+        `).join('');
+
+        modal.classList.remove('hidden');
+        closeBtn.onclick = () => modal.classList.add('hidden');
+        
+        window.onclick = (event) => {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        };
+    }
+
+    window.switchAccount = async (targetId) => {
+        try {
+            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${targetId}.json`);
+            if (data) {
+                const targetUser = JSON.parse(data.content);
+                targetUser.sha = data.sha;
+                localStorage.setItem('current_user', JSON.stringify(targetUser));
+                window.location.reload();
+            }
+        } catch (e) {
+            alert('Failed to switch account: ' + e.message);
+        }
+    };
+
+    scanAlts();
+
     let userSHA = null;
     let notifications = [];
     let notificationsSHA = null;
