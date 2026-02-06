@@ -5,7 +5,7 @@ window.GitHubAPI = {
     version: '1.4.1',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
-        console.log(`GitHubAPI v${this.version} initialized (Main Repo Only)`);
+        console.log(`GitHubAPI v${this.version} initialized (Private Storage Mode)`);
     },
     cachedPAT: null,
     _loadingPAT: null, // Promise lock for concurrent getPAT calls
@@ -104,20 +104,37 @@ window.GitHubAPI = {
 
     /**
      * Get repository info for a path.
-     * Always returns the main Everythingtt repository.
+     * Redirects storage paths to the private repository.
      */
     getRepoInfo(path) {
+        if (path.includes('-storage/')) {
+            return { owner: 'Painsel', repo: 'Everything-TT-Critical-Data' };
+        }
         return { owner: 'Painsel', repo: 'Everythingtt' };
     },
 
     getAPIURL(path) {
-        const { owner, repo } = this.getRepoInfo(path.replace('/contents/', ''));
-        return `https://api.github.com/repos/${owner}/${repo}${path}`;
+        let cleanPath = path.replace('/contents/', '');
+        const { owner, repo } = this.getRepoInfo(cleanPath);
+        
+        // If it's a storage path in the private repo, remove the 'news/' prefix if present
+        if (repo === 'Everything-TT-Critical-Data') {
+            cleanPath = cleanPath.replace(/^news\//, '');
+        }
+        
+        return `https://api.github.com/repos/${owner}/${repo}/contents/${cleanPath}`;
     },
 
     getRawURL(path) {
-        const { owner, repo } = this.getRepoInfo(path);
-        return `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`;
+        let cleanPath = path;
+        const { owner, repo } = this.getRepoInfo(cleanPath);
+        
+        // If it's a storage path in the private repo, remove the 'news/' prefix if present
+        if (repo === 'Everything-TT-Critical-Data') {
+            cleanPath = cleanPath.replace(/^news\//, '');
+        }
+        
+        return `https://raw.githubusercontent.com/${owner}/${repo}/main/${cleanPath}`;
     },
 
     // Global request queue to serialize all API calls and avoid 409/429 errors
@@ -153,13 +170,14 @@ window.GitHubAPI = {
                 
                 let apiPath;
                 if (path.startsWith('http')) {
-                    // Only allow requests to the main repository
+                    // Allow requests to both main and critical data repositories
                     const mainRepoPath = '/repos/Painsel/Everythingtt';
+                    const criticalRepoPath = '/repos/Painsel/Everything-TT-Critical-Data';
                     const urlObj = new URL(path);
                     apiPath = urlObj.pathname;
                     
-                    if (!apiPath.startsWith(mainRepoPath)) {
-                        console.error(`Middleware restricted: Attempted to access non-main repo: ${apiPath}`);
+                    if (!apiPath.startsWith(mainRepoPath) && !apiPath.startsWith(criticalRepoPath)) {
+                        console.error(`Middleware restricted: Attempted to access non-authorized repo: ${apiPath}`);
                         // Fallback to direct API for other repos if PAT exists, or throw
                         if (pat) {
                             url = path;
@@ -167,7 +185,7 @@ window.GitHubAPI = {
                             // Skip the middleware block
                             return this._proceedWithFetch(url, options, method, body, retries, path);
                         } else {
-                            throw new Error('Middleware is restricted to the main repository and no token is available for other repositories.');
+                            throw new Error('Middleware is restricted and no token is available for other repositories.');
                         }
                     }
                 } else {

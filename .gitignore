@@ -4,3 +4,9 @@ EverythingTT-API/
 .DS_Store
 dist/
 build/
+
+# Critical Data Storage
+news/article-comments-storage/
+news/created-articles-storage/
+news/created-news-accounts-storage/
+news/notifications-storage/
