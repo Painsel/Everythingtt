@@ -10,7 +10,13 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    max-width: 800px;
+    max-width: 1000px;
+}
+
+@media (min-width: 1600px) {
+    .form-group {
+        max-width: 1200px;
+    }
 }
 
 #article-title {

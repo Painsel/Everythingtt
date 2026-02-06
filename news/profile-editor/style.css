@@ -3,6 +3,13 @@
     flex-direction: column;
     gap: 2rem;
     margin-top: 1rem;
+    max-width: 1000px;
+}
+
+@media (min-width: 1600px) {
+    .profile-editor-section {
+        max-width: 1200px;
+    }
 }
 
 .profile-preview {

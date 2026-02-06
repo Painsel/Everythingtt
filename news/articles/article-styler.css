@@ -54,15 +54,28 @@
 
 .articles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
     margin-top: 1rem;
     transition: all 0.3s ease;
 }
 
-@media (min-width: 1600px) {
+@media (min-width: 1200px) {
     .articles-grid {
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 2rem;
+    }
+}
+
+@media (min-width: 1800px) {
+    .articles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+@media (min-width: 2400px) {
+    .articles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
     }
 }
 
@@ -173,6 +186,19 @@
 }
 
 /* Responsive adjustments for articles and modals */
+@media (max-width: 768px) {
+    .articles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+        margin: 5vh auto;
+    }
+}
+
 @media (max-width: 600px) {
     .articles-grid {
         grid-template-columns: 1fr;
@@ -186,7 +212,45 @@
         width: 100%;
         margin: 0;
         height: 100%;
+        max-height: 100vh;
         border-radius: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .comments-modal-content {
+        display: flex;
+        flex-direction: column;
+        padding-top: 40px; /* Space for close button */
+    }
+
+    .close-comments-modal, .close-notifications-modal, .close-modal {
+        top: 10px;
+        right: 15px;
+        font-size: 32px;
+        z-index: 1001;
+    }
+
+    .comments-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 0 1rem;
+    }
+
+    #comments-title {
+        padding: 0 1rem 1rem 1rem;
+        margin: 0;
+        border-bottom: 1px solid #40444b;
+    }
+
+    .comment-input-area {
+        position: sticky;
+        bottom: 0;
+        background: #2f3136;
+        padding: 1rem;
+        border-top: 1px solid #40444b;
+        margin-top: auto;
     }
 
     .emoji-picker {

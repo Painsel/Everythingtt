@@ -165,7 +165,7 @@
 .modal-content {
     background-color: #2f3136;
     width: 100%;
-    max-width: 450px;
+    max-width: 500px;
     max-height: calc(100vh - 40px);
     overflow-y: auto;
     border-radius: 8px;
@@ -173,6 +173,12 @@
     padding: 1.5rem;
     border: 1px solid #40444b;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+@media (min-width: 1200px) {
+    .modal-content {
+        max-width: 600px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -303,7 +309,20 @@
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 2rem;
-    transition: grid-template-columns 0.3s ease;
+    transition: all 0.3s ease;
+}
+
+@media (min-width: 1600px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 400px;
+        gap: 3rem;
+    }
+}
+
+@media (min-width: 2000px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 450px;
+    }
 }
 
 @media (max-width: 1200px) {
