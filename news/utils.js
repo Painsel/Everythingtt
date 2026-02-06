@@ -9,8 +9,9 @@ window.GitHubAPI = {
     },
     cachedPAT: null,
     _loadingPAT: null, // Promise lock for concurrent getPAT calls
+    middlewareURL: null, // Set this to use a Vercel middleware instead of direct GitHub API calls
     
-    // Fetches the Main PAT from JSONBin
+    // Fetches the Main PAT or Middleware URL from JSONBin
     async getPAT() {
         if (this.cachedPAT) return this.cachedPAT;
         if (this._loadingPAT) return this._loadingPAT;
@@ -23,6 +24,10 @@ window.GitHubAPI = {
                 });
                 const mainData = await mainRes.json();
                 const mainConfig = mainData.record || mainData;
+
+                if (mainConfig.middleware_url) {
+                    this.middlewareURL = mainConfig.middleware_url;
+                }
 
                 if (mainConfig.github_pat) {
                     this.cachedPAT = mainConfig.github_pat;
@@ -92,6 +97,47 @@ window.GitHubAPI = {
         // Enqueue the request to ensure serial execution
         return this._enqueue(async () => {
             const pat = await this.getPAT();
+            
+            // If middleware is available, use it instead of direct GitHub API calls
+            if (this.middlewareURL) {
+                let url = this.middlewareURL;
+                if (!url.endsWith('/')) url += '/';
+                
+                // Construct the path for the middleware
+                let apiPath = path;
+                if (!path.startsWith('http')) {
+                    apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
+                } else {
+                    apiPath = path.replace('https://api.github.com', '');
+                }
+
+                const middlewareUrl = `${url}?path=${encodeURIComponent(apiPath)}`;
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+                if (body) options.body = JSON.stringify(body);
+
+                try {
+                    const response = await fetch(middlewareUrl, options);
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.message || `Middleware request failed with status ${response.status}`);
+                    }
+                    return response.json();
+                } catch (e) {
+                    if (retries > 0) {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        return this.request(path, method, body, retries - 1);
+                    }
+                    throw e;
+                }
+            }
+
+            // Fallback to direct GitHub API if no middleware
             if (!pat) throw new Error('No GitHub token available.');
             
             let url;
