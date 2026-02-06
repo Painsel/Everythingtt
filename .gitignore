@@ -1,1 +1,6 @@
-README.md
+node_modules/
+.env
+EverythingTT-API/
+.DS_Store
+dist/
+build/
