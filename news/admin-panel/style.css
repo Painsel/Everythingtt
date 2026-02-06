@@ -110,6 +110,17 @@
     background: #c03537;
 }
 
+.btn-action.delete-acc {
+    background: #202225;
+    border: 1px solid #ed4245;
+    color: #ed4245;
+}
+
+.btn-action.delete-acc:hover {
+    background: #ed4245;
+    color: #fff;
+}
+
 .modal {
     position: fixed;
     top: 0;
@@ -176,6 +187,33 @@
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
+}
+
+.btn-danger {
+    background: #ed4245;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #c03537;
+}
+
+.btn-secondary {
+    background: #4f545c;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.btn-secondary:hover {
+    background: #686d73;
 }
 
 .status-msg {

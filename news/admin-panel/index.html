@@ -95,6 +95,19 @@
         </div>
     </div>
 
+    <div id="delete-account-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 style="color: #ff4d4d;">Delete Account</h3>
+            <p>Are you sure you want to delete the account for <span id="delete-target-user" style="font-weight: bold;"></span>?</p>
+            <p style="color: #ff4d4d; font-size: 0.9em; margin-top: 5px;">This action is permanent and cannot be undone.</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-delete" class="btn-danger">Delete Permanently</button>
+                <button id="btn-cancel-delete" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../utils.js?v=1.4.1"></script>
     <script src="script.js?v=1.0.0"></script>
 </body>

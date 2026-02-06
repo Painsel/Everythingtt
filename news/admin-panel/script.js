@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Modals
     const resetIpModal = document.getElementById('reset-ip-modal');
     const changePwModal = document.getElementById('change-pw-modal');
+    const deleteAccountModal = document.getElementById('delete-account-modal');
     const closeModals = document.querySelectorAll('.close-modal');
     
     let allAccounts = [];
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="account-actions">
                     <button class="btn-action reset-ip" onclick="openResetIp('${acc.id}', '${acc.username}')">Reset IP</button>
                     <button class="btn-action change-pw" onclick="openChangePw('${acc.id}', '${acc.username}')">Change Password</button>
+                    <button class="btn-action delete-acc" onclick="openDeleteAccount('${acc.id}', '${acc.username}')">Delete</button>
                 </div>
             </div>
         `).join('');
@@ -97,14 +99,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         changePwModal.classList.remove('hidden');
     };
 
+    window.openDeleteAccount = (userId, username) => {
+        currentEditingUserId = userId;
+        document.getElementById('delete-target-user').innerText = username;
+        deleteAccountModal.classList.remove('hidden');
+    };
+
     closeModals.forEach(btn => {
         btn.onclick = () => {
             resetIpModal.classList.add('hidden');
             changePwModal.classList.add('hidden');
+            deleteAccountModal.classList.add('hidden');
         };
     });
 
+    document.getElementById('btn-cancel-delete').onclick = () => {
+        deleteAccountModal.classList.add('hidden');
+    };
+
     // Action Confirmations
+    document.getElementById('btn-confirm-delete').onclick = async () => {
+        const btn = document.getElementById('btn-confirm-delete');
+        try {
+            btn.disabled = true;
+            btn.innerText = 'Deleting...';
+            
+            await GitHubAPI.safeDeleteFile(
+                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `Admin: Deleted account for user ${currentEditingUserId}`
+            );
+            
+            alert('Account deleted successfully');
+            deleteAccountModal.classList.add('hidden');
+            loadAccounts();
+        } catch (e) {
+            alert('Failed to delete account: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Delete Permanently';
+        }
+    };
+
     document.getElementById('btn-confirm-ip').onclick = async () => {
         const newIp = document.getElementById('new-ip').value.trim();
         const btn = document.getElementById('btn-confirm-ip');

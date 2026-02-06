@@ -322,6 +322,22 @@ window.GitHubAPI = {
         return await this.request(`/contents/${path}`, 'PUT', body);
     },
 
+    async deleteFile(path, message, sha) {
+        const body = {
+            message,
+            sha
+        };
+        return await this.request(`/contents/${path}`, 'DELETE', body);
+    },
+
+    async safeDeleteFile(path, message) {
+        return this.queuedWrite(path, async () => {
+            const data = await this.getFile(path);
+            if (!data) return { skipped: true, message: "File not found" };
+            return await this.deleteFile(path, message, data.sha);
+        });
+    },
+
     async safeUpdateFile(path, transformFn, message) {
         return this.queuedWrite(path, async () => {
             const data = await this.getFile(path);
