@@ -15,12 +15,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     const commentFileUpload = document.getElementById('comment-file-upload');
     const attachmentPreview = document.getElementById('attachment-preview');
     
+    // Banner Lightbox Elements
+    const lightbox = document.getElementById('banner-lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const closeLightbox = document.querySelector('.close-lightbox');
+    
     let currentArticleIdForComments = null;
     let commentsSHA = null;
     let currentReplyToId = null;
     let currentAttachmentBase64 = null;
     let notifications = [];
     let notificationsSHA = null;
+
+    function openBannerLightbox(url) {
+        if (!lightboxImg || !lightbox) return;
+        lightboxImg.src = url;
+        lightbox.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    if (closeLightbox) {
+        closeLightbox.addEventListener('click', () => {
+            lightbox.classList.add('hidden');
+            document.body.style.overflow = '';
+        });
+    }
+
+    if (lightbox) {
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                lightbox.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        });
+    }
 
     const REACTION_EMOJIS = ["🔥", "✨", "👍", "🎉", "🤣", "😂", "😃", "🤔", "🥵", "🥶", "🤡", "🤖", "💀"];
     let articleSHAs = {}; // Store SHAs for updates
@@ -934,6 +962,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             </div>
         `;
+
+        // Click to view banner
+        const bannerElement = card.querySelector('.article-banner');
+        if (bannerElement) {
+            if (banners.length > 1) {
+                // Slideshow case: add click to each slide
+                const slides = card.querySelectorAll('.slide');
+                slides.forEach(slide => {
+                    slide.addEventListener('click', (e) => {
+                        // Don't trigger if clicking nav buttons
+                        if (e.target.closest('.slideshow-nav')) return;
+                        
+                        const bgImg = slide.style.backgroundImage;
+                        if (bgImg && bgImg !== 'none') {
+                            const url = bgImg.slice(5, -2);
+                            openBannerLightbox(url);
+                        }
+                    });
+                });
+            } else {
+                // Single banner case
+                bannerElement.addEventListener('click', () => {
+                    const bgImg = bannerElement.style.backgroundImage;
+                    if (bgImg && bgImg !== 'none') {
+                        const url = bgImg.slice(5, -2);
+                        openBannerLightbox(url);
+                    }
+                });
+            }
+        }
 
         // Initialize slideshow events if multiple banners
         if (banners.length > 1) {

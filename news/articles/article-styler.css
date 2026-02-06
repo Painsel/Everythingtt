@@ -100,6 +100,74 @@
     transform: none !important;
 }
 
+/* Lightbox Modal */
+#banner-lightbox {
+    background-color: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+}
+
+#banner-lightbox.hidden {
+    display: none;
+}
+
+.lightbox-content {
+    position: relative;
+    max-width: 95vw;
+    max-height: 95vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#lightbox-img {
+    max-width: 100%;
+    max-height: 95vh;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+
+.close-lightbox {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2001;
+    transition: transform 0.2s, color 0.2s;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+.close-lightbox:hover {
+    color: #ed4245;
+    transform: scale(1.1);
+}
+
+.article-banner {
+    cursor: zoom-in;
+}
+
+.article-banner.slideshow .slide {
+    cursor: zoom-in;
+}
+
+.article-banner.slideshow .slideshow-nav button,
+.article-banner.slideshow .ss-dots {
+    cursor: default;
+}
+
+.article-card {
+    cursor: default;
+    transform: none !important;
+}
+
 .single-article-view .article-banner {
     height: 300px;
 }
@@ -1127,8 +1195,8 @@
 }
 
 .user-badge {
-    width: 14px !important;
-    height: 14px !important;
+    width: 40px !important;
+    height: 40px !important;
     object-fit: contain;
     cursor: help;
     flex-shrink: 0;
@@ -1137,9 +1205,9 @@
 }
 
 .comment-badge {
-    /* Inherits 14px from .user-badge style if applied elsewhere, but explicitly defined here */
-    width: 14px;
-    height: 14px;
+    /* Explicitly defined for comments if needed, but inheriting from .user-badge */
+    width: 40px;
+    height: 40px;
     margin-left: 4px;
     vertical-align: middle;
 }

@@ -152,8 +152,8 @@
 }
 
 .user-badge {
-    width: 14px !important;
-    height: 14px !important;
+    width: 40px !important;
+    height: 40px !important;
     margin-left: 6px;
     vertical-align: middle;
     cursor: help;

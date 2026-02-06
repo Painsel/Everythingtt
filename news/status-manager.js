@@ -9,7 +9,12 @@ const StatusManager = {
         if (!savedUser) return;
         this.user = JSON.parse(savedUser);
 
-        // Don't override manual DND
+        // App exit - Moved up to ensure it's always registered
+        window.addEventListener('beforeunload', () => {
+            this.setStatusSync('offline');
+        });
+
+        // Don't override manual DND for active session status
         if (this.user.statusType === 'dnd') {
             this.currentStatus = 'dnd';
             return;
@@ -21,11 +26,6 @@ const StatusManager = {
         // Activity listeners
         ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'].forEach(evt => {
             window.addEventListener(evt, () => this.handleActivity(), { passive: true });
-        });
-
-        // App exit
-        window.addEventListener('beforeunload', () => {
-            this.setStatusSync('offline');
         });
     },
 
