@@ -66,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentBannerBase64 = '';
 
-    const TITLE_LIMIT = 200;
-    const CONTENT_LIMIT = 50000;
+    const TITLE_LIMIT = 50;
+    const CONTENT_LIMIT = 3000;
 
     // Image optimization helper
     async function optimizeImage(file, maxWidth, maxHeight) {
@@ -110,6 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
     bannerFileInput.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
+            const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+            if (file.size > MAX_SIZE) {
+                alert('Banner image is too large (max 2MB)');
+                bannerFileInput.value = '';
+                return;
+            }
+            if (file.type === 'image/gif') {
+                alert('GIFs are not allowed for Article Banners');
+                bannerFileInput.value = '';
+                return;
+            }
+
             try {
                 btnPublish.disabled = true;
                 btnPublish.innerText = 'Processing Image...';
@@ -136,15 +148,31 @@ document.addEventListener('DOMContentLoaded', () => {
         bannerPreview.src = '';
     });
 
-    // Removed the "double count" logic for format characters to allow more content
-    function calculateCount(text) {
+    // Weighted count logic: Markdown counts for 2 characters per character
+    function calculateCount(text, isContent = false) {
         if (!text) return 0;
-        return text.length;
+        if (!isContent) return text.length;
+
+        let weightedLength = text.length;
+        
+        // Define Markdown patterns that count double. 
+        // We use a single regex with alternation to avoid double-counting overlapping matches.
+        // The order matters: more specific/longer patterns should come first.
+        const markdownRegex = /(!\[.*?\]\(.*?\)|\[.*?\]\(.*?\)|@\[.*?\]|@[a-zA-Z0-9_]+|\*\*+|#+\s|^>\s|^---$|\/(red|blue|violet|yellow|green)\s|^[-*]\s)/gm;
+
+        const matches = text.match(markdownRegex);
+        if (matches) {
+            matches.forEach(match => {
+                weightedLength += match.length;
+            });
+        }
+
+        return weightedLength;
     }
 
     function updateCounters() {
-        const titleCount = calculateCount(titleInput.value);
-        const contentCount = calculateCount(contentInput.value);
+        const titleCount = calculateCount(titleInput.value, false);
+        const contentCount = calculateCount(contentInput.value, true);
 
         titleCounter.innerText = `${titleCount} / ${TITLE_LIMIT}`;
         contentCounter.innerText = `${contentCount} / ${CONTENT_LIMIT}`;
@@ -172,8 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const banner = currentBannerBase64 || '#7289da'; // Fallback to default color if no banner
         const content = contentInput.value;
 
-        const titleCount = calculateCount(title);
-        const contentCount = calculateCount(content);
+        const titleCount = calculateCount(title, false);
+        const contentCount = calculateCount(content, true);
 
         if (titleCount > TITLE_LIMIT) return alert(`Title is too long (${titleCount}/${TITLE_LIMIT})`);
         if (contentCount > CONTENT_LIMIT) return alert(`Content is too long (${contentCount}/${CONTENT_LIMIT})`);

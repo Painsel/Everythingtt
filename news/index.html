@@ -16,8 +16,8 @@
     <div id="auth-container" class="container">
         <h1>News Dashboard Login</h1>
         <form id="login-form" class="form-group">
-            <input type="text" id="login-username" placeholder="Username" autocomplete="username">
-            <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+            <input type="text" id="login-username" placeholder="Username" autocomplete="username" maxlength="100">
+            <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" maxlength="100">
             <button type="submit" id="btn-login">Login / Sign Up</button>
         </form>
         <p class="hint">Don't have an account? Entering a new username will create one.</p>
@@ -64,8 +64,8 @@
                 <div class="editor-fields">
                     <input type="text" id="edit-pfp" placeholder="Profile Picture URL">
                     <input type="text" id="edit-banner" placeholder="Banner Color or URL">
-                    <input type="text" id="edit-username" placeholder="Username">
-                    <textarea id="edit-bio" placeholder="Bio"></textarea>
+                    <input type="text" id="edit-username" placeholder="Username" maxlength="100">
+                    <textarea id="edit-bio" placeholder="Bio" maxlength="300"></textarea>
                     <button id="btn-save-profile">Save Changes</button>
                 </div>
             </section>

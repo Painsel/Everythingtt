@@ -209,6 +209,13 @@
     width: 100%;
 }
 
+.limit-hint {
+    font-size: 0.7rem;
+    color: #72767d;
+    font-style: italic;
+    margin-top: -4px;
+}
+
 #upload-pfp::-webkit-file-upload-button,
 #upload-banner::-webkit-file-upload-button {
     background: #4f545c;

@@ -37,7 +37,8 @@
                 <div class="banner-upload-container">
                     <label for="article-banner-file" class="upload-label">
                         <span>Upload Article Banner</span>
-                        <input type="file" id="article-banner-file" accept="image/*">
+                        <input type="file" id="article-banner-file" accept="image/jpeg,image/png,image/webp">
+                        <small class="limit-hint">Max 2MB, no GIFs</small>
                     </label>
                     <div id="banner-preview-container" class="hidden">
                         <img id="banner-preview" src="" alt="Banner Preview">
@@ -57,9 +58,13 @@
                     <code>> Quote</code>
                     <code>[Text](URL)</code>
                     <code>![Alt](URL)</code>
+                    <code>@[User Name]</code>
                     <code>---</code>
                     <code>/red Text</code>
                     <small>(red, blue, violet, yellow, green)</small>
+                </div>
+                <div class="character-note">
+                    <small>* Markdown formatting syntax counts as 2 characters per character.</small>
                 </div>
                 <button id="btn-publish">Publish Article</button>
             </div>

@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('login-password').value;
 
         if (!username || !password) return alert('Username and Password required');
+        
+        if (username.length > 100) return alert('Username cannot be longer than 100 characters');
+        if (password.length > 100) return alert('Password cannot be longer than 100 characters');
 
         try {
             btnLogin.disabled = true;
@@ -147,6 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const banner = document.getElementById('edit-banner').value;
         const username = document.getElementById('edit-username').value;
         const bio = document.getElementById('edit-bio').value;
+
+        if (!username) return alert('Username is required');
+        if (username.length > 100) return alert('Username cannot be longer than 100 characters');
+        if (bio.length > 300) return alert('Bio cannot be longer than 300 characters');
 
         currentUser.pfp = pfp;
         currentUser.banner = banner;

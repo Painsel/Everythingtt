@@ -779,6 +779,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Italic: *Text*
         formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
+        // User Mentions: @username or @[user name]
+        formatted = formatted.replace(/@\[(.*?)\]/g, (match, username) => {
+            return `<span class="mention" onclick="findAndShowUser('${username.replace(/'/g, "\\'")}')">@${username}</span>`;
+        });
+        formatted = formatted.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention" onclick="findAndShowUser(\'$1\')">@$1</span>');
+
         // Images: ![Alt](URL)
         formatted = formatted.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" class="article-embedded-image">');
 
@@ -1301,7 +1307,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
 
-        // User Mentions: @username
+        // User Mentions: @username or @[user name]
+        // Handle @[user name] first
+        formatted = formatted.replace(/@\[(.*?)\]/g, (match, username) => {
+            return `<span class="mention" onclick="findAndShowUser('${username.replace(/'/g, "\\'")}')">@${username}</span>`;
+        });
+        // Handle @username (no spaces)
         formatted = formatted.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention" onclick="findAndShowUser(\'$1\')">@$1</span>');
 
         return formatted.replace(/\n/g, '<br>');
@@ -1924,9 +1935,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     // 3. Notify mentioned users
-                    const mentions = savedText.match(/@([a-zA-Z0-9_]+)/g);
-                    if (mentions) {
-                        const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
+                    const mentionsWithSpaces = savedText.match(/@\[(.*?)\]/g) || [];
+                    const mentionsSimple = savedText.match(/@([a-zA-Z0-9_]+)/g) || [];
+                    
+                    const allMentions = [
+                        ...mentionsWithSpaces.map(m => m.substring(2, m.length - 1)),
+                        ...mentionsSimple.map(m => m.substring(1))
+                    ];
+
+                    if (allMentions.length > 0) {
+                        const uniqueMentions = [...new Set(allMentions)];
                         for (const username of uniqueMentions) {
                             (async () => {
                                 try {

@@ -146,6 +146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const statusType = document.getElementById('edit-status-type').value;
 
         if (!username) return alert('Username is required');
+        if (username.length > 100) return alert('Display Name cannot be longer than 100 characters');
+        if (bio.length > 300) return alert('Bio cannot be longer than 300 characters');
+        if (statusMsg.length > 30) return alert('Status Message cannot be longer than 30 characters');
 
         try {
             btnSave.disabled = true;
@@ -158,11 +161,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             const pfpFile = uploadPfp.files[0];
             const bannerFile = uploadBanner.files[0];
 
+            const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+
             if (pfpFile) {
+                if (pfpFile.size > MAX_SIZE) {
+                    throw new Error('Profile Picture is too large (max 2MB)');
+                }
+                if (pfpFile.type === 'image/gif') {
+                    throw new Error('GIFs are not allowed for Profile Pictures');
+                }
                 pfp = await optimizeImage(pfpFile, 512, 512);
             }
 
             if (bannerFile) {
+                if (bannerFile.size > MAX_SIZE) {
+                    throw new Error('Profile Banner is too large (max 2MB)');
+                }
+                if (bannerFile.type === 'image/gif') {
+                    throw new Error('GIFs are not allowed for Profile Banners');
+                }
                 banner = await optimizeImage(bannerFile, 1920, 640);
             }
 

@@ -57,27 +57,29 @@
                 <div class="editor-fields">
                     <div class="input-group">
                         <label for="edit-username">Display Name</label>
-                        <input type="text" id="edit-username" placeholder="Username">
+                        <input type="text" id="edit-username" placeholder="Username" maxlength="100">
                     </div>
                     <div class="input-group">
                         <label for="upload-pfp">Profile Picture</label>
                         <div class="file-input-wrapper">
-                            <input type="file" id="upload-pfp" accept="image/*">
+                            <input type="file" id="upload-pfp" accept="image/jpeg,image/png,image/webp">
+                            <small class="limit-hint">Max 2MB, no GIFs</small>
                         </div>
                     </div>
                     <div class="input-group">
                         <label for="upload-banner">Profile Banner</label>
                         <div class="file-input-wrapper">
-                            <input type="file" id="upload-banner" accept="image/*">
+                            <input type="file" id="upload-banner" accept="image/jpeg,image/png,image/webp">
+                            <small class="limit-hint">Max 2MB, no GIFs</small>
                         </div>
                     </div>
                     <div class="input-group">
                         <label for="edit-bio">Bio</label>
-                        <textarea id="edit-bio" placeholder="Tell us about yourself..."></textarea>
+                        <textarea id="edit-bio" placeholder="Tell us about yourself..." maxlength="300"></textarea>
                     </div>
                     <div class="input-group">
                         <label for="edit-status">Status Message</label>
-                        <input type="text" id="edit-status-msg" placeholder="What's on your mind?">
+                        <input type="text" id="edit-status-msg" placeholder="What's on your mind?" maxlength="30">
                     </div>
                     <div class="input-group">
                         <label for="edit-status-type">Manual Status</label>

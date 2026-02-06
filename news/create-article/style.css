@@ -35,9 +35,17 @@
 
 .upload-label {
     cursor: pointer;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     color: #b9bbbe;
     font-weight: 500;
+}
+
+.limit-hint {
+    font-size: 0.75rem;
+    color: #72767d;
+    font-style: italic;
 }
 
 .upload-label input[type="file"] {
@@ -182,6 +190,15 @@
     padding: 2px 6px;
     border-radius: 3px;
     color: #5865f2;
+}
+
+.character-note {
+    margin-top: -10px;
+    color: #72767d;
+}
+
+.character-note small {
+    font-style: italic;
 }
 
 /* Preview placeholder for banner */
