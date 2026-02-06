@@ -1841,7 +1841,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (res.finalContent) {
                 const finalComments = JSON.parse(res.finalContent);
-                commentsSHA = res.content.sha;
+                commentsSHA = res.content ? res.content.sha : commentsSHA;
                 renderComments(finalComments);
 
                 // Send notifications in background
@@ -1871,12 +1871,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (mentions) {
                         const uniqueMentions = [...new Set(mentions.map(m => m.substring(1)))];
                         for (const username of uniqueMentions) {
-                            try {
-                                (async () => {
+                            (async () => {
+                                try {
                                     const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
                                     for (const file of files) {
                                         if (!file.name.endsWith('.json')) continue;
                                         const accData = await GitHubAPI.getFile(file.path);
+                                        if (!accData || !accData.content) continue;
                                         const account = JSON.parse(accData.content);
                                         if (account.username.toLowerCase() === username.toLowerCase()) {
                                             addNotification(account.id, 'mention', {
@@ -1887,8 +1888,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             break;
                                         }
                                     }
-                                })();
-                            } catch (e) {}
+                                } catch (e) {
+                                    // Silent fail for background mention lookup
+                                }
+                            })();
                         }
                     }
                 }
