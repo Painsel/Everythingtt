@@ -2,7 +2,7 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.3.3',
+    version: '1.3.4',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (Main Repo Only)`);
@@ -104,10 +104,16 @@ window.GitHubAPI = {
                 'Content-Type': 'application/json'
             };
 
-            // Disable middleware for now as it's causing 404s
-            if (false && this.middlewareURL) {
+            // Re-enabling middleware with fallback to /api endpoint
+            if (this.middlewareURL) {
                 let base = this.middlewareURL;
                 if (!base.endsWith('/')) base += '/';
+                
+                // Vercel serves functions in /api/ by default. 
+                // If calling the root results in a 404, we ensure we target the /api endpoint.
+                if (!base.toLowerCase().includes('/api')) {
+                    base += 'api';
+                }
                 
                 let apiPath = path;
                 if (!path.startsWith('http')) {
