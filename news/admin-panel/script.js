@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const resetIpModal = document.getElementById('reset-ip-modal');
     const changePwModal = document.getElementById('change-pw-modal');
     const deleteAccountModal = document.getElementById('delete-account-modal');
+    const banIpModal = document.getElementById('ban-ip-modal');
     const closeModals = document.querySelectorAll('.close-modal');
     
     let allAccounts = [];
@@ -66,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 <div class="account-actions">
                     <button class="btn-action reset-ip" onclick="openResetIp('${acc.id}', '${acc.username}')">Reset IP</button>
+                    <button class="btn-action ban-ip" onclick="openBanIp('${acc.id}', '${acc.username}', '${acc.allowedIp || ''}')">Ban IP</button>
                     <button class="btn-action change-pw" onclick="openChangePw('${acc.id}', '${acc.username}')">Change Password</button>
                     <button class="btn-action delete-acc" onclick="openDeleteAccount('${acc.id}', '${acc.username}')">Delete</button>
                 </div>
@@ -105,16 +107,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         deleteAccountModal.classList.remove('hidden');
     };
 
+    window.openBanIp = (userId, username, ip) => {
+        currentEditingUserId = userId;
+        document.getElementById('ban-target-user').innerText = username;
+        document.getElementById('ban-target-ip').innerText = ip || 'Unknown';
+        banIpModal.classList.remove('hidden');
+    };
+
     closeModals.forEach(btn => {
         btn.onclick = () => {
             resetIpModal.classList.add('hidden');
             changePwModal.classList.add('hidden');
             deleteAccountModal.classList.add('hidden');
+            banIpModal.classList.add('hidden');
         };
     });
 
     document.getElementById('btn-cancel-delete').onclick = () => {
         deleteAccountModal.classList.add('hidden');
+    };
+
+    document.getElementById('btn-cancel-ban').onclick = () => {
+        banIpModal.classList.add('hidden');
     };
 
     // Action Confirmations
@@ -197,6 +211,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             btn.disabled = false;
             btn.innerText = 'Change Password';
+        }
+    };
+
+    document.getElementById('btn-confirm-ban').onclick = async () => {
+        const ip = document.getElementById('ban-target-ip').innerText;
+        if (!ip || ip === 'Unknown' || ip === 'None') return alert('No valid IP to ban');
+        
+        const btn = document.getElementById('btn-confirm-ban');
+        
+        try {
+            btn.disabled = true;
+            btn.innerText = 'Banning...';
+            
+            // 1. Fetch current ban list
+            let banListData = await GitHubAPI.getFile('news/banned-ips.json');
+            let bannedIps = [];
+            let sha = null;
+            
+            if (banListData) {
+                bannedIps = JSON.parse(banListData.content);
+                sha = banListData.sha;
+            }
+            
+            if (bannedIps.includes(ip)) {
+                alert('This IP is already banned');
+                banIpModal.classList.add('hidden');
+                return;
+            }
+            
+            // 2. Add to list
+            bannedIps.push(ip);
+            
+            // 3. Update file
+            await GitHubAPI.updateFile(
+                'news/banned-ips.json',
+                JSON.stringify(bannedIps),
+                `Admin: Banned IP ${ip} (Associated with user ${currentEditingUserId})`,
+                sha
+            );
+            
+            alert(`IP ${ip} has been banned.`);
+            banIpModal.classList.add('hidden');
+        } catch (e) {
+            alert('Failed to ban IP: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Ban This IP';
         }
     };
 

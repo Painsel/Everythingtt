@@ -108,6 +108,20 @@
         </div>
     </div>
 
+    <div id="ban-ip-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 style="color: #ff4d4d;">Ban IP Address</h3>
+            <p>Target User: <span id="ban-target-user" style="font-weight: bold;"></span></p>
+            <p>Current IP: <span id="ban-target-ip" style="font-family: monospace;"></span></p>
+            <p style="margin-top: 10px;">Banning this IP will prevent <b>any</b> user from logging in or creating an account from this address.</p>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="btn-confirm-ban" class="btn-danger">Ban This IP</button>
+                <button id="btn-cancel-ban" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../utils.js?v=1.5.2"></script>
     <script src="script.js?v=1.0.0"></script>
 </body>

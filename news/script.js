@@ -49,6 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error('Could not verify your IP address. Please check your connection or disable ad-blockers.');
             }
 
+            // Check if IP is banned
+            const banListData = await GitHubAPI.getFile('news/banned-ips.json');
+            if (banListData) {
+                const bannedIps = JSON.parse(banListData.content);
+                if (bannedIps.includes(currentIp)) {
+                    btnLogin.disabled = false;
+                    btnLogin.innerText = 'Login / Sign Up';
+                    return alert('Security Error: Your IP address has been banned from this service.');
+                }
+            }
+
             // Check if user exists
             const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
             let foundUser = null;
