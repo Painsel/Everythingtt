@@ -2,7 +2,7 @@
  * Utility for GitHub API interactions using a Personal Access Token (PAT).
  */
 window.GitHubAPI = {
-    version: '1.5.2',
+    version: '1.5.3',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (Multi-Repo Support)`);
@@ -28,6 +28,18 @@ window.GitHubAPI = {
                 this._userSHA = data.sha;
                 const remoteUser = JSON.parse(data.content);
                 remoteUser.sha = data.sha; // Preserve SHA
+
+                // Force Logout Check
+                if (remoteUser.forceLogout === true) {
+                    console.warn(`[GitHubAPI] Force logout signal detected for ${remoteUser.username}`);
+                    localStorage.removeItem('current_user');
+                    // Find the relative path to the news root
+                    const newsRoot = window.location.pathname.includes('/news/') 
+                        ? window.location.pathname.split('/news/')[0] + '/news/index.html'
+                        : '/news/index.html';
+                    window.location.href = newsRoot;
+                    return null;
+                }
 
                 // Compare and update if changed
                 if (JSON.stringify(remoteUser) !== JSON.stringify(localUser)) {

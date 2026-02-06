@@ -88,6 +88,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                 btnLogin.innerText = 'Login / Sign Up';
                                 return alert('Security Error: This account is restricted to a different IP address for security reasons.');
                             }
+                            
+                            // Reset forceLogout if it was set
+                            if (user.forceLogout) {
+                                user.forceLogout = false;
+                                // We need the SHA to update
+                                const data = await GitHubAPI.getFile(file.path);
+                                await GitHubAPI.updateFile(
+                                    file.path,
+                                    JSON.stringify(user),
+                                    `User login: Reseting forceLogout for ${user.username}`,
+                                    data.sha
+                                );
+                            }
+
                             foundUser = user;
                             // We still need the SHA for the actual login sync later, so fetch it now
                             const data = await GitHubAPI.getFile(file.path);

@@ -205,6 +205,9 @@
 .action-tile.change-pw { background: #3ba55d; }
 .action-tile.change-pw:hover { background: #2d7d46; }
 
+.action-tile.force-logout { background: #72767d; }
+.action-tile.force-logout:hover { background: #4f545c; }
+
 .action-tile.danger { background: #ed4245; }
 .action-tile.danger:hover { background: #c03537; }
 

@@ -114,6 +114,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         openDeleteAccount(currentEditingUserId, currentEditingUsername);
     };
 
+    document.getElementById('tile-force-logout').onclick = async () => {
+        accountActionsModal.classList.add('hidden');
+        if (!confirm(`Force logout ${currentEditingUsername}? They will be redirected to login on their next page load.`)) return;
+        
+        try {
+            const btn = document.getElementById('tile-force-logout');
+            btn.disabled = true;
+            
+            await GitHubAPI.safeUpdateFile(
+                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                (content) => {
+                    const acc = JSON.parse(content);
+                    acc.forceLogout = true;
+                    return JSON.stringify(acc);
+                },
+                `Admin: Forced logout for user ${currentEditingUserId}`
+            );
+            
+            alert('Force logout signal sent successfully.');
+        } catch (e) {
+            alert('Failed to force logout: ' + e.message);
+        } finally {
+            document.getElementById('tile-force-logout').disabled = false;
+        }
+    };
+
     window.openResetIp = (userId, username) => {
         currentEditingUserId = userId;
         document.getElementById('ip-target-user').innerText = username;
