@@ -476,29 +476,77 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    window.handleUnmute = function(userId) {
-        if (!currentEditingArticleId) return;
+    window.handleUnmute = async function(userId) {
+        if (!currentEditingArticleId || !user) return;
+        
         const article = articleData[currentEditingArticleId];
+        if (!article || article.authorId !== user.id) return;
+
         if (article.mutes && article.mutes[userId]) {
+            const oldMutes = { ...article.mutes };
             delete article.mutes[userId];
             renderMutedUsers(article.mutes);
+
+            try {
+                await GitHubAPI.safeUpdateFile(
+                    `news/created-articles-storage/${currentEditingArticleId}.json`,
+                    (content) => {
+                        const data = JSON.parse(content);
+                        if (!data.mutes) data.mutes = {};
+                        delete data.mutes[userId];
+                        return JSON.stringify(data);
+                    },
+                    `Unmute user ${userId} on article ${currentEditingArticleId}`
+                );
+            } catch (e) {
+                console.error('Failed to unmute on GitHub:', e);
+                article.mutes = oldMutes; // Revert on failure
+                renderMutedUsers(article.mutes);
+                alert('Failed to save unmute: ' + e.message);
+            }
         }
     };
 
-    btnMuteUser.addEventListener('click', () => {
+    btnMuteUser.addEventListener('click', async () => {
         const userId = muteUserIdInput.value.trim();
-        if (!userId) return;
+        if (!userId || !currentEditingArticleId || !user) return;
         
+        const article = articleData[currentEditingArticleId];
+        if (!article || article.authorId !== user.id) return;
+
         const duration = muteDurationSelect.value;
         const expiry = duration === 'permanent' ? 'permanent' : (Date.now() + parseInt(duration) * 1000).toString();
         
-        if (!currentEditingArticleId) return;
-        const article = articleData[currentEditingArticleId];
+        const oldMutes = { ...(article.mutes || {}) };
         if (!article.mutes) article.mutes = {};
-        
         article.mutes[userId] = expiry;
+        
         muteUserIdInput.value = '';
         renderMutedUsers(article.mutes);
+
+        btnMuteUser.disabled = true;
+        btnMuteUser.innerText = 'Muting...';
+
+        try {
+            await GitHubAPI.safeUpdateFile(
+                `news/created-articles-storage/${currentEditingArticleId}.json`,
+                (content) => {
+                    const data = JSON.parse(content);
+                    if (!data.mutes) data.mutes = {};
+                    data.mutes[userId] = expiry;
+                    return JSON.stringify(data);
+                },
+                `Mute user ${userId} on article ${currentEditingArticleId}`
+            );
+        } catch (e) {
+            console.error('Failed to mute on GitHub:', e);
+            article.mutes = oldMutes; // Revert on failure
+            renderMutedUsers(article.mutes);
+            alert('Failed to save mute: ' + e.message);
+        } finally {
+            btnMuteUser.disabled = false;
+            btnMuteUser.innerText = 'Mute';
+        }
     });
 
     closeSettingsModal.addEventListener('click', () => {
@@ -522,10 +570,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnSaveSettings.addEventListener('click', async () => {
         if (!currentEditingArticleId || !user) return;
 
+        // Extra safety check
+        const localArticle = articleData[currentEditingArticleId];
+        if (!localArticle || localArticle.authorId !== user.id) {
+            return alert('You do not have permission to edit this article.');
+        }
+
         btnSaveSettings.disabled = true;
         btnSaveSettings.innerText = 'Saving...';
 
         try {
+            // Get latest UI state for mutes
+            const currentMutes = localArticle.mutes || {};
+
             const res = await GitHubAPI.safeUpdateFile(
                 `news/created-articles-storage/${currentEditingArticleId}.json`,
                 (content) => {
@@ -538,8 +595,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         content: editContent.value.trim(),
                         banner: currentEditingBannerBase64,
                         isPrivate: markPrivateToggle.checked,
-                        // Preserve mutes from currentArticle if they were updated elsewhere
-                        mutes: currentArticle.mutes || {},
+                        // Use the mutes from our local state which includes any recent changes in the UI
+                        mutes: currentMutes,
                         lastUpdated: new Date().toISOString()
                     };
 
@@ -553,7 +610,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             
             if (res.content) {
-                const finalArticle = JSON.parse(decodeURIComponent(escape(atob(res.content.content.replace(/\s/g, '')))));
+                // Correctly decode UTF-8 content from GitHub response
+                const b64 = res.content.content.replace(/\s/g, '');
+                const jsonStr = decodeURIComponent(Array.prototype.map.call(atob(b64), function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                
+                const finalArticle = JSON.parse(jsonStr);
+                
                 // Update local state
                 articleData[currentEditingArticleId] = finalArticle;
                 articleSHAs[currentEditingArticleId] = res.content.sha;
@@ -575,22 +639,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnDeleteArticle.addEventListener('click', async () => {
         if (!currentEditingArticleId || !user) return;
 
+        // Extra safety check
+        const localArticle = articleData[currentEditingArticleId];
+        if (!localArticle || localArticle.authorId !== user.id) {
+            return alert('You do not have permission to delete this article.');
+        }
+
         if (!confirm('Are you absolutely sure you want to delete this article? This action cannot be undone.')) {
             return;
         }
 
-        const sha = articleSHAs[currentEditingArticleId];
         btnDeleteArticle.disabled = true;
         btnDeleteArticle.innerText = 'Deleting...';
 
         try {
-            // Delete article file
+            // 1. Fetch latest SHA to ensure we can delete without conflict
+            const latest = await GitHubAPI.getFile(`news/created-articles-storage/${currentEditingArticleId}.json`);
+            if (!latest) throw new Error('Could not find article to delete.');
+            
+            const currentSha = latest.sha;
+
+            // 2. Delete article file
             await GitHubAPI.request(`/contents/news/created-articles-storage/${currentEditingArticleId}.json`, 'DELETE', {
                 message: `Delete article: ${currentEditingArticleId}`,
-                sha: sha
+                sha: currentSha
             });
 
-            // Optionally delete comments file
+            // 3. Optionally delete comments file
             try {
                 const commentsRes = await GitHubAPI.getFile(`news/article-comments-storage/${currentEditingArticleId}.json`);
                 if (commentsRes) {
@@ -600,10 +675,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
             } catch (e) {
-                // Comments might not exist, ignore
+                console.warn('Comments file deletion skipped or failed:', e);
             }
 
-            // Update user contributions count
+            // 4. Update user contributions count
             try {
                 const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
                 if (userData) {
@@ -621,10 +696,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.warn('Failed to update contributions count:', e);
             }
 
+            // 5. Cleanup local state
+            delete articleData[currentEditingArticleId];
+            delete articleSHAs[currentEditingArticleId];
+            
+            // 6. UI Update
             settingsModal.classList.add('hidden');
-            window.location.hash = ''; // Go back to feed
-            loadArticles();
+            
+            // If we are in single view, go back to feed
+            if (window.location.hash.includes(currentEditingArticleId)) {
+                window.location.hash = '';
+            } else {
+                // Just remove the card if in feed view for better responsiveness
+                const card = document.getElementById(`article-${currentEditingArticleId}`);
+                if (card) card.remove();
+            }
+
             alert('Article deleted successfully.');
+            loadArticles(); // Final refresh to be sure
         } catch (e) {
             console.error('Failed to delete article:', e);
             alert('Failed to delete article: ' + e.message);
