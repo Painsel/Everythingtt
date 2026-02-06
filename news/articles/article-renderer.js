@@ -957,7 +957,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </button>
                             `).join('')}
                         <button class="reaction-btn add-reaction" data-article-id="${article.id}">+</button>
-                        <button class="comment-trigger-btn" data-article-id="${article.id}">💬 Comments</button>
+                        <button class="comment-trigger-btn" data-article-id="${article.id}">
+                            💬 Comments ${article.commentCount ? `<span class="comment-count">(${article.commentCount})</span>` : ''}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1198,6 +1200,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    async function syncCommentCount(articleId, count) {
+        try {
+            const res = await GitHubAPI.safeUpdateFile(
+                `news/created-articles-storage/${articleId}.json`,
+                (content) => {
+                    if (!content) return "";
+                    const article = JSON.parse(content);
+                    article.commentCount = count;
+                    return JSON.stringify(article);
+                },
+                `Update comment count for article ${articleId}`
+            );
+            
+            if (res.finalContent) {
+                const updatedArticle = JSON.parse(res.finalContent);
+                articleData[articleId] = updatedArticle;
+                articleSHAs[articleId] = res.content.sha;
+                updateReactionUI(updatedArticle);
+            }
+        } catch (e) {
+            console.error('Failed to sync comment count:', e);
+        }
+    }
+
     function updateReactionUI(article) {
         const card = document.getElementById(`article-${article.id}`);
         if (!card) return;
@@ -1227,7 +1253,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </button>
                 `).join('')}
             <button class="reaction-btn add-reaction" data-article-id="${article.id}">+</button>
-            <button class="comment-trigger-btn" data-article-id="${article.id}">💬 Comments</button>
+            <button class="comment-trigger-btn" data-article-id="${article.id}">
+                💬 Comments ${article.commentCount ? `<span class="comment-count">(${article.commentCount})</span>` : ''}
+            </button>
         `;
 
         container.innerHTML = html;
@@ -1241,11 +1269,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.stopPropagation();
         });
 
-        container.querySelector('.comment-trigger-btn').addEventListener('click', () => openComments(article.id, article.title));
-
+        // Add reaction button clicks
         container.querySelectorAll('.reaction-btn:not(.add-reaction)').forEach(btn => {
             btn.addEventListener('click', () => handleReaction(article.id, btn.dataset.emoji));
         });
+
+        // Comments button
+        container.querySelector('.comment-trigger-btn').addEventListener('click', () => openComments(article.id, article.title));
     }
 
     window.showAuthorProfile = async function(authorId) {
@@ -1396,7 +1426,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function openComments(articleId, title) {
         currentArticleIdForComments = articleId;
-        document.getElementById('comments-title').innerText = `Comments: ${title}`;
+        const modalTitle = document.getElementById('comments-title');
+        modalTitle.innerText = `Comments: ${title}`;
         commentsModal.classList.remove('hidden');
         commentsList.innerHTML = '<p class="status-msg">Loading comments...</p>';
         
@@ -1405,16 +1436,35 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (data) {
                 commentsSHA = data.sha;
                 const comments = JSON.parse(data.content);
+                modalTitle.innerText = `Comments: ${title} (${comments.length})`;
                 // Cache comments for editing
                 localStorage.setItem(`comments_${articleId}`, data.content);
                 renderComments(comments);
+
+                // Sync count if it's missing or different in articleData
+                const article = articleData[articleId];
+                if (article && article.commentCount !== comments.length) {
+                    syncCommentCount(articleId, comments.length);
+                }
             } else {
                 commentsSHA = null;
                 commentsList.innerHTML = '<p class="status-msg">No comments yet. Be the first to say something!</p>';
+                
+                // Sync count if it's not 0 in articleData
+                const article = articleData[articleId];
+                if (article && article.commentCount !== 0) {
+                    syncCommentCount(articleId, 0);
+                }
             }
         } catch (e) {
             commentsSHA = null;
             commentsList.innerHTML = '<p class="status-msg">No comments yet. Be the first to say something!</p>';
+            
+            // Sync count if it's not 0 in articleData (error usually means file doesn't exist)
+            const article = articleData[articleId];
+            if (article && article.commentCount !== 0) {
+                syncCommentCount(articleId, 0);
+            }
         }
     }
 
@@ -1669,6 +1719,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finalComments = JSON.parse(res.finalContent);
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
+                
+                // Update article comment count
+                syncCommentCount(currentArticleIdForComments, finalComments.length);
             }
         } catch (e) {
             console.error('Delete comment failed:', e);
@@ -2033,6 +2086,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finalComments = JSON.parse(res.finalContent);
                 commentsSHA = res.content ? res.content.sha : commentsSHA;
                 renderComments(finalComments);
+
+                // Update article comment count
+                syncCommentCount(currentArticleIdForComments, finalComments.length);
 
                 // Send notifications in background
                 const currentArticle = articleData[currentArticleIdForComments];
