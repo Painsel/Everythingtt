@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('Account data synced from remote');
             }
         } catch (e) {
-            console.error('Profile sync failed:', e);
+            // Profile sync failure - ignore
         }
     }
 

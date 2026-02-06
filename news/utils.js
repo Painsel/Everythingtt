@@ -37,7 +37,6 @@ window.GitHubAPI = {
                 }
                 return null;
             } catch (e) {
-                console.error('Failed to load main PAT:', e);
                 const local = localStorage.getItem('gh_pat');
                 if (local) {
                     this.cachedPAT = local;
@@ -104,7 +103,6 @@ window.GitHubAPI = {
             const response = await fetch(url, options);
             
             if (response.status === 409 && retries > 0) {
-                console.warn(`Conflict (409) detected for ${path}. Retrying...`);
                 await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
                 
                 if (method === 'PUT') {
@@ -159,7 +157,6 @@ window.GitHubAPI = {
             try {
                 return await operation();
             } catch (e) {
-                console.error(`Queued write failed for ${path}:`, e);
                 throw e;
             }
         });
@@ -197,7 +194,6 @@ window.GitHubAPI = {
                 sha: data.sha
             };
         } catch (e) {
-            console.error(`Error processing file data for ${path}:`, e);
             return null;
         }
     },

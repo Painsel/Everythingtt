@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `New notification for ${targetUserId}`
             );
         } catch (e) {
-            console.error('Failed to send notification:', e);
+            // Notification fetch failure - ignore
         }
     }
 
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return userStatusCache[userId];
             }
         } catch (e) {
-            console.warn(`Could not fetch status for user ${userId}`);
+            // Silently fail status fetch
         }
         return { status: 'offline', statusType: 'auto', statusMsg: '' };
     }
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (e) {
-            console.error('Profile polling failed:', e);
+            // Background polling - ignore errors
         }
     }
 
@@ -1023,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (e) {
-            console.error('Polling failed:', e);
+            // Silently ignore polling failures to avoid console clutter
         }
     }
 

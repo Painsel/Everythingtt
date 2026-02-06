@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         user = JSON.parse(content);
                     } catch (e) {
-                        console.warn(`Skipping invalid JSON file: ${file.path}`);
                         continue;
                     }
 
