@@ -1438,12 +1438,26 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (!user || !currentArticleIdForComments) return;
          if (!confirm('Are you sure you want to delete this comment?')) return;
 
-         // Optimistically hide the comment
-         const commentEl = document.getElementById(`comment-${commentId}`);
-         if (commentEl) {
-             const thread = commentEl.closest('.comment-thread');
-             if (thread) thread.style.display = 'none';
+         // --- OPTIMISTIC UPDATE ---
+         const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+         const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup
+         
+         const commentToDelete = cachedComments.find(c => String(c.id) === String(commentId));
+         if (!commentToDelete) return;
+
+         const article = articleData[currentArticleIdForComments];
+         const isArticleAuthor = user && article && String(article.authorId) === String(user.id);
+         const isCommentOwner = user && String(commentToDelete.authorId) === String(user.id);
+
+         if (!isArticleAuthor && !isCommentOwner) {
+             alert('You do not have permission to delete this comment.');
+             return;
          }
+
+         // Filter out the comment and its replies immediately
+         const optimisticallyUpdated = cachedComments.filter(c => String(c.id) !== String(commentId) && String(c.replyToId) !== String(commentId));
+         localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(optimisticallyUpdated));
+         renderComments(optimisticallyUpdated);
 
         try {
             const res = await GitHubAPI.safeUpdateFile(
@@ -1454,12 +1468,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const index = comments.findIndex(c => String(c.id) === String(commentId));
                     if (index === -1) return content;
                     
-                    const commentToDelete = comments[index];
-                    const article = articleData[currentArticleIdForComments];
-                    const isArticleAuthor = user && article && String(article.authorId) === String(user.id);
-                    const isCommentOwner = user && String(commentToDelete.authorId) === String(user.id);
+                    const remoteCommentToDelete = comments[index];
+                    const isArticleAuthorRemote = user && article && String(article.authorId) === String(user.id);
+                    const isCommentOwnerRemote = user && String(remoteCommentToDelete.authorId) === String(user.id);
 
-                    if (!isArticleAuthor && !isCommentOwner) {
+                    if (!isArticleAuthorRemote && !isCommentOwnerRemote) {
                         throw new Error('You do not have permission to delete this comment.');
                     }
 
@@ -1474,18 +1487,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finalComments = JSON.parse(res.finalContent);
                 localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(finalComments));
                 renderComments(finalComments);
-            } else {
-                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
-                renderComments(cachedComments);
             }
         } catch (e) {
             console.error('Delete comment failed:', e);
             alert('Failed to delete comment: ' + e.message);
-            // Rollback optimistic hide
-            if (commentEl) {
-                const thread = commentEl.closest('.comment-thread');
-                if (thread) thread.style.display = 'block';
-            }
+            // Rollback optimistic delete
+            localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(originalComments));
+            renderComments(originalComments);
         }
     };
 
