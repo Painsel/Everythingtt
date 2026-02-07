@@ -265,6 +265,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('info-password').innerText = acc.password;
             document.getElementById('info-id').innerText = acc.id;
             document.getElementById('info-join-date').innerText = acc.joinDate ? new Date(acc.joinDate).toLocaleString() : 'N/A';
+            
+            // Privacy Consent Info
+            const consentSpan = document.getElementById('info-privacy');
+            if (acc.privacyConsent === true) {
+                consentSpan.innerText = 'Accepted';
+                consentSpan.style.color = '#3ba55d'; // Success green
+            } else if (acc.privacyConsent === false) {
+                consentSpan.innerText = 'Declined';
+                consentSpan.style.color = '#ed4245'; // Danger red
+            } else {
+                consentSpan.innerText = 'No Choice Made (Pre-Update)';
+                consentSpan.style.color = '#72767d'; // Muted grey
+            }
+
             document.getElementById('info-ip').innerText = acc.allowedIp || 'None';
 
             // 3. Fetch IP details if IP exists

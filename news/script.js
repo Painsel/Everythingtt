@@ -159,7 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     bio: 'Welcome to my profile!',
                     joinDate: new Date().toISOString(),
                     contributions: 0,
-                    allowedIp: currentIp // Lock account to this IP
+                    allowedIp: currentIp, // Lock account to this IP
+                    privacyConsent: consent // Store their choice
                 };
                 const res = await GitHubAPI.updateFile(`news/created-news-accounts-storage/${newUser.id}.json`, JSON.stringify(newUser), `Create user ${username}`);
                 userSha = res.content.sha; // Capture SHA for future updates
@@ -172,6 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Migration: Set allowedIp if not present
                 if (!foundUser.allowedIp) {
                     foundUser.allowedIp = currentIp;
+                    needsUpdate = true;
+                }
+
+                // Store privacy consent if not present or changed
+                if (foundUser.privacyConsent !== consent) {
+                    foundUser.privacyConsent = consent;
                     needsUpdate = true;
                 }
 
