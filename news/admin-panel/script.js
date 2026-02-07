@@ -402,7 +402,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    document.getElementById('btn-confirm-ip').onclick = async () => {
+    document.getElementById('form-reset-ip').onsubmit = async (e) => {
+        e.preventDefault();
         const newIp = document.getElementById('new-ip').value.trim();
         const btn = document.getElementById('btn-confirm-ip');
         
@@ -427,7 +428,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    document.getElementById('btn-confirm-pw').onclick = async () => {
+    document.getElementById('form-change-pw').onsubmit = async (e) => {
+        e.preventDefault();
         const newPw = document.getElementById('new-pw').value.trim();
         if (!newPw) return alert('Password cannot be empty');
         

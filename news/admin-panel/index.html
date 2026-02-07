@@ -70,13 +70,15 @@
             <span class="close-modal">&times;</span>
             <h3>Reset Allowed IP</h3>
             <p>Target User: <span id="ip-target-user" style="font-weight: bold;"></span></p>
-            <div class="input-group">
-                <label for="new-ip">New Allowed IP (Leave empty to clear):</label>
-                <input type="text" id="new-ip" placeholder="e.g. 192.168.1.1">
-            </div>
-            <div class="modal-actions">
-                <button id="btn-confirm-ip" class="btn-primary">Update IP</button>
-            </div>
+            <form id="form-reset-ip">
+                <div class="input-group">
+                    <label for="new-ip">New Allowed IP (Leave empty to clear):</label>
+                    <input type="text" id="new-ip" placeholder="e.g. 192.168.1.1">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" id="btn-confirm-ip" class="btn-primary">Update IP</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -85,13 +87,15 @@
             <span class="close-modal">&times;</span>
             <h3>Change Password</h3>
             <p>Target User: <span id="pw-target-user" style="font-weight: bold;"></span></p>
-            <div class="input-group">
-                <label for="new-pw">New Password:</label>
-                <input type="password" id="new-pw" placeholder="Enter new password">
-            </div>
-            <div class="modal-actions">
-                <button id="btn-confirm-pw" class="btn-primary">Change Password</button>
-            </div>
+            <form id="form-change-pw">
+                <div class="input-group">
+                    <label for="new-pw">New Password:</label>
+                    <input type="password" id="new-pw" placeholder="Enter new password">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" id="btn-confirm-pw" class="btn-primary">Change Password</button>
+                </div>
+            </form>
         </div>
     </div>
 

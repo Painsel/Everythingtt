@@ -193,15 +193,18 @@ window.GitHubAPI = {
     },
 
     async request(path, method = 'GET', body = null, retries = 5) {
+        // Separate path and query parameters
+        let [basePath, queryStr] = path.split('?');
+
         // Client-side cache check
         if (method === 'GET') {
-            const cached = this._fileCache.get(path);
+            const cached = this._fileCache.get(basePath);
             if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
                 return cached.data;
             }
         } else {
             // Clear cache for this path on any modification
-            this._fileCache.delete(path);
+            this._fileCache.delete(basePath);
         }
 
         const pat = await this.getPAT();
@@ -215,11 +218,11 @@ window.GitHubAPI = {
         const criticalRepoPath = '/repos/Painsel/Everything-TT-Critical-Data';
         
         let apiPath;
-        if (path.startsWith('http')) {
-            const urlObj = new URL(path);
+        if (basePath.startsWith('http')) {
+            const urlObj = new URL(basePath);
             apiPath = urlObj.pathname;
         } else {
-            apiPath = this.getAPIURL(path).replace('https://api.github.com', '');
+            apiPath = this.getAPIURL(basePath).replace('https://api.github.com', '');
         }
 
         let queueName = 'github';
@@ -234,26 +237,38 @@ window.GitHubAPI = {
             
             if (isAuthorized) {
                 url = `${base}?path=${encodeURIComponent(apiPath)}`;
+                if (queryStr) {
+                    url += `&${queryStr}`;
+                }
                 queueName = 'middleware';
             } else {
                 console.warn(`Middleware restricted: Attempted to access non-authorized path: ${apiPath}. Falling back to direct API.`);
                 if (!pat) throw new Error('Middleware restricted and no GitHub token available for direct access.');
                 
-                url = path.startsWith('http') ? path : this.getAPIURL(path);
+                url = basePath.startsWith('http') ? basePath : this.getAPIURL(basePath);
+                if (queryStr) {
+                    url += (url.includes('?') ? '&' : '?') + queryStr;
+                }
                 headers['Authorization'] = `token ${pat}`;
             }
         } else {
             // Direct GitHub API
             if (!pat) throw new Error('No GitHub token available.');
-            url = path.startsWith('http') ? path : this.getAPIURL(path);
+            url = basePath.startsWith('http') ? basePath : this.getAPIURL(basePath);
+            if (queryStr) {
+                url += (url.includes('?') ? '&' : '?') + queryStr;
+            }
             headers['Authorization'] = `token ${pat}`;
         }
 
         // Store direct API info for fallback
         const directInfo = {
-            url: path.startsWith('http') ? path : this.getAPIURL(path),
+            url: basePath.startsWith('http') ? basePath : this.getAPIURL(basePath),
             headers: { ...headers, 'Authorization': pat ? `token ${pat}` : headers['Authorization'] }
         };
+        if (queryStr) {
+            directInfo.url += (directInfo.url.includes('?') ? '&' : '?') + queryStr;
+        }
 
         // Add cache buster for GET requests
         if (method === 'GET') {
@@ -298,12 +313,15 @@ window.GitHubAPI = {
                 await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
                 
                 if (method === 'PUT') {
-                    let relativePath = originalPath;
-                    if (originalPath.startsWith('http')) {
-                        const parts = originalPath.split('/contents/');
+                    // Strip query string for relative path extraction
+                    const [pathOnly] = originalPath.split('?');
+                    let relativePath = pathOnly;
+                    
+                    if (pathOnly.startsWith('http')) {
+                        const parts = pathOnly.split('/contents/');
                         if (parts.length > 1) relativePath = parts[1];
                     } else {
-                        relativePath = originalPath.replace(/^\/contents\//, '').replace(/^contents\//, '');
+                        relativePath = pathOnly.replace(/^\/contents\//, '').replace(/^contents\//, '');
                     }
 
                     const freshData = await this.getFile(relativePath);
@@ -338,7 +356,8 @@ window.GitHubAPI = {
             
             // Cache successful GET requests
             if (method === 'GET') {
-                this._fileCache.set(originalPath, {
+                const [pathOnly] = originalPath.split('?');
+                this._fileCache.set(pathOnly, {
                     data: data,
                     timestamp: Date.now()
                 });
