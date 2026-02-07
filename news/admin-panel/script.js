@@ -93,21 +93,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingUserIp = ip;
         document.getElementById('actions-target-user').innerText = username;
         
-        // Developer-only check for "Make Admin" tile
+        // Developer-only check for "Make Admin" and "Make BETA" tiles
         const DEVELOPER_ID = '382156063438888';
         const makeAdminTile = document.getElementById('tile-make-admin');
+        const makeBetaTile = document.getElementById('tile-make-beta');
         
         if (user.id !== DEVELOPER_ID) {
             makeAdminTile.classList.add('hidden');
+            makeBetaTile.classList.add('hidden');
         } else {
             makeAdminTile.classList.remove('hidden');
-            // Update Make Admin tile based on current role
+            makeBetaTile.classList.remove('hidden');
+            
             const acc = allAccounts.find(a => a.id === userId);
-            const label = document.getElementById('label-make-admin');
+            
+            // Update Make Admin tile
+            const labelAdmin = document.getElementById('label-make-admin');
             if (acc && acc.role === 'admin') {
-                label.innerText = 'Remove Admin';
+                labelAdmin.innerText = 'Remove Admin';
             } else {
-                label.innerText = 'Make Admin';
+                labelAdmin.innerText = 'Make Admin';
+            }
+
+            // Update Make BETA tile
+            const labelBeta = document.getElementById('label-make-beta');
+            if (acc && acc.role === 'beta') {
+                labelBeta.innerText = 'Remove BETA';
+            } else {
+                labelBeta.innerText = 'Make BETA';
             }
         }
         
@@ -163,7 +176,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!acc) return;
 
         const isCurrentlyAdmin = acc.role === 'admin';
-        const actionText = isCurrentlyAdmin ? 'remove admin rights from' : 'make';
         const confirmMsg = isCurrentlyAdmin 
             ? `Are you sure you want to remove admin rights from ${currentEditingUsername}?`
             : `Are you sure you want to make ${currentEditingUsername} an admin?`;
@@ -186,6 +198,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             alert('Failed to update admin rights: ' + e.message);
         } finally {
             document.getElementById('tile-make-admin').disabled = false;
+        }
+    };
+
+    document.getElementById('tile-make-beta').onclick = async () => {
+        accountActionsModal.classList.add('hidden');
+        
+        // Final security check: Only the developer can manage BETA roles
+        const DEVELOPER_ID = '382156063438888';
+        if (user.id !== DEVELOPER_ID) {
+            alert('Unauthorized: Only the Developer can manage BETA roles.');
+            return;
+        }
+
+        const acc = allAccounts.find(a => a.id === currentEditingUserId);
+        if (!acc) return;
+
+        const isCurrentlyBeta = acc.role === 'beta';
+        const confirmMsg = isCurrentlyBeta 
+            ? `Are you sure you want to remove BETA Tester rights from ${currentEditingUsername}?`
+            : `Are you sure you want to make ${currentEditingUsername} a BETA Tester?`;
+
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const btn = document.getElementById('tile-make-beta');
+            btn.disabled = true;
+
+            await GitHubAPI.safeUpdateFile(
+                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                { role: isCurrentlyBeta ? 'user' : 'beta' },
+                `Admin: ${isCurrentlyBeta ? 'Removed' : 'Granted'} BETA Tester rights for ${currentEditingUsername}`
+            );
+
+            alert(`BETA Tester rights ${isCurrentlyBeta ? 'removed' : 'granted'} successfully.`);
+            loadAccounts();
+        } catch (e) {
+            alert('Failed to update BETA Tester rights: ' + e.message);
+        } finally {
+            document.getElementById('tile-make-beta').disabled = false;
         }
     };
 

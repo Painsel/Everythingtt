@@ -553,7 +553,64 @@ window.GitHubAPI = {
     renderNewUserBadge(joinDate, className = 'user-badge') {
         if (!this.isNewUser(joinDate)) return '';
         const badgePath = this.getBadgePath('new_badge.png');
-        return `<img src="${badgePath}" class="${className}" style="width: 40px; height: 40px; object-fit: contain; vertical-align: middle;" title="New User - This account was created less than a month ago" alt="New User Badge">`;
+        return this.renderBadge(badgePath, 'New User', 'This account was created less than a month ago.', className);
+    },
+
+    /**
+     * Renders a badge with an enhanced tooltip that works on hover and tap.
+     */
+    renderBadge(iconPath, title, description, className = 'user-badge') {
+        const uniqueId = 'badge-' + Math.random().toString(36).substr(2, 9);
+        return `
+            <div class="badge-wrapper" onclick="event.stopPropagation(); this.querySelector('.badge-tooltip').classList.toggle('active')">
+                <img src="${iconPath}" class="${className}" alt="${title}">
+                <div class="badge-tooltip">
+                    <div class="tooltip-title">${title}</div>
+                    <div class="tooltip-desc">${description}</div>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Renders the special EverythingTT Theme badge.
+     */
+    renderThemeBadge(className = 'user-badge') {
+        const badgePath = this.getBadgePath('big_fan.png'); // Using big_fan as the theme badge
+        return this.renderBadge(badgePath, 'EverythingTT Elite', 'A distinguished member of the EverythingTT community.', className);
+    },
+
+    DEVELOPER_ID: '777', // The unique ID of the developer
+
+    /**
+     * Renders a role badge (e.g., Admin, BETA Tester) with enhanced tooltips.
+     */
+    renderRoleBadge(role, className = 'admin-badge') {
+        if (role === 'admin') {
+            return `
+                <div class="badge-wrapper" onclick="event.stopPropagation(); this.querySelector('.badge-tooltip').classList.toggle('active')">
+                    <span class="${className}">Admin</span>
+                    <div class="badge-tooltip">
+                        <div class="tooltip-title">Administrator</div>
+                        <div class="tooltip-desc">Has full access to manage the EverythingTT ecosystem.</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        if (role === 'beta') {
+            return `
+                <div class="badge-wrapper" onclick="event.stopPropagation(); this.querySelector('.badge-tooltip').classList.toggle('active')">
+                    <span class="beta-badge" style="background: #9c27b0; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;">BETA</span>
+                    <div class="badge-tooltip">
+                        <div class="tooltip-title">BETA Tester</div>
+                        <div class="tooltip-desc">Tests upcoming features before they are officially released.</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        return '';
     }
 };
 

@@ -1,11 +1,11 @@
 node_modules/
 .env
-EverythingTT-API/
 .DS_Store
 dist/
 build/
 
 # Critical Data Storage
+EverythingTT-API/
 news/article-comments-storage/
 news/created-articles-storage/
 news/created-news-accounts-storage/

@@ -913,22 +913,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             displayContent = formatArticleContent(article.content);
         }
 
-        // Slideshow logic for banner
+        // Slideshow logic for banner (BETA feature)
         const banners = Array.isArray(article.banner) ? article.banner : [article.banner || 'https://via.placeholder.com/400x150'];
+        const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || user.id === GitHubAPI.DEVELOPER_ID);
+        const hasMultipleBanners = banners.length > 1;
+        
         let bannerHTML = '';
-        if (banners.length > 1) {
+        if (hasMultipleBanners) {
             bannerHTML = `
-                <div class="article-banner slideshow" id="slideshow-${article.id}">
+                <div class="article-banner slideshow ${!isBetaTester ? 'beta-restricted' : ''}" id="slideshow-${article.id}">
                     ${banners.map((b, i) => `
                         <div class="slide ${i === 0 ? 'active' : ''}" style="background-image: ${b.startsWith('#') ? 'none' : `url(${b})`}; background-color: ${b.startsWith('#') ? b : 'transparent'}"></div>
                     `).join('')}
-                    <div class="slideshow-nav">
-                        <button class="ss-prev">❮</button>
+                    <div class="slideshow-nav ${!isBetaTester ? 'locked' : ''}">
+                        <button class="ss-prev" ${!isBetaTester ? 'disabled title="BETA Feature: Testing only"' : ''}>❮</button>
                         <div class="ss-dots">
                             ${banners.map((_, i) => `<span class="ss-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
                         </div>
-                        <button class="ss-next">❯</button>
+                        <button class="ss-next" ${!isBetaTester ? 'disabled title="BETA Feature: Testing only"' : ''}>❯</button>
                     </div>
+                    ${!isBetaTester ? `<div class="beta-lock-overlay"><span>🧪 BETA FEATURE</span></div>` : ''}
                 </div>
             `;
         } else {
@@ -989,7 +993,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Click to view banner
         const bannerElement = card.querySelector('.article-banner');
         if (bannerElement) {
-            if (banners.length > 1) {
+            if (hasMultipleBanners) {
                 // Slideshow case: add click to each slide
                 const slides = card.querySelectorAll('.slide');
                 slides.forEach(slide => {
@@ -1016,8 +1020,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // Initialize slideshow events if multiple banners
-        if (banners.length > 1) {
+        // Initialize slideshow events if multiple banners (BETA feature)
+        if (hasMultipleBanners && isBetaTester) {
             let currentIndex = 0;
             const slides = card.querySelectorAll('.slide');
             const dots = card.querySelectorAll('.ss-dot');
@@ -1364,9 +1368,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="profile-card-names">
                         <div class="profile-card-username-row">
                             <span class="profile-card-username">${author.username}</span>
-                            ${author.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+                            ${GitHubAPI.renderRoleBadge(author.role)}
                             ${author.statusMsg ? `<div class="profile-card-status-bubble">${author.statusMsg}</div>` : ''}
                             ${GitHubAPI.renderNewUserBadge(author.joinDate)}
+                            ${GitHubAPI.renderThemeBadge()}
                         </div>
                         <span class="profile-card-id">#${author.id}</span>
                     </div>
@@ -1588,7 +1593,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="comment-author-info">
                                 <div class="comment-author-row" data-user-id="${c.authorId}">
                                     <span class="comment-author-name" onclick="window.showAuthorProfile('${c.authorId}')">${c.authorName}</span>
+                                    ${GitHubAPI.renderRoleBadge(c.authorRole)}
                                     ${GitHubAPI.renderNewUserBadge(c.authorJoinDate, 'user-badge comment-badge')}
+                                    ${GitHubAPI.renderThemeBadge('user-badge comment-badge')}
                                     <div class="comment-status-bubble" data-user-id="${c.authorId}" style="display: none;"></div>
                                 </div>
                                 <span class="comment-timestamp">${new Date(c.timestamp).toLocaleString()}</span>
@@ -1670,15 +1677,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (statusInfo.joinDate) {
                 document.querySelectorAll(`.comment-author-row[data-user-id="${authorId}"]`).forEach(row => {
                     // Only add if not already present or if we want to ensure it's up to date
-                    const existingBadge = row.querySelector('.user-badge');
-                    if (!existingBadge) {
-                        const badgeHtml = GitHubAPI.renderNewUserBadge(statusInfo.joinDate, 'user-badge comment-badge');
-                        if (badgeHtml) {
-                            const nameEl = row.querySelector('.comment-author-name');
-                            if (nameEl) {
-                                nameEl.insertAdjacentHTML('afterend', badgeHtml);
-                            }
-                        }
+                    const nameEl = row.querySelector('.comment-author-name');
+                    if (nameEl) {
+                        const roleBadge = GitHubAPI.renderRoleBadge(statusInfo.role);
+                        const newUserBadge = GitHubAPI.renderNewUserBadge(statusInfo.joinDate, 'user-badge comment-badge');
+                        const themeBadge = GitHubAPI.renderThemeBadge('user-badge comment-badge');
+                        
+                        // Clear existing and re-add
+                        row.querySelectorAll('.badge-wrapper').forEach(b => b.remove());
+                        nameEl.insertAdjacentHTML('afterend', roleBadge + newUserBadge + themeBadge);
                     }
                 });
             }
