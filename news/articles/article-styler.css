@@ -2514,3 +2514,72 @@
     margin-left: 8px;
     vertical-align: middle;
 }
+
+/* Temporary Link Styles */
+.temp-link-container {
+    background-color: #2f3136;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #40444b;
+    margin-top: 8px;
+}
+
+.temp-link-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.temp-link-btn {
+    background-color: #5865f2;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    width: fit-content;
+}
+
+.temp-link-btn:hover {
+    background-color: #4752c4;
+}
+
+.temp-link-btn:disabled {
+    background-color: #4f545c;
+    cursor: not-allowed;
+}
+
+.temp-link-display {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.temp-link-display input {
+    flex: 1;
+    background: #202225;
+    border: 1px solid #40444b;
+    color: #dcddde;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.temp-link-status {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #b9bbbe;
+}
+
+.temp-link-status.success {
+    color: #3ba55c;
+}
+
+.temp-link-status.error {
+    color: #ed4245;
+}
