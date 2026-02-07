@@ -334,7 +334,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // UI Listeners for Notifications
     const btnNotif = document.getElementById('btn-notifications');
     const btnMyArticles = document.getElementById('btn-my-articles');
-    const exploreTitle = document.getElementById('explore-title');
     const notifModal = document.getElementById('notifications-modal');
     const closeNotifModal = document.querySelector('.close-notifications-modal');
 

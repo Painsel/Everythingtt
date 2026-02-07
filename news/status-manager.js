@@ -123,6 +123,8 @@ const StatusManager = {
             headers: headers,
             body: body,
             keepalive: true
+        }).catch(() => {
+            // Silently ignore failures on page unload
         });
     }
 };
