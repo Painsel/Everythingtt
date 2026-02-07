@@ -4,7 +4,6 @@ node_modules/
 dist/
 build/
 news/temp-access-links
-
 # Critical Data Storage
 EverythingTT-API/
 news/article-comments-storage/

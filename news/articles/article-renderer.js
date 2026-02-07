@@ -1274,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 <div class="article-footer-actions">
                     <button class="article-action-btn copy-url-btn" data-article-id="${article.id}" title="Copy Article URL">
-                        🔗 Copy Link
+                        <span class="icon">🔗</span> Copy Link
                     </button>
                     ${(isLong && !isFullView) ? `<button class="read-more-btn" data-article-id="${article.id}">Read More</button>` : ''}
                 </div>
@@ -1294,9 +1294,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <span class="count">${getReactionCount(emoji)}</span>
                                 </button>
                             `).join('')}
-                        <button class="reaction-btn add-reaction" data-article-id="${article.id}">+</button>
+                        <button class="reaction-btn add-reaction" data-article-id="${article.id}" title="Add Reaction">+</button>
                         <button class="comment-trigger-btn" data-article-id="${article.id}">
-                            💬 Comments ${article.commentCount ? `<span class="comment-count">(${article.commentCount})</span>` : ''}
+                            <span class="icon">💬</span> Comments ${article.commentCount ? `<span class="comment-count">${article.commentCount}</span>` : ''}
                         </button>
                     </div>
                 </div>
@@ -1466,11 +1466,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const url = `${baseUrl}#article-${articleId}`;
                 
                 navigator.clipboard.writeText(url).then(() => {
-                    const originalText = copyBtn.innerHTML;
-                    copyBtn.innerHTML = '✅ Copied!';
+                    const originalHTML = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<span class="icon">✅</span> Copied!';
                     copyBtn.classList.add('copied');
                     setTimeout(() => {
-                        copyBtn.innerHTML = originalText;
+                        copyBtn.innerHTML = originalHTML;
                         copyBtn.classList.remove('copied');
                     }, 2000);
                 }).catch(err => {
