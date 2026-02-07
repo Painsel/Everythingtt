@@ -176,11 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentEditingUserId}.json`,
-                (content) => {
-                    const account = JSON.parse(content);
-                    account.role = isCurrentlyAdmin ? 'user' : 'admin';
-                    return JSON.stringify(account);
-                },
+                { role: isCurrentlyAdmin ? 'user' : 'admin' },
                 `Admin: ${isCurrentlyAdmin ? 'Removed' : 'Granted'} admin rights for ${currentEditingUsername}`
             );
 
@@ -203,11 +199,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentEditingUserId}.json`,
-                (content) => {
-                    const acc = JSON.parse(content);
-                    acc.forceLogout = true;
-                    return JSON.stringify(acc);
-                },
+                { forceLogout: true },
                 `Admin: Forced logout for user ${currentEditingUserId}`
             );
             
@@ -369,11 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentEditingUserId}.json`,
-                (content) => {
-                    const acc = JSON.parse(content);
-                    acc.allowedIp = newIp || null;
-                    return JSON.stringify(acc);
-                },
+                { allowedIp: newIp || null },
                 `Admin: Reset IP for user ${currentEditingUserId}`
             );
             
@@ -400,11 +388,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentEditingUserId}.json`,
-                (content) => {
-                    const acc = JSON.parse(content);
-                    acc.password = newPw;
-                    return JSON.stringify(acc);
-                },
+                { password: newPw },
                 `Admin: Change password for user ${currentEditingUserId}`
             );
             
@@ -429,31 +413,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.disabled = true;
             btn.innerText = 'Banning...';
             
-            // 1. Fetch current ban list
-            let banListData = await GitHubAPI.getFile('news/banned-ips.json');
-            let bannedIps = [];
-            let sha = null;
-            
-            if (banListData) {
-                bannedIps = JSON.parse(banListData.content);
-                sha = banListData.sha;
-            }
-            
-            if (bannedIps.includes(ip)) {
-                alert('This IP is already banned');
-                banIpModal.classList.add('hidden');
-                return;
-            }
-            
-            // 2. Add to list
-            bannedIps.push(ip);
-            
-            // 3. Update file
-            await GitHubAPI.updateFile(
+            await GitHubAPI.safeUpdateFile(
                 'news/banned-ips.json',
-                JSON.stringify(bannedIps),
-                `Admin: Banned IP ${ip} (Associated with user ${currentEditingUserId})`,
-                sha
+                { _action: 'append', data: ip },
+                `Admin: Banned IP ${ip} (Associated with user ${currentEditingUserId})`
             );
             
             alert(`IP ${ip} has been banned.`);

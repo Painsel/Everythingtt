@@ -5,12 +5,14 @@ window.GitHubAPI = {
     version: '1.5.8',
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
-        console.log(`GitHubAPI v${this.version} initialized (Multi-Repo Support)`);
+        console.log(`GitHubAPI v${this.version} initialized (High Performance Mode)`);
     },
     cachedPAT: null,
     _loadingPAT: null, // Promise lock for concurrent getPAT calls
     middlewareURL: null, // Set this to use a Vercel middleware instead of direct GitHub API calls
     _userSHA: null, // Store current user's SHA globally
+    _fileCache: new Map(), // Client-side cache for GET requests
+    CACHE_TTL: 10000, // 10 seconds client-side cache
     
     /**
      * Synchronize the current user's profile metadata from remote storage.
@@ -191,6 +193,17 @@ window.GitHubAPI = {
     },
 
     async request(path, method = 'GET', body = null, retries = 5) {
+        // Client-side cache check
+        if (method === 'GET') {
+            const cached = this._fileCache.get(path);
+            if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
+                return cached.data;
+            }
+        } else {
+            // Clear cache for this path on any modification
+            this._fileCache.delete(path);
+        }
+
         const pat = await this.getPAT();
         let url;
         let headers = {
@@ -295,7 +308,18 @@ window.GitHubAPI = {
                 error.status = response.status;
                 throw error;
             }
-            return response.json();
+
+            const data = await response.json();
+            
+            // Cache successful GET requests
+            if (method === 'GET') {
+                this._fileCache.set(originalPath, {
+                    data: data,
+                    timestamp: Date.now()
+                });
+            }
+            
+            return data;
         } catch (e) {
             if (e.status === 404 || e.status === 422) throw e;
 
@@ -407,18 +431,64 @@ window.GitHubAPI = {
         });
     },
 
-    async safeUpdateFile(path, transformFn, message) {
+    async safeUpdateFile(path, transform, message) {
+        // Optimization: Atomic push via Middleware
+        if (this.middlewareURL && (typeof transform === 'string' || (typeof transform === 'object' && transform !== null && !transform.then))) {
+            try {
+                const res = await this.request(`${path}?action=push`, 'POST', {
+                    transform: transform,
+                    message: message
+                });
+                
+                if (res.skipped) return res;
+                
+                // Update local cache with new content
+                this._fileCache.set(`/contents/${path}`, {
+                    data: {
+                        content: btoa(unescape(encodeURIComponent(res.finalContent))),
+                        sha: res.content ? res.content.sha : (res.commit ? res.commit.sha : null)
+                    },
+                    timestamp: Date.now()
+                });
+
+                return res;
+            } catch (e) {
+                console.warn('[GitHubAPI] Atomic push failed, falling back to safe update:', e);
+                // Fallback to standard safe update
+            }
+        }
+
         return this.queuedWrite(path, async () => {
             const data = await this.getFile(path);
             const currentContent = data ? data.content : "";
-            const newContent = await transformFn(currentContent);
+            
+            let newContent;
+            if (typeof transform === 'function') {
+                newContent = await transform(currentContent);
+            } else if (typeof transform === 'object') {
+                // If it's an object and we are here (fallback or no middleware), 
+                // we apply the same logic as the middleware would
+                try {
+                    const currentJSON = currentContent ? JSON.parse(currentContent) : {};
+                    if (transform._action === 'append') {
+                        const list = Array.isArray(currentJSON) ? currentJSON : [];
+                        list.push(transform.data);
+                        newContent = JSON.stringify(list, null, 2);
+                    } else {
+                        newContent = JSON.stringify({ ...currentJSON, ...transform }, null, 2);
+                    }
+                } catch (e) {
+                    throw new Error('Invalid JSON for transform: ' + e.message);
+                }
+            } else {
+                newContent = transform;
+            }
             
             if (newContent === currentContent && data) {
                 return { skipped: true, content: data, message: "No changes detected", finalContent: currentContent };
             }
 
             const res = await this.updateFile(path, newContent, message, data ? data.sha : null);
-            // Attach the final content to the response so callers don't try to parse it from the metadata
             return { ...res, finalContent: newContent };
         });
     },

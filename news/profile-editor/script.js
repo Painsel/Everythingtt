@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const res = await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentUser.id}.json`,
-                async () => JSON.stringify(updatedUser),
+                updatedUser,
                 `Update profile: ${username}`
             );
 

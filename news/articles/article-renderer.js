@@ -669,26 +669,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const res = await GitHubAPI.safeUpdateFile(
                 `news/created-articles-storage/${currentEditingArticleId}.json`,
-                (content) => {
-                    if (!content) throw new Error("Article file not found");
-                    const currentArticle = JSON.parse(content);
-                    
-                    const updatedArticle = {
-                        ...currentArticle,
-                        title: editTitle.value.trim(),
-                        content: editContent.value.trim(),
-                        banner: currentEditingBannerBase64,
-                        isPrivate: markPrivateToggle.checked,
-                        // Use the mutes from our local state which includes any recent changes in the UI
-                        mutes: currentMutes,
-                        lastUpdated: new Date().toISOString()
-                    };
-
-                    if (!updatedArticle.title || !updatedArticle.content) {
-                        throw new Error('Title and content are required.');
-                    }
-
-                    return JSON.stringify(updatedArticle);
+                {
+                    title: editTitle.value.trim(),
+                    content: editContent.value.trim(),
+                    banner: currentEditingBannerBase64,
+                    isPrivate: markPrivateToggle.checked,
+                    mutes: currentMutes,
+                    lastUpdated: new Date().toISOString()
                 },
                 `Update article: ${editTitle.value.trim()}`
             );
@@ -1263,12 +1250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const res = await GitHubAPI.safeUpdateFile(
                 `news/created-articles-storage/${articleId}.json`,
-                (content) => {
-                    if (!content) return "";
-                    const article = JSON.parse(content);
-                    article.commentCount = count;
-                    return JSON.stringify(article);
-                },
+                { commentCount: count },
                 `Update comment count for article ${articleId}`
             );
             
