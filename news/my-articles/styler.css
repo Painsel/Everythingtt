@@ -1,0 +1,37 @@
+/* My Articles Page Specific Styles */
+.my-articles-page #explore-title {
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Hide author info in My Articles feed as requested */
+.my-articles-page .author-info {
+    display: none !important;
+}
+
+.my-articles-page .article-card {
+    border-left: 4px solid #5865f2;
+}
+
+.my-articles-page .article-card.private-article {
+    border-left-color: #f1c40f;
+}
+
+.my-articles-page .article-info h3 {
+    margin-top: 0.5rem;
+}
+
+/* Add a badge for private articles in the card */
+.my-articles-page .private-status-tag {
+    background: rgba(241, 196, 15, 0.1);
+    color: #f1c40f;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: inline-block;
+}

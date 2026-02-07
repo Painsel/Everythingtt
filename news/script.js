@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: GitHubAPI.generateID().toString(),
                     username,
                     password,
-                    pfp: 'https://via.placeholder.com/150',
+                    pfp: 'https://placehold.co/150',
                     banner: '#7289da',
                     bio: 'Welcome to my profile!',
                     joinDate: new Date().toISOString(),

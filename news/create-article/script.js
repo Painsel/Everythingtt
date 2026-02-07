@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const markPrivateToggle = document.getElementById('mark-private-toggle');
     
     // BETA feature restriction for "Mark As Private"
-    const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || user.id === GitHubAPI.DEVELOPER_ID);
+    const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || String(user.id) === String(GitHubAPI.DEVELOPER_ID));
     if (!isBetaTester && markPrivateToggle) {
         markPrivateToggle.disabled = true;
         const privateContainer = markPrivateToggle.closest('.setting-item');
@@ -157,8 +157,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Banner handling
     bannerFileInput.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files);
+        let files = Array.from(e.target.files);
         if (files.length > 0) {
+            // BETA restriction for Slideshow (multiple banners)
+            if (!isBetaTester) {
+                if (files.length > 1) {
+                    alert('Multiple banners (Slideshow) is a BETA feature. Only the first image will be used.');
+                }
+                files = [files[0]];
+                // Also clear existing if they already had one (only one allowed for non-beta)
+                currentBannersBase64 = [];
+            }
+
             const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
             
             try {

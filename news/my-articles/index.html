@@ -6,6 +6,7 @@
     <title>My Articles - EverythingTT News</title>
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="../articles/article-styler.css">
+    <link rel="stylesheet" href="styler.css">
     <script>
         // Redirect if not logged in or not BETA
         (function() {
@@ -22,7 +23,7 @@
         })();
     </script>
 </head>
-<body>
+<body class="my-articles-page">
     <div class="container dashboard-container">
         <aside class="sidebar">
             <div id="logged-in-user" class="user-info">
@@ -44,11 +45,15 @@
                     🔔
                     <span id="notification-badge" class="notification-badge hidden">0</span>
                 </div>
+                <div id="btn-my-articles" class="nav-item hidden">My Articles</div>
                 <a href="../create-article/" class="nav-item">Publish News</a>
             </nav>
         </aside>
 
         <main class="content">
+            <div id="single-article-header" class="hidden">
+                <button id="btn-back-to-feed">← Back to My Articles</button>
+            </div>
             <h2 id="explore-title">My Articles <span class="beta-tool-badge">BETA</span></h2>
             <div id="articles-list" class="articles-grid">
                 <!-- Articles will be loaded here -->
@@ -225,9 +230,6 @@
     <script src="../utils.js"></script>
     <script src="../status-manager.js"></script>
     <script src="../articles/article-renderer.js"></script>
-    <script>
-        // Set filter to 'my' and load
-        window.currentFilter = 'my';
-    </script>
+    <script src="renderer.js"></script>
 </body>
 </html>

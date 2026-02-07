@@ -81,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let userSHA = null;
 
     // Developer ID check for global access
-    const isDeveloper = user && user.id === GitHubAPI.DEVELOPER_ID;
+    const isDeveloper = user && String(user.id) === String(GitHubAPI.DEVELOPER_ID);
     const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || isDeveloper);
 
     // Security check: IP Address restriction
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const notifModal = document.getElementById('notifications-modal');
     const closeNotifModal = document.querySelector('.close-notifications-modal');
 
-    window.currentFilter = 'all';
+    window.currentFilter = window.currentFilter || 'all';
 
     if (btnNotif) {
         btnNotif.addEventListener('click', () => {
@@ -383,8 +383,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (isSingleArticle) {
                 // Single article view
                 document.body.classList.add('single-article-view');
-                singleArticleHeader.classList.remove('hidden');
-                exploreTitle.classList.add('hidden');
+                if (singleArticleHeader) singleArticleHeader.classList.remove('hidden');
+                if (exploreTitle) exploreTitle.classList.add('hidden');
                 
                 const data = await GitHubAPI.getFile(`news/created-articles-storage/${singleArticleId}.json`);
                 if (!data) {
@@ -407,8 +407,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 // Feed view
                 document.body.classList.remove('single-article-view');
-                singleArticleHeader.classList.add('hidden');
-                exploreTitle.classList.remove('hidden');
+                if (singleArticleHeader) singleArticleHeader.classList.add('hidden');
+                if (exploreTitle) exploreTitle.classList.remove('hidden');
                 
                 const files = await GitHubAPI.listFiles('news/created-articles-storage');
                 console.log(`Raw files from listFiles:`, files);
@@ -569,7 +569,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function openArticleSettings(articleId) {
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
-        if (!article || (!isBetaTester && article.authorId !== user.id)) return;
+        if (!article || !user || !isBetaTester || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
 
         // Reset to first tab
         sidebarTabs[0].click();
@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Handle banner preview (handle both single string and array/slideshow)
         const displayBanner = Array.isArray(article.banner) ? article.banner[0] : article.banner;
-        editBannerPreview.src = (displayBanner && !displayBanner.startsWith('#')) ? displayBanner : 'https://via.placeholder.com/400x150';
+        editBannerPreview.src = (displayBanner && !displayBanner.startsWith('#')) ? displayBanner : 'https://placehold.co/400x150';
         
         markPrivateToggle.checked = !!article.isPrivate;
         
@@ -637,10 +637,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.handleUnmute = async function(userId) {
-        if (!currentEditingArticleId || !user) return;
+        if (!currentEditingArticleId || !user || !isBetaTester) return;
         
         const article = articleData[currentEditingArticleId];
-        if (!article || (!isBetaTester && article.authorId !== user.id)) return;
+        if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
 
         if (article.mutes && article.mutes[userId]) {
             const oldMutes = { ...article.mutes };
@@ -669,10 +669,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnMuteUser.addEventListener('click', async () => {
         const userId = muteUserIdInput.value.trim();
-        if (!userId || !currentEditingArticleId || !user) return;
+        if (!userId || !currentEditingArticleId || !user || !isBetaTester) return;
         
         const article = articleData[currentEditingArticleId];
-        if (!article || (!isBetaTester && article.authorId !== user.id)) return;
+        if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
 
         const duration = muteDurationSelect.value;
         const expiry = duration === 'permanent' ? 'permanent' : (Date.now() + parseInt(duration) * 1000).toString();
@@ -728,11 +728,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnSaveSettings.addEventListener('click', async () => {
-        if (!currentEditingArticleId || !user) return;
+        if (!currentEditingArticleId || !user || !isBetaTester) return;
 
         // Extra safety check
         const localArticle = articleData[currentEditingArticleId];
-        if (!localArticle || (!isBetaTester && localArticle.authorId !== user.id)) {
+        if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
             return alert('You do not have permission to edit this article.');
         }
 
@@ -778,11 +778,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     btnDeleteArticle.addEventListener('click', async () => {
-        if (!currentEditingArticleId || !user) return;
+        if (!currentEditingArticleId || !user || !isBetaTester) return;
 
         // Extra safety check
         const localArticle = articleData[currentEditingArticleId];
-        if (!localArticle || (!isBetaTester && localArticle.authorId !== user.id)) {
+        if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
             return alert('You do not have permission to delete this article.');
         }
 
@@ -868,9 +868,11 @@ document.addEventListener('DOMContentLoaded', async () => {
      window.addEventListener('hashchange', loadArticles);
  
      // Back to feed button
-    btnBackToFeed.addEventListener('click', () => {
-        window.location.hash = '';
-    });
+    if (btnBackToFeed) {
+        btnBackToFeed.addEventListener('click', () => {
+            window.location.hash = '';
+        });
+    }
 
     function formatArticleContent(text) {
         if (!text) return '';
@@ -990,7 +992,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Slideshow logic for banner (BETA feature)
-        const banners = Array.isArray(article.banner) ? article.banner : [article.banner || 'https://via.placeholder.com/400x150'];
+        const banners = Array.isArray(article.banner) ? article.banner : [article.banner || 'https://placehold.co/400x150'];
         const hasMultipleBanners = banners.length > 1;
         
         let bannerHTML = '';
@@ -1017,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.innerHTML = `
             ${bannerHTML}
             <div class="article-info">
-                ${(user && (user.id === article.authorId || isBetaTester)) ? `
+                ${(user && isBetaTester && (String(user.id) === String(article.authorId) || isDeveloper)) ? `
                     <div class="article-settings-trigger" title="Article Settings" data-article-id="${article.id}">
                         ⚙️
                     </div>
@@ -1025,7 +1027,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <h3>${article.title} ${article.isPrivate ? '<span class="private-badge" title="Private Article">🔒</span>' : ''}</h3>
                 <div class="author-info" data-author-id="${article.authorId}">
                     <img src="${article.authorPfp}" alt="${article.authorName}" class="author-pfp">
-                    <span>By ${article.authorName}</span>
+                    <span>${window.currentFilter === 'my' ? '' : `By ${article.authorName}`}</span>
                 </div>
                 <p class="timestamp">${new Date(article.timestamp).toLocaleDateString()}</p>
                 
@@ -1639,7 +1641,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const article = articleData[currentArticleIdForComments];
-        const isArticleAuthor = user && article && article.authorId === user.id;
+        const isArticleAuthor = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
+        const canManageArticle = isArticleAuthor && isBetaTester;
 
         // Separate pinned and unpinned, and organize into threads
         const pinnedComments = comments.filter(c => c.pinned).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -1694,12 +1697,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </button>
                             </div>
                             <span class="action-link" onclick="window.setupReply('${c.id}', '${c.authorName}')">Reply</span>
-                            ${isArticleAuthor ? `
+                            ${canManageArticle ? `
                                 <span class="action-link pin-btn ${c.pinned ? 'active' : ''}" onclick="window.togglePinComment('${c.id}')">
                                     ${c.pinned ? 'Unpin' : 'Pin'}
                                 </span>
                             ` : ''}
-                            ${(isArticleAuthor || isCommentOwner) ? `
+                            ${(canManageArticle || isCommentOwner) ? `
                                 <span class="action-link delete-comment-btn" onclick="window.handleDeleteComment('${c.id}')">Delete</span>
                             ` : ''}
                             ${isCommentOwner ? `
@@ -1801,10 +1804,11 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (!commentToDelete) return;
 
          const article = articleData[currentArticleIdForComments];
-         const isArticleAuthor = user && article && String(article.authorId) === String(user.id);
+         const isArticleAuthor = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
+         const canManageArticle = isArticleAuthor && isBetaTester;
          const isCommentOwner = user && String(commentToDelete.authorId) === String(user.id);
-
-         if (!isArticleAuthor && !isCommentOwner) {
+ 
+         if (!canManageArticle && !isCommentOwner) {
              alert('You do not have permission to delete this comment.');
              return;
          }
@@ -1824,10 +1828,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (index === -1) return content;
                     
                     const remoteCommentToDelete = comments[index];
-                    const isArticleAuthorRemote = user && article && String(article.authorId) === String(user.id);
+                    const isArticleAuthorRemote = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
+                    const canManageArticleRemote = isArticleAuthorRemote && isBetaTester;
                     const isCommentOwnerRemote = user && String(remoteCommentToDelete.authorId) === String(user.id);
 
-                    if (!isArticleAuthorRemote && !isCommentOwnerRemote) {
+                    if (!canManageArticleRemote && !isCommentOwnerRemote) {
                         throw new Error('You do not have permission to delete this comment.');
                     }
 
@@ -1862,6 +1867,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
     window.togglePinComment = async function(commentId) {
+        if (!currentArticleIdForComments || !user || !isBetaTester) return;
+        
+        const article = articleData[currentArticleIdForComments];
+        if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
+
         // --- OPTIMISTIC UPDATE ---
         const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
         const originalComments = JSON.parse(JSON.stringify(cachedComments)); // Backup
