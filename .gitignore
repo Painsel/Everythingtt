@@ -3,6 +3,7 @@ node_modules/
 .DS_Store
 dist/
 build/
+news/temp-access-links
 
 # Critical Data Storage
 EverythingTT-API/
@@ -10,4 +11,3 @@ news/article-comments-storage/
 news/created-articles-storage/
 news/created-news-accounts-storage/
 news/notifications-storage/
-news/temp-access-links
