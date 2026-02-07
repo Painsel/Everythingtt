@@ -91,6 +91,131 @@
         </div>
     </div>
 
+    <!-- Article Management Modal -->
+    <div id="article-settings-modal" class="modal hidden">
+        <div class="modal-content management-modal-container">
+            <div class="management-sidebar">
+                <div class="sidebar-header">
+                    <h3>Settings</h3>
+                </div>
+                <div class="sidebar-tabs">
+                    <div class="sidebar-tab active" data-tab="content">
+                        <span class="tab-icon">📝</span> Edit Content
+                    </div>
+                    <div class="sidebar-tab" data-tab="moderation">
+                        <span class="tab-icon">🛡️</span> Moderation
+                    </div>
+                    <div class="sidebar-tab tab-danger" data-tab="danger">
+                        <span class="tab-icon">⚠️</span> Danger Zone
+                    </div>
+                </div>
+            </div>
+
+            <div class="management-main">
+                <span class="close-management-modal">&times;</span>
+                
+                <!-- Content Tab -->
+                <div id="tab-content" class="tab-pane active">
+                    <div class="pane-header">
+                        <h2>Article Content</h2>
+                        <p>Update your article's title, body, and banner image.</p>
+                    </div>
+
+                    <div class="management-section">
+                        <label>Title</label>
+                        <input type="text" id="edit-article-title" placeholder="Enter article title...">
+                    </div>
+
+                    <div class="management-section">
+                        <label>Content</label>
+                        <textarea id="edit-article-content" rows="12" placeholder="Write your article content here..."></textarea>
+                    </div>
+
+                    <div class="management-section">
+                        <label>Banner Image</label>
+                        <div class="banner-edit-container">
+                            <div class="banner-preview-large">
+                                <img id="edit-banner-preview" src="" alt="Banner Preview">
+                                <div class="banner-overlay">
+                                    <label for="edit-banner-upload" class="change-banner-btn">
+                                        Change Banner
+                                        <input type="file" id="edit-banner-upload" accept="image/*" hidden>
+                                    </label>
+                                </div>
+                            </div>
+                            <p class="help-text">Recommended size: 1200x400. Max 2MB.</p>
+                        </div>
+                    </div>
+
+                    <div class="management-section">
+                        <div class="toggle-wrapper setting-item">
+                            <label class="switch">
+                                <input type="checkbox" id="mark-private-toggle">
+                                <span class="slider round"></span>
+                            </label>
+                            <div class="toggle-info">
+                                <label><strong>Mark as Private</strong></label>
+                                <p>Only people with the link can view this article.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Moderation Tab -->
+                <div id="tab-moderation" class="tab-pane">
+                    <div class="pane-header">
+                        <h2>Moderation Tools</h2>
+                        <p>Manage who can interact with your article.</p>
+                    </div>
+
+                    <div class="management-section">
+                        <label>Mute User from Comments</label>
+                        <div class="mute-form">
+                            <input type="text" id="mute-user-id" placeholder="Enter User ID...">
+                            <select id="mute-duration">
+                                <option value="3600">1 Hour</option>
+                                <option value="86400">24 Hours</option>
+                                <option value="604800">1 Week</option>
+                                <option value="2592000">30 Days</option>
+                                <option value="permanent">Permanent</option>
+                            </select>
+                            <button id="btn-mute-user" class="mute-action-btn">Mute</button>
+                        </div>
+                    </div>
+
+                    <div class="management-section">
+                        <label>Muted Users</label>
+                        <div id="muted-users-list" class="styled-muted-list">
+                            <!-- Muted users will appear here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Danger Zone Tab -->
+                <div id="tab-danger" class="tab-pane">
+                    <div class="pane-header">
+                        <h2>Danger Zone</h2>
+                        <p>Actions here are permanent and cannot be undone.</p>
+                    </div>
+
+                    <div class="management-section danger-zone">
+                        <div class="danger-item">
+                            <div class="danger-info">
+                                <strong>Delete Article</strong>
+                                <p>Once you delete an article, there is no going back. Please be certain.</p>
+                            </div>
+                            <button id="btn-delete-article" class="delete-action-btn">Delete Article</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="management-footer">
+                    <button id="btn-save-article-changes" class="save-changes-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Banner Lightbox -->
     <div id="banner-lightbox" class="modal hidden lightbox-modal">
         <span class="close-lightbox">&times;</span>

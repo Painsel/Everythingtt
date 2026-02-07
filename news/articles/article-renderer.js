@@ -570,14 +570,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function openArticleSettings(articleId) {
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
-        if (!article) return;
+        if (!article || (!isBetaTester && article.authorId !== user.id)) return;
 
         // Reset to first tab
         sidebarTabs[0].click();
 
         editTitle.value = article.title;
         editContent.value = article.content;
-        editBannerPreview.src = article.banner || 'https://via.placeholder.com/400x150';
+        
+        // Handle banner preview (handle both single string and array/slideshow)
+        const displayBanner = Array.isArray(article.banner) ? article.banner[0] : article.banner;
+        editBannerPreview.src = (displayBanner && !displayBanner.startsWith('#')) ? displayBanner : 'https://via.placeholder.com/400x150';
+        
         markPrivateToggle.checked = !!article.isPrivate;
         
         // "Mark As Private" is a BETA feature
@@ -637,7 +641,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentEditingArticleId || !user) return;
         
         const article = articleData[currentEditingArticleId];
-        if (!article || article.authorId !== user.id) return;
+        if (!article || (!isBetaTester && article.authorId !== user.id)) return;
 
         if (article.mutes && article.mutes[userId]) {
             const oldMutes = { ...article.mutes };
@@ -669,7 +673,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!userId || !currentEditingArticleId || !user) return;
         
         const article = articleData[currentEditingArticleId];
-        if (!article || article.authorId !== user.id) return;
+        if (!article || (!isBetaTester && article.authorId !== user.id)) return;
 
         const duration = muteDurationSelect.value;
         const expiry = duration === 'permanent' ? 'permanent' : (Date.now() + parseInt(duration) * 1000).toString();
@@ -729,7 +733,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Extra safety check
         const localArticle = articleData[currentEditingArticleId];
-        if (!localArticle || localArticle.authorId !== user.id) {
+        if (!localArticle || (!isBetaTester && localArticle.authorId !== user.id)) {
             return alert('You do not have permission to edit this article.');
         }
 
@@ -779,7 +783,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Extra safety check
         const localArticle = articleData[currentEditingArticleId];
-        if (!localArticle || localArticle.authorId !== user.id) {
+        if (!localArticle || (!isBetaTester && localArticle.authorId !== user.id)) {
             return alert('You do not have permission to delete this article.');
         }
 
@@ -1014,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.innerHTML = `
             ${bannerHTML}
             <div class="article-info">
-                ${(user && user.id === article.authorId) ? `
+                ${(user && (user.id === article.authorId || isBetaTester)) ? `
                     <div class="article-settings-trigger" title="Article Settings" data-article-id="${article.id}">
                         ⚙️
                     </div>
