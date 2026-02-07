@@ -576,6 +576,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let editSlideshowIndex = 0;
     let editSlideshowImages = [];
 
+    let currentEditingArticleId = null;
+    let currentEditingBannerBase64 = null;
+
     function updateEditBannerPreview() {
         if (editSlideshowImages.length > 0) {
             const currentImg = editSlideshowImages[editSlideshowIndex];
@@ -636,9 +639,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     });
-
-    let currentEditingArticleId = null;
-    let currentEditingBannerBase64 = null;
 
     async function openArticleSettings(articleId) {
         currentEditingArticleId = articleId;
