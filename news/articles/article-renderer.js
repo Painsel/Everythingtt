@@ -541,6 +541,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnSaveSettings = document.getElementById('btn-save-article-changes');
     const btnDeleteArticle = document.getElementById('btn-delete-article');
 
+    // Slideshow Edit Logic
+    const editBannerControls = document.getElementById('edit-banner-controls');
+    const editBannerCountText = document.getElementById('edit-banner-count');
+    const btnEditPrev = document.getElementById('btn-edit-prev');
+    const btnEditNext = document.getElementById('btn-edit-next');
+    const btnEditRemove = document.getElementById('btn-edit-remove');
+    let editSlideshowIndex = 0;
+    let editSlideshowImages = [];
+
+    function updateEditBannerPreview() {
+        if (editSlideshowImages.length > 0) {
+            const currentImg = editSlideshowImages[editSlideshowIndex];
+            editBannerPreview.src = (currentImg && !currentImg.startsWith('#')) ? currentImg : 'https://placehold.co/400x150';
+            editBannerCountText.innerText = `${editSlideshowIndex + 1} / ${editSlideshowImages.length}`;
+            editBannerControls.classList.remove('hidden');
+        } else {
+            editBannerPreview.src = 'https://placehold.co/400x150';
+            editBannerCountText.innerText = '0 / 0';
+            editBannerControls.classList.add('hidden');
+        }
+    }
+
+    btnEditPrev.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (editSlideshowImages.length <= 1) return;
+        editSlideshowIndex = (editSlideshowIndex - 1 + editSlideshowImages.length) % editSlideshowImages.length;
+        updateEditBannerPreview();
+    });
+
+    btnEditNext.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (editSlideshowImages.length <= 1) return;
+        editSlideshowIndex = (editSlideshowIndex + 1) % editSlideshowImages.length;
+        updateEditBannerPreview();
+    });
+
+    btnEditRemove.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (editSlideshowImages.length === 0) return;
+        editSlideshowImages.splice(editSlideshowIndex, 1);
+        if (editSlideshowIndex >= editSlideshowImages.length && editSlideshowImages.length > 0) {
+            editSlideshowIndex = editSlideshowImages.length - 1;
+        } else if (editSlideshowImages.length === 0) {
+            editSlideshowIndex = 0;
+        }
+        updateEditBannerPreview();
+    });
+
     // Tab Logic
     const sidebarTabs = document.querySelectorAll('.sidebar-tab');
     const tabPanes = document.querySelectorAll('.tab-pane');
@@ -578,8 +626,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         editContent.value = article.content;
         
         // Handle banner preview (handle both single string and array/slideshow)
-        const displayBanner = Array.isArray(article.banner) ? article.banner[0] : article.banner;
-        editBannerPreview.src = (displayBanner && !displayBanner.startsWith('#')) ? displayBanner : 'https://placehold.co/400x150';
+        editSlideshowImages = Array.isArray(article.banner) ? [...article.banner] : (article.banner ? [article.banner] : []);
+        editSlideshowIndex = 0;
+        updateEditBannerPreview();
         
         markPrivateToggle.checked = !!article.isPrivate;
         
@@ -589,21 +638,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!isBetaTester) {
                 privateFeatureContainer.classList.add('beta-restricted');
                 markPrivateToggle.disabled = true;
-                // Add beta badge if not present
-                if (!privateFeatureContainer.querySelector('.beta-tool-badge')) {
-                    const badge = document.createElement('span');
-                    badge.className = 'beta-tool-badge';
-                    badge.innerText = 'BETA';
-                    badge.style.marginLeft = '10px';
-                    privateFeatureContainer.querySelector('label').appendChild(badge);
-                }
             } else {
                 privateFeatureContainer.classList.remove('beta-restricted');
                 markPrivateToggle.disabled = false;
             }
         }
 
-        currentEditingBannerBase64 = article.banner;
+        // Slideshow is a BETA feature
+        const bannerSection = document.querySelector('.banner-edit-container');
+        if (bannerSection) {
+            const bannerUpload = document.getElementById('edit-banner-upload');
+            if (!isBetaTester) {
+                bannerUpload.multiple = false;
+                bannerSection.classList.add('beta-restricted');
+                // Limit to 1 image if they have more
+                if (editSlideshowImages.length > 1) {
+                    editSlideshowImages = [editSlideshowImages[0]];
+                    updateEditBannerPreview();
+                }
+            } else {
+                bannerUpload.multiple = true;
+                bannerSection.classList.remove('beta-restricted');
+            }
+        }
+
+        currentEditingBannerBase64 = article.banner; // Deprecated but kept for compatibility during save if needed
+        // Note: we now use editSlideshowImages as the source of truth during editing
 
         renderMutedUsers(article.mutes || {});
 
@@ -716,15 +776,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     editBannerUpload.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            currentEditingBannerBase64 = event.target.result;
-            editBannerPreview.src = currentEditingBannerBase64;
-        };
-        reader.readAsDataURL(file);
+        // BETA limit: 5 images
+        if (editSlideshowImages.length + files.length > 5) {
+            alert('BETA Testers can add up to 5 images for a slideshow.');
+            return;
+        }
+
+        for (const file of files) {
+            const reader = new FileReader();
+            const promise = new Promise((resolve) => {
+                reader.onload = (event) => {
+                    editSlideshowImages.push(event.target.result);
+                    resolve();
+                };
+            });
+            reader.readAsDataURL(file);
+            await promise;
+        }
+        
+        editSlideshowIndex = editSlideshowImages.length - 1;
+        updateEditBannerPreview();
     });
 
     btnSaveSettings.addEventListener('click', async () => {
@@ -743,12 +817,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Get latest UI state for mutes
             const currentMutes = localArticle.mutes || {};
 
+            // Decide banner format: single string if 1 image, array if multiple
+            const finalBanner = editSlideshowImages.length > 1 ? editSlideshowImages : (editSlideshowImages[0] || null);
+
             const res = await GitHubAPI.safeUpdateFile(
                 `news/created-articles-storage/${currentEditingArticleId}.json`,
                 {
                     title: editTitle.value.trim(),
                     content: editContent.value.trim(),
-                    banner: currentEditingBannerBase64,
+                    banner: finalBanner,
                     isPrivate: isBetaTester ? markPrivateToggle.checked : (localArticle.isPrivate || false),
                     mutes: currentMutes,
                     lastUpdated: new Date().toISOString()
@@ -998,7 +1075,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let bannerHTML = '';
         if (hasMultipleBanners) {
             bannerHTML = `
-                <div class="article-banner slideshow ${!isBetaTester ? 'beta-restricted' : ''}" id="slideshow-${article.id}">
+                <div class="article-banner slideshow ${hasMultipleBanners ? 'slideshow-active' : ''} ${!isBetaTester ? 'beta-restricted' : ''}" id="slideshow-${article.id}">
                     ${banners.map((b, i) => `
                         <div class="slide ${i === 0 ? 'active' : ''}" style="background-image: ${b.startsWith('#') ? 'none' : `url(${b})`}; background-color: ${b.startsWith('#') ? b : 'transparent'}"></div>
                     `).join('')}
@@ -1069,30 +1146,44 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Click to view banner
         const bannerElement = card.querySelector('.article-banner');
         if (bannerElement) {
-            if (hasMultipleBanners) {
-                // Slideshow case: add click to each slide
-                const slides = card.querySelectorAll('.slide');
-                slides.forEach(slide => {
-                    slide.addEventListener('click', (e) => {
-                        // Don't trigger if clicking nav buttons
-                        if (e.target.closest('.slideshow-nav')) return;
-                        
-                        const bgImg = slide.style.backgroundImage;
-                        if (bgImg && bgImg !== 'none') {
-                            const url = bgImg.slice(5, -2);
-                            openBannerLightbox(url);
-                        }
-                    });
-                });
-            } else {
-                // Single banner case
-                bannerElement.addEventListener('click', () => {
-                    const bgImg = bannerElement.style.backgroundImage;
-                    if (bgImg && bgImg !== 'none') {
-                        const url = bgImg.slice(5, -2);
-                        openBannerLightbox(url);
+            const handleBannerClick = (e) => {
+                // Don't trigger if clicking nav buttons or dots
+                if (e.target.closest('.slideshow-nav') || e.target.closest('.ss-nav-overlay')) return;
+                
+                let url = '';
+                if (hasMultipleBanners) {
+                    const activeSlide = bannerElement.querySelector('.slide.active');
+                    if (activeSlide) {
+                        const bgImg = activeSlide.style.backgroundImage;
+                        if (bgImg && bgImg !== 'none') url = bgImg.slice(5, -2);
                     }
-                });
+                } else {
+                    const bgImg = bannerElement.style.backgroundImage;
+                    if (bgImg && bgImg !== 'none') url = bgImg.slice(5, -2);
+                }
+
+                if (url) {
+                    openBannerLightbox(url);
+                }
+            };
+
+            bannerElement.addEventListener('click', handleBannerClick);
+            
+            // Add visual cue for "Click to View" if it's an image
+            if (!hasMultipleBanners) {
+                const bgImg = bannerElement.style.backgroundImage;
+                if (bgImg && bgImg !== 'none') {
+                    const cue = document.createElement('div');
+                    cue.className = 'banner-click-cue';
+                    cue.innerHTML = '<span>Click to View</span>';
+                    bannerElement.appendChild(cue);
+                }
+            } else {
+                // For slideshow, we can add it to the nav overlay or just rely on the slides
+                const cue = document.createElement('div');
+                cue.className = 'banner-click-cue';
+                cue.innerHTML = '<span>Click to View</span>';
+                bannerElement.appendChild(cue);
             }
         }
 

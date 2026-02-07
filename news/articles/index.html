@@ -136,18 +136,26 @@
                     </div>
 
                     <div class="management-section">
-                        <label>Banner Image</label>
+                        <label>Banner Images <span class="beta-tool-badge">BETA Slideshow</span></label>
                         <div class="banner-edit-container">
-                            <div class="banner-preview-large">
-                                <img id="edit-banner-preview" src="" alt="Banner Preview">
+                            <div class="banner-preview-large slideshow-preview-container">
+                                <div id="edit-slideshow-preview" class="edit-slideshow-preview">
+                                    <img id="edit-banner-preview" src="" alt="Banner Preview">
+                                </div>
                                 <div class="banner-overlay">
                                     <label for="edit-banner-upload" class="change-banner-btn">
-                                        Change Banner
-                                        <input type="file" id="edit-banner-upload" accept="image/*" hidden>
+                                        Add/Change Banner
+                                        <input type="file" id="edit-banner-upload" accept="image/*" multiple hidden>
                                     </label>
                                 </div>
                             </div>
-                            <p class="help-text">Recommended size: 1200x400. Max 2MB.</p>
+                            <div id="edit-banner-controls" class="edit-banner-controls hidden">
+                                <button id="btn-edit-prev" class="edit-nav-btn">❮</button>
+                                <span id="edit-banner-count">1 / 1</span>
+                                <button id="btn-edit-next" class="edit-nav-btn">❯</button>
+                                <button id="btn-edit-remove" class="edit-remove-btn" title="Remove current banner">🗑️</button>
+                            </div>
+                            <p class="help-text">BETA Testers can add up to 5 images for a slideshow. Recommended size: 1200x400.</p>
                         </div>
                     </div>
 
