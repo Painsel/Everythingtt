@@ -348,12 +348,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load articles
     async function loadArticles() {
         const hash = window.location.hash;
-        const singleArticleId = hash.startsWith('#article-') ? hash.replace('#article-', '') : null;
+        const singleArticleId = hash.split('?')[0].replace('#article-', '');
+        const isSingleArticle = hash.startsWith('#article-');
         
         try {
             articlesList.innerHTML = '<p class="status-msg">Loading articles...</p>';
             
-            if (singleArticleId) {
+            if (isSingleArticle) {
                 // Single article view
                 document.body.classList.add('single-article-view');
                 singleArticleHeader.classList.remove('hidden');
@@ -965,6 +966,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 <div class="article-content-container">
                     <div class="article-text">${displayContent}</div>
+                </div>
+                
+                <div class="article-footer-actions">
+                    <button class="article-action-btn copy-url-btn" data-article-id="${article.id}" title="Copy Article URL">
+                        🔗 Copy Link
+                    </button>
                     ${(isLong && !isFullView) ? `<button class="read-more-btn" data-article-id="${article.id}">Read More</button>` : ''}
                 </div>
                 
@@ -1125,6 +1132,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.querySelectorAll('.reaction-btn:not(.add-reaction)').forEach(btn => {
             btn.addEventListener('click', () => handleReaction(article.id, btn.dataset.emoji));
         });
+
+        // Copy URL event
+        const copyBtn = card.querySelector('.copy-url-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const articleId = copyBtn.getAttribute('data-article-id');
+                // Ensure we get the correct base URL even if running locally or on a different domain
+                const baseUrl = window.location.origin + window.location.pathname;
+                const url = `${baseUrl}#article-${articleId}`;
+                
+                navigator.clipboard.writeText(url).then(() => {
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '✅ Copied!';
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    alert('Failed to copy URL to clipboard.');
+                });
+            });
+        }
 
         articlesList.appendChild(card);
         

@@ -930,17 +930,47 @@
     pointer-events: none;
 }
 
+.article-footer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #40444b;
+}
+
+.article-action-btn {
+    background: #4f545c;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.article-action-btn:hover {
+    background: #5865f2;
+}
+
+.article-action-btn.copied {
+    background: #3ba55d;
+}
+
 .read-more-btn {
     background: transparent;
     border: none;
     color: #5865f2;
-    padding: 8px 0;
+    padding: 6px 0;
     font-weight: 600;
     cursor: pointer;
-    text-align: left;
-    width: fit-content;
+    text-align: right;
     transition: color 0.2s;
-    margin-bottom: 1rem;
 }
 
 .read-more-btn:hover {
