@@ -490,7 +490,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                if (article.isPrivate && !hasTempAccess && (!user || (String(user.id) !== String(article.authorId) && !isDeveloper))) {
+                if (article.isPrivate && !hasTempAccess && (!user || String(user.id) !== String(article.authorId))) {
                     articlesList.innerHTML = '<p class="status-msg">This article is private and can only be viewed by the author or via a temporary access link.</p>';
                     return;
                 }
@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (a.isPrivate) {
                             // Render private articles only in "My Articles" filter for the author or developer
                             if (window.currentFilter === 'my') {
-                                return String(a.authorId) === String(user.id) || isDeveloper;
+                                return String(a.authorId) === String(user.id);
                             }
                             // In general feed, they are hidden
                             return false; 
@@ -697,7 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!settingsModal) return;
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
-        if (!article || !user || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
+        if (!article || !user || String(article.authorId) !== String(user.id)) return;
 
         // Reset to first tab
         if (sidebarTabs && sidebarTabs[0]) sidebarTabs[0].click();
@@ -779,7 +779,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentEditingArticleId || !user) return;
         
         const article = articleData[currentEditingArticleId];
-        if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
+        if (!article || (String(article.authorId) !== String(user.id))) return;
 
         if (article.mutes && article.mutes[userId]) {
             const oldMutes = { ...article.mutes };
@@ -853,7 +853,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!currentEditingArticleId || !user) return;
             
             const article = articleData[currentEditingArticleId];
-            if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
+            if (!article || String(article.authorId) !== String(user.id)) return;
 
             btnGenerateTempLink.disabled = true;
             btnGenerateTempLink.innerText = 'Generating...';
@@ -963,7 +963,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Extra safety check
             const localArticle = articleData[currentEditingArticleId];
-            if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
+            if (!localArticle || String(localArticle.authorId) !== String(user.id)) {
                 return alert('You do not have permission to edit this article.');
             }
 
@@ -1018,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Extra safety check
             const localArticle = articleData[currentEditingArticleId];
-            if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
+            if (!localArticle || String(localArticle.authorId) !== String(user.id)) {
                 return alert('You do not have permission to delete this article.');
             }
 
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.innerHTML = `
             ${bannerHTML}
             <div class="article-info">
-                ${(user && (String(user.id) === String(article.authorId) || isDeveloper)) ? `
+                ${(user && String(user.id) === String(article.authorId)) ? `
                     <div class="article-settings-trigger" title="Article Settings" data-article-id="${article.id}">
                         ⚙️
                     </div>
@@ -1903,7 +1903,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const article = articleData[currentArticleIdForComments];
-        const isArticleAuthor = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
+        const isArticleAuthor = user && article && String(article.authorId) === String(user.id);
         const canManageArticle = isArticleAuthor;
 
         // Separate pinned and unpinned, and organize into threads
@@ -2066,7 +2066,7 @@ document.addEventListener('DOMContentLoaded', async () => {
          if (!commentToDelete) return;
 
          const article = articleData[currentArticleIdForComments];
-         const isArticleAuthor = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
+         const isArticleAuthor = user && article && String(article.authorId) === String(user.id);
          const canManageArticle = isArticleAuthor;
          const isCommentOwner = user && String(commentToDelete.authorId) === String(user.id);
  
@@ -2090,7 +2090,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (index === -1) return content;
                     
                     const remoteCommentToDelete = comments[index];
-                    const isArticleAuthorRemote = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
+                    const isArticleAuthorRemote = user && article && String(article.authorId) === String(user.id);
                     const canManageArticleRemote = isArticleAuthorRemote;
                     const isCommentOwnerRemote = user && String(remoteCommentToDelete.authorId) === String(user.id);
 
@@ -2132,7 +2132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentArticleIdForComments || !user) return;
         
         const article = articleData[currentArticleIdForComments];
-        if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
+        if (!article || String(article.authorId) !== String(user.id)) return;
 
         // --- OPTIMISTIC UPDATE ---
         const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
