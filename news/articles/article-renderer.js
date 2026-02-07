@@ -80,6 +80,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let user = JSON.parse(localStorage.getItem('current_user'));
     let userSHA = null;
 
+    // Developer ID check for global access
+    const isDeveloper = user && user.id === GitHubAPI.DEVELOPER_ID;
+    const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || isDeveloper);
+
     // Security check: IP Address restriction
     async function checkIP() {
         if (!user) return;
@@ -98,6 +102,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user) {
         const loggedInDiv = document.getElementById('logged-in-user');
         loggedInDiv.classList.remove('hidden');
+        
+        // Only show My Articles for BETA Testers/Admins/Developer
+        if (isBetaTester) {
+            const btnMyArticles = document.getElementById('btn-my-articles');
+            if (btnMyArticles) btnMyArticles.classList.remove('hidden');
+        }
+
         updateSideProfileWithStatus(user);
         pollUserProfile(); // Initial fetch
         pollNotifications(); // Initial notifications fetch
@@ -331,19 +342,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (btnMyArticles) {
-        btnMyArticles.addEventListener('click', () => {
-            if (window.currentFilter === 'my') {
-                window.currentFilter = 'all';
-                btnMyArticles.classList.remove('active');
-                exploreTitle.innerText = 'Explore Articles';
-            } else {
-                window.currentFilter = 'my';
-                btnMyArticles.classList.add('active');
-                exploreTitle.innerText = 'My Articles';
-            }
-            loadArticles();
-        });
-    }
+         btnMyArticles.addEventListener('click', () => {
+             window.location.href = '../my-articles/';
+         });
+     }
 
     if (closeNotifModal) {
         closeNotifModal.addEventListener('click', () => {
@@ -388,7 +390,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const article = JSON.parse(data.content);
                 
                 // Private check for single view
-                if (article.isPrivate && (!user || user.id !== article.authorId)) {
+                if (article.isPrivate && (!user || (user.id !== article.authorId && !isDeveloper))) {
                     articlesList.innerHTML = '<p class="status-msg">This article is private and can only be viewed by the author.</p>';
                     return;
                 }
@@ -440,8 +442,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const filteredArticles = validArticles
                     .filter(a => {
-                        const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || user.id === GitHubAPI.DEVELOPER_ID);
-                        
                         // "My Articles" filter check
                         if (window.currentFilter === 'my' && user) {
                             return a.authorId === user.id;
@@ -449,8 +449,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         // Private articles restriction (BETA Feature)
                         if (a.isPrivate) {
-                            // If BETA Feature is active for private articles: only show in direct link
-                            // We are in Feed View here (isSingleArticle is false)
+                            // Render private articles only in "My Articles" filter for the author or developer
+                            if (window.currentFilter === 'my') {
+                                return a.authorId === user.id || isDeveloper;
+                            }
+                            // In general feed, they are hidden
                             return false; 
                         }
 
@@ -569,6 +572,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         editContent.value = article.content;
         editBannerPreview.src = article.banner || 'https://via.placeholder.com/400x150';
         markPrivateToggle.checked = !!article.isPrivate;
+        
+        // "Mark As Private" is a BETA feature
+        const privateFeatureContainer = markPrivateToggle.closest('.setting-item');
+        if (privateFeatureContainer) {
+            if (!isBetaTester) {
+                privateFeatureContainer.classList.add('beta-restricted');
+                markPrivateToggle.disabled = true;
+                // Add beta badge if not present
+                if (!privateFeatureContainer.querySelector('.beta-tool-badge')) {
+                    const badge = document.createElement('span');
+                    badge.className = 'beta-tool-badge';
+                    badge.innerText = 'BETA';
+                    badge.style.marginLeft = '10px';
+                    privateFeatureContainer.querySelector('label').appendChild(badge);
+                }
+            } else {
+                privateFeatureContainer.classList.remove('beta-restricted');
+                markPrivateToggle.disabled = false;
+            }
+        }
+
         currentEditingBannerBase64 = article.banner;
 
         renderMutedUsers(article.mutes || {});
@@ -715,7 +739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     title: editTitle.value.trim(),
                     content: editContent.value.trim(),
                     banner: currentEditingBannerBase64,
-                    isPrivate: markPrivateToggle.checked,
+                    isPrivate: isBetaTester ? markPrivateToggle.checked : (localArticle.isPrivate || false),
                     mutes: currentMutes,
                     lastUpdated: new Date().toISOString()
                 },
@@ -957,7 +981,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Slideshow logic for banner (BETA feature)
         const banners = Array.isArray(article.banner) ? article.banner : [article.banner || 'https://via.placeholder.com/400x150'];
-        const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || user.id === GitHubAPI.DEVELOPER_ID);
         const hasMultipleBanners = banners.length > 1;
         
         let bannerHTML = '';

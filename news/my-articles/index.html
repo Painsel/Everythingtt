@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Articles - EverythingTT News</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../articles/article-styler.css">
+    <script>
+        // Redirect if not logged in or not BETA
+        (function() {
+            try {
+                const user = JSON.parse(localStorage.getItem('current_user'));
+                const DEVELOPER_ID = '382156063438888';
+                const isBeta = user && (user.role === 'beta' || user.role === 'admin' || user.id === DEVELOPER_ID);
+                if (!isBeta) {
+                    window.location.replace('../articles/');
+                }
+            } catch (e) {
+                window.location.replace('../articles/');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div class="container dashboard-container">
+        <aside class="sidebar">
+            <div id="logged-in-user" class="user-info">
+                <div class="side-pfp-wrapper">
+                    <img id="side-pfp" src="" alt="PFP">
+                    <div id="side-status-icon" class="status-icon"></div>
+                </div>
+                <div class="side-user-details">
+                    <div class="side-username-row">
+                        <span id="side-username"></span>
+                        <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+            <nav>
+                <a href="../homepage/" class="nav-item">Dashboard</a>
+                <a href="../articles/" class="nav-item">Explore Articles</a>
+                <div class="nav-item notification-nav" id="btn-notifications" title="Notifications">
+                    🔔
+                    <span id="notification-badge" class="notification-badge hidden">0</span>
+                </div>
+                <a href="../create-article/" class="nav-item">Publish News</a>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <h2 id="explore-title">My Articles <span class="beta-tool-badge">BETA</span></h2>
+            <div id="articles-list" class="articles-grid">
+                <!-- Articles will be loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals (Re-used from articles/index.html via renderer) -->
+    <div id="notifications-modal" class="modal hidden">
+        <div class="modal-content notifications-modal-content">
+            <span class="close-notifications-modal">&times;</span>
+            <h3>Notifications</h3>
+            <div id="notifications-list" class="notifications-list"></div>
+        </div>
+    </div>
+
+    <div id="profile-modal" class="modal hidden">
+        <div class="modal-content profile-modal-container">
+            <span class="close-modal">&times;</span>
+            <div id="modal-profile-content"></div>
+        </div>
+    </div>
+
+    <div id="comments-modal" class="modal hidden">
+        <div class="modal-content comments-modal-content">
+            <span class="close-comments-modal">&times;</span>
+            <h3 id="comments-title">Comments</h3>
+            <div id="comments-list" class="comments-list"></div>
+            <div class="comment-input-area">
+                <div id="attachment-preview" class="attachment-preview hidden"></div>
+                <textarea id="new-comment-text" placeholder="Write a comment..." rows="2"></textarea>
+                <div class="comment-controls">
+                    <label for="comment-file-upload" class="attachment-btn">
+                        📎
+                        <input type="file" id="comment-file-upload" accept="image/*" hidden>
+                    </label>
+                    <button id="btn-submit-comment">Post</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner Lightbox -->
+    <div id="banner-lightbox" class="modal hidden lightbox-modal">
+        <span class="close-lightbox">&times;</span>
+        <img class="modal-content" id="lightbox-img">
+    </div>
+
+    <script src="../utils.js"></script>
+    <script src="../status-manager.js"></script>
+    <script src="../articles/article-renderer.js"></script>
+    <script>
+        // Set filter to 'my' and load
+        window.currentFilter = 'my';
+    </script>
+</body>
+</html>
