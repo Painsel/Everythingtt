@@ -249,10 +249,19 @@ window.GitHubAPI = {
             headers['Authorization'] = `token ${pat}`;
         }
 
+        // Store direct API info for fallback
+        const directInfo = {
+            url: path.startsWith('http') ? path : this.getAPIURL(path),
+            headers: { ...headers, 'Authorization': pat ? `token ${pat}` : headers['Authorization'] }
+        };
+
         // Add cache buster for GET requests
         if (method === 'GET') {
             const separator = url.includes('?') ? '&' : '?';
             url += `${separator}t=${Date.now()}`;
+            
+            const directSep = directInfo.url.includes('?') ? '&' : '?';
+            directInfo.url += `${directSep}t=${Date.now()}`;
         }
         
         const options = { method, headers };
@@ -260,7 +269,17 @@ window.GitHubAPI = {
 
         // Enqueue the request based on the target service
         return this._enqueue(async () => {
-            return this._proceedWithFetch(url, options, method, body, retries, path);
+            try {
+                return await this._proceedWithFetch(url, options, method, body, retries, path);
+            } catch (e) {
+                // Fallback to direct API if middleware fails (500/502/503/504 or Network Error)
+                if (queueName === 'middleware' && pat && (e.status >= 500 || !e.status)) {
+                    console.warn(`[GitHubAPI] Middleware failed (${e.status || 'Network Error'}). Falling back to direct GitHub API.`);
+                    const directOptions = { ...options, headers: directInfo.headers };
+                    return this._proceedWithFetch(directInfo.url, directOptions, method, body, retries, path);
+                }
+                throw e;
+            }
         }, queueName);
     },
 
