@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             sideBadgeContainer.style.verticalAlign = 'middle';
             sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
         }
-        badgeContainer.innerHTML = `
+        sideBadgeContainer.innerHTML = `
             ${GitHubAPI.renderRoleBadge(u.role)}
             ${GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge')}
             ${GitHubAPI.renderThemeBadge('user-badge side-badge')}
@@ -100,6 +100,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUIWithStatus(user);
     updateStats(user);
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
+
+    // Listen for live updates from StatusManager
+    if (window.StatusManager) {
+        window.StatusManager.onUserUpdate = (updatedUser) => {
+            console.log('[Dashboard] UI refreshed via StatusManager update');
+            updateUIWithStatus(updatedUser);
+            updateStats(updatedUser);
+            
+            // Update local user reference for other functions
+            Object.assign(user, updatedUser);
+        };
+    }
 
     // Show admin panel if user is admin
     if (user.id === '382156063438888') {

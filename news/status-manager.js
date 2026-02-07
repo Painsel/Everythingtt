@@ -3,6 +3,7 @@ const StatusManager = {
     idleTimeout: 300000, // 5 minutes
     currentStatus: null,
     user: null,
+    onUserUpdate: null,
 
     async init() {
         const savedUser = localStorage.getItem('current_user');
@@ -74,6 +75,11 @@ const StatusManager = {
             // Update local storage
             this.user = userData;
             localStorage.setItem('current_user', JSON.stringify(userData));
+
+            // Notify UI if listener exists
+            if (typeof this.onUserUpdate === 'function') {
+                this.onUserUpdate(userData);
+            }
         } catch (e) {
             console.error('Failed to update status:', e);
         }

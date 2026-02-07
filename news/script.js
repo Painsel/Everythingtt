@@ -293,7 +293,11 @@ document.addEventListener('DOMContentLoaded', () => {
             badgeContainer.style.verticalAlign = 'middle';
             document.getElementById('profile-username-display').appendChild(badgeContainer);
         }
-        badgeContainer.innerHTML = GitHubAPI.renderNewUserBadge(user.joinDate);
+        badgeContainer.innerHTML = `
+            ${GitHubAPI.renderRoleBadge(user.role)}
+            ${GitHubAPI.renderNewUserBadge(user.joinDate)}
+            ${GitHubAPI.renderThemeBadge()}
+        `;
 
         // Stats
         const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Early Member';
