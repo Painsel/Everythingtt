@@ -811,10 +811,52 @@ button:hover {
     }
 }
 
-/* BETA Feature Restrictions */
+/* BETA Restricted Items */
 .beta-restricted {
+    opacity: 0.6;
+    cursor: not-allowed;
     position: relative;
-    overflow: hidden;
+    pointer-events: none;
+}
+
+.beta-restricted::after {
+    content: "BETA Feature";
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: #9c27b0;
+    color: white;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.setting-item.beta-restricted {
+    pointer-events: auto; /* Allow label clicks but disable input */
+}
+
+.setting-item.beta-restricted input,
+.setting-item.beta-restricted select {
+    pointer-events: none;
+}
+
+/* My Articles Sidebar */
+#btn-my-articles.active {
+    background: rgba(88, 101, 242, 0.2);
+    border-left: 3px solid #5865f2;
+}
+
+.beta-tool-badge {
+    background: #9c27b0;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 .slideshow-nav.locked {

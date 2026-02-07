@@ -64,6 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const titleCounter = document.getElementById('title-counter');
     const contentCounter = document.getElementById('content-counter');
     const btnPublish = document.getElementById('btn-publish');
+    const markPrivateToggle = document.getElementById('mark-private-toggle');
+    
+    // BETA feature restriction for "Mark As Private"
+    const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || user.id === GitHubAPI.DEVELOPER_ID);
+    if (!isBetaTester && markPrivateToggle) {
+        markPrivateToggle.disabled = true;
+        const privateContainer = markPrivateToggle.closest('.setting-item');
+        if (privateContainer) privateContainer.classList.add('beta-restricted');
+    }
+
     const bannerFileInput = document.getElementById('article-banner-file');
     const bannerPreviewContainer = document.getElementById('banner-preview-container');
     const slideshowPreview = document.getElementById('banner-slideshow-preview');
@@ -259,6 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             authorName: user.username,
             authorPfp: user.pfp,
             timestamp: new Date().toISOString(),
+            isPrivate: isBetaTester ? !!markPrivateToggle.checked : false,
             reactions: {
                 "🔥": 0, "✨": 0, "👍": 0, "🎉": 0, "🤣": 0, "😂": 0, "😃": 0, "🤔": 0, "🥵": 0, "🥶": 0, "🤡": 0, "🤖": 0, "💀": 0
             }

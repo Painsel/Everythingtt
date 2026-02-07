@@ -101,12 +101,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (user) {
         const loggedInDiv = document.getElementById('logged-in-user');
-        loggedInDiv.classList.remove('hidden');
+        if (loggedInDiv) loggedInDiv.classList.remove('hidden');
         
         // Only show My Articles for BETA Testers/Admins/Developer
         if (isBetaTester) {
             const btnMyArticles = document.getElementById('btn-my-articles');
-            if (btnMyArticles) btnMyArticles.classList.remove('hidden');
+            if (btnMyArticles) {
+                btnMyArticles.classList.remove('hidden');
+                // Check if we are on the My Articles page to highlight the button
+                if (window.currentFilter === 'my') {
+                    btnMyArticles.classList.add('active');
+                }
+            }
         }
 
         updateSideProfileWithStatus(user);
@@ -390,7 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const article = JSON.parse(data.content);
                 
                 // Private check for single view
-                if (article.isPrivate && (!user || (user.id !== article.authorId && !isDeveloper))) {
+                if (article.isPrivate && (!user || (String(user.id) !== String(article.authorId) && !isDeveloper))) {
                     articlesList.innerHTML = '<p class="status-msg">This article is private and can only be viewed by the author.</p>';
                     return;
                 }
@@ -442,19 +448,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const filteredArticles = validArticles
                     .filter(a => {
-                        // "My Articles" filter check
-                        if (window.currentFilter === 'my' && user) {
-                            return a.authorId === user.id;
-                        }
-
+                        // Developer ID and Author can see private articles in Feed if "My Articles" filter is active
                         // Private articles restriction (BETA Feature)
                         if (a.isPrivate) {
                             // Render private articles only in "My Articles" filter for the author or developer
                             if (window.currentFilter === 'my') {
-                                return a.authorId === user.id || isDeveloper;
+                                return String(a.authorId) === String(user.id) || isDeveloper;
                             }
                             // In general feed, they are hidden
                             return false; 
+                        }
+
+                        // "My Articles" filter check
+                        if (window.currentFilter === 'my' && user) {
+                            return String(a.authorId) === String(user.id);
                         }
 
                         return true;
