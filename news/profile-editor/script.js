@@ -39,9 +39,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize sidebar and fields
     function updateUI(user) {
+        const statusIconName = (user.statusType === 'dnd') ? 'DoNotDisturb.png' : (user.status === 'idle' ? 'Idle.png' : (user.status === 'online' ? 'Online.png' : 'Offline.png'));
+        const iconPath = GitHubAPI.getStatusIconPath(statusIconName);
+
         document.getElementById('side-pfp').src = user.pfp;
         document.getElementById('side-username').innerText = user.username;
         
+        // Add badges to sidebar
+        const sideUsername = document.getElementById('side-username');
+        let sideBadgeContainer = sideUsername.nextElementSibling;
+        if (!sideBadgeContainer || !sideBadgeContainer.classList.contains('badge-container')) {
+            sideBadgeContainer = document.createElement('div');
+            sideBadgeContainer.className = 'badge-container';
+            sideBadgeContainer.style.display = 'inline-flex';
+            sideBadgeContainer.style.marginLeft = '4px';
+            sideBadgeContainer.style.verticalAlign = 'middle';
+            sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
+        }
+        sideBadgeContainer.innerHTML = `
+            ${GitHubAPI.renderRoleBadge(user.role)}
+            ${GitHubAPI.renderNewUserBadge(user.joinDate, 'user-badge side-badge')}
+            ${GitHubAPI.renderThemeBadge('user-badge side-badge')}
+        `;
+
+        document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
+
         // Preview
         document.getElementById('profile-pfp').src = user.pfp;
         document.getElementById('profile-banner').style.background = user.banner.startsWith('#') ? user.banner : `url(${user.banner})`;
@@ -50,12 +72,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('profile-id-display').innerText = `ID: ${user.id}`;
         document.getElementById('profile-bio-display').innerText = user.bio;
 
+        // Status Preview
+        updateStatusPreview(user);
+
         // Badges
         const badgeContainer = document.getElementById('badge-container');
         if (badgeContainer) {
             badgeContainer.innerHTML = `
-                ${user.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+                ${GitHubAPI.renderRoleBadge(user.role)}
                 ${GitHubAPI.renderNewUserBadge(user.joinDate)}
+                ${GitHubAPI.renderThemeBadge()}
             `;
         }
 
@@ -64,11 +90,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('edit-bio').value = user.bio;
         document.getElementById('edit-status-msg').value = user.statusMsg || '';
         document.getElementById('edit-status-type').value = user.statusType || 'auto';
-
-        updateStatusPreview();
     }
 
-    function updateStatusPreview() {
+    function updateStatusPreview(userOverride = null) {
         const msg = document.getElementById('edit-status-msg').value;
         const type = document.getElementById('edit-status-type').value;
         const bubble = document.getElementById('status-bubble');
@@ -81,9 +105,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             bubble.style.display = 'none';
         }
 
-        // For preview, we show the manual status or Online if auto
+        // Use the manual type if set, otherwise fallback to current user status or Online
         let iconName = 'Online.png';
-        if (type === 'dnd') iconName = 'DoNotDisturb.png';
+        if (type === 'dnd') {
+            iconName = 'DoNotDisturb.png';
+        } else {
+            const currentStatus = userOverride ? userOverride.status : (currentUser ? currentUser.status : 'online');
+            iconName = currentStatus === 'idle' ? 'Idle.png' : (currentStatus === 'online' ? 'Online.png' : 'Offline.png');
+        }
         
         const iconUrl = GitHubAPI.getStatusIconPath(iconName);
         icon.style.backgroundImage = `url('${iconUrl}')`;
