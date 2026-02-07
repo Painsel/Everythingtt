@@ -1264,9 +1264,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <h3>${article.title} ${article.isPrivate ? '<span class="private-badge" title="Private Article">🔒</span>' : ''}</h3>
                 <div class="author-info" data-author-id="${article.authorId}">
                     <img src="${article.authorPfp}" alt="${article.authorName}" class="author-pfp">
-                    <span>${window.currentFilter === 'my' ? '' : `By ${article.authorName}`}</span>
+                    <span>${window.currentFilter === 'my' ? 'You' : `By ${article.authorName}`}</span>
                 </div>
-                <p class="timestamp">${new Date(article.timestamp).toLocaleDateString()}</p>
+                <div class="timestamp" title="${new Date(article.timestamp).toLocaleString()}">
+                    ${new Date(article.timestamp).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
                 
                 <div class="article-content-container">
                     <div class="article-text">${displayContent}</div>
