@@ -272,9 +272,15 @@ window.GitHubAPI = {
             try {
                 return await this._proceedWithFetch(url, options, method, body, retries, path);
             } catch (e) {
-                // Fallback to direct API if middleware fails (500/502/503/504 or Network Error)
-                if (queueName === 'middleware' && pat && (e.status >= 500 || !e.status)) {
-                    console.warn(`[GitHubAPI] Middleware failed (${e.status || 'Network Error'}). Falling back to direct GitHub API.`);
+                // Fallback to direct API if middleware fails (500/502/503/504, Network Error, or Specific Config Error)
+                const isMiddlewareError = queueName === 'middleware' && (
+                    e.status >= 500 || 
+                    !e.status || 
+                    e.message.includes('Server configuration error')
+                );
+
+                if (isMiddlewareError && pat) {
+                    console.warn(`[GitHubAPI] Middleware unavailable or misconfigured: ${e.message}. Falling back to direct GitHub API.`);
                     const directOptions = { ...options, headers: directInfo.headers };
                     return this._proceedWithFetch(directInfo.url, directOptions, method, body, retries, path);
                 }
