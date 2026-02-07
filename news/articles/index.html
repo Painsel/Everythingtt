@@ -31,7 +31,7 @@
             <nav>
                 <a href="../homepage/" class="nav-item">Dashboard</a>
                 <div id="btn-my-articles" class="nav-item hidden">
-                    My Articles <span class="beta-tool-badge" style="margin-left: 5px;">BETA</span>
+                    My Articles
                 </div>
                 <div class="nav-item notification-nav" id="btn-notifications" title="Notifications">
                     🔔
@@ -136,7 +136,7 @@
                     </div>
 
                     <div class="management-section">
-                        <label>Banner Images <span class="beta-tool-badge">BETA Slideshow</span></label>
+                        <label>Banner Images <span>Slideshow</span></label>
                         <div class="banner-edit-container">
                             <div class="banner-preview-large slideshow-preview-container">
                                 <div id="edit-slideshow-preview" class="edit-slideshow-preview">
@@ -155,7 +155,7 @@
                                 <button id="btn-edit-next" class="edit-nav-btn">❯</button>
                                 <button id="btn-edit-remove" class="edit-remove-btn" title="Remove current banner">🗑️</button>
                             </div>
-                            <p class="help-text">BETA Testers can add up to 5 images for a slideshow. Recommended size: 1200x400.</p>
+                            <p class="help-text">You can add up to 5 images for a slideshow. Recommended size: 1200x400.</p>
                         </div>
                     </div>
 
@@ -246,6 +246,30 @@
         <div class="lightbox-content">
             <span class="close-lightbox">&times;</span>
             <img id="lightbox-img" src="" alt="Full size banner">
+        </div>
+    </div>
+
+    <!-- Changelog Modal -->
+    <div id="changelog-modal" class="modal hidden">
+        <div class="modal-content changelog-modal-content">
+            <div class="changelog-header">
+                <div class="changelog-title-row">
+                    <span class="changelog-icon">🎉</span>
+                    <h3>New Update!</h3>
+                </div>
+                <button class="close-modal close-changelog-modal">&times;</button>
+            </div>
+            <div class="changelog-body">
+                <span class="changelog-version-tag">v1.5.0</span>
+                <ul class="changelog-list">
+                    <li>Added "My Articles" tab for managing your own articles</li>
+                    <li>Added Slideshow feature for Article banners</li>
+                    <li>Added "Mark As Private" feature to restrict article view and a Temporary link generation tool</li>
+                </ul>
+            </div>
+            <div class="changelog-footer">
+                <button id="btn-close-changelog" class="btn-primary">Got it!</button>
+            </div>
         </div>
     </div>
 

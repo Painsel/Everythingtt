@@ -1,7 +1,9 @@
 {
-    "version": "1.4.0",
-    "date": "2026-02-06",
+    "version": "1.5.0",
+    "date": "2026-02-07",
     "updates": [
-        "Added built-in Account Protection using the IP address. Anyone who tries to login to your account will be blocked."
+        "Added 'My Articles' tab for managing your own articles",
+        "Added Slideshow feature for Article banners",
+        "Added 'Mark As Private' feature to restrict article view and a Temporary link generation tool"
     ]
 }

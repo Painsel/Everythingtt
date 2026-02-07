@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Developer ID check for global access
     const isDeveloper = user && String(user.id) === String(GitHubAPI.DEVELOPER_ID);
-    const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || isDeveloper);
 
     // Article Management Modal Logic
     const settingsModal = document.getElementById('article-settings-modal');
@@ -138,19 +137,57 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Changelog Modal Elements
+    const changelogModal = document.getElementById('changelog-modal');
+    const closeChangelogModal = document.querySelector('.close-changelog-modal');
+    const btnCloseChangelog = document.getElementById('btn-close-changelog');
+
+    async function checkChangelog() {
+        try {
+            const response = await fetch('../changelog.json');
+            if (!response.ok) return;
+            const changelog = await response.json();
+            const lastSeenVersion = localStorage.getItem('last_seen_changelog_version');
+
+            if (changelog.version !== lastSeenVersion) {
+                if (changelogModal) {
+                    // Update version tag
+                    const versionTag = changelogModal.querySelector('.changelog-version-tag');
+                    if (versionTag) versionTag.innerText = `v${changelog.version}`;
+
+                    // Update updates list
+                    const changelogList = changelogModal.querySelector('.changelog-list');
+                    if (changelogList && changelog.updates) {
+                        changelogList.innerHTML = changelog.updates.map(update => `<li>${update}</li>`).join('');
+                    }
+
+                    changelogModal.classList.remove('hidden');
+                    
+                    const saveVersion = () => {
+                        localStorage.setItem('last_seen_changelog_version', changelog.version);
+                        changelogModal.classList.add('hidden');
+                    };
+
+                    if (closeChangelogModal) closeChangelogModal.onclick = saveVersion;
+                    if (btnCloseChangelog) btnCloseChangelog.onclick = saveVersion;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to check changelog:', e);
+        }
+    }
+
     if (user) {
         const loggedInDiv = document.getElementById('logged-in-user');
         if (loggedInDiv) loggedInDiv.classList.remove('hidden');
         
-        // Only show My Articles for BETA Testers/Admins/Developer
-        if (isBetaTester) {
-            const btnMyArticles = document.getElementById('btn-my-articles');
-            if (btnMyArticles) {
-                btnMyArticles.classList.remove('hidden');
-                // Check if we are on the My Articles page to highlight the button
-                if (window.currentFilter === 'my') {
-                    btnMyArticles.classList.add('active');
-                }
+        // My Articles is now public for all logged in users
+        const btnMyArticles = document.getElementById('btn-my-articles');
+        if (btnMyArticles) {
+            btnMyArticles.classList.remove('hidden');
+            // Check if we are on the My Articles page to highlight the button
+            if (window.currentFilter === 'my') {
+                btnMyArticles.classList.add('active');
             }
         }
 
@@ -158,6 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         pollUserProfile(); // Initial fetch
         pollNotifications(); // Initial notifications fetch
         checkIP(); // Initial IP check
+        checkChangelog(); // Check for updates
     }
 
     async function addNotification(targetUserId, type, data) {
@@ -659,7 +697,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!settingsModal) return;
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
-        if (!article || !user || !isBetaTester || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
+        if (!article || !user || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
 
         // Reset to first tab
         if (sidebarTabs && sidebarTabs[0]) sidebarTabs[0].click();
@@ -696,36 +734,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // "Mark As Private" is a BETA feature
-        if (markPrivateToggle) {
-            const privateFeatureContainer = markPrivateToggle.closest('.setting-item');
-            if (privateFeatureContainer) {
-                if (!isBetaTester) {
-                    privateFeatureContainer.classList.add('beta-restricted');
-                    markPrivateToggle.disabled = true;
-                } else {
-                    privateFeatureContainer.classList.remove('beta-restricted');
-                    markPrivateToggle.disabled = false;
-                }
-            }
-        }
-
-        // Slideshow is a BETA feature
+        // Slideshow is now public
         const bannerSection = document.querySelector('.banner-edit-container');
         if (bannerSection) {
             const bannerUpload = document.getElementById('edit-banner-upload');
-            if (!isBetaTester) {
-                if (bannerUpload) bannerUpload.multiple = false;
-                bannerSection.classList.add('beta-restricted');
-                // Limit to 1 image if they have more
-                if (editSlideshowImages.length > 1) {
-                    editSlideshowImages = [editSlideshowImages[0]];
-                    updateEditBannerPreview();
-                }
-            } else {
-                if (bannerUpload) bannerUpload.multiple = true;
-                bannerSection.classList.remove('beta-restricted');
-            }
+            if (bannerUpload) bannerUpload.multiple = true;
         }
 
         currentEditingBannerBase64 = article.banner; // Deprecated but kept for compatibility during save if needed
@@ -762,8 +775,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    window.handleUnmute = async function(userId) {
-        if (!currentEditingArticleId || !user || !isBetaTester) return;
+    window.handleUnmute = async function handleMuteUser() {
+        if (!currentEditingArticleId || !user) return;
         
         const article = articleData[currentEditingArticleId];
         if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
@@ -795,7 +808,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnMuteUser) {
         btnMuteUser.addEventListener('click', async () => {
-            if (!currentEditingArticleId || !user || !isBetaTester) return;
+            if (!currentEditingArticleId || !user) return;
             const targetId = muteUserIdInput ? muteUserIdInput.value.trim() : null;
             const duration = muteDurationSelect ? muteDurationSelect.value : null;
             if (!targetId) return alert('Please enter a User ID');
@@ -946,7 +959,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnSaveSettings) {
         btnSaveSettings.addEventListener('click', async () => {
-            if (!currentEditingArticleId || !user || !isBetaTester) return;
+            if (!currentEditingArticleId || !user) return;
 
             // Extra safety check
             const localArticle = articleData[currentEditingArticleId];
@@ -970,7 +983,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         title: editTitle ? editTitle.value.trim() : localArticle.title,
                         content: editContent ? editContent.value.trim() : localArticle.content,
                         banner: finalBanner,
-                        isPrivate: (isBetaTester && markPrivateToggle) ? markPrivateToggle.checked : (localArticle.isPrivate || false),
+                        isPrivate: markPrivateToggle ? markPrivateToggle.checked : (localArticle.isPrivate || false),
                         mutes: currentMutes,
                         lastUpdated: new Date().toISOString()
                     },
@@ -1001,7 +1014,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnDeleteArticle) {
         btnDeleteArticle.addEventListener('click', async () => {
-            if (!currentEditingArticleId || !user || !isBetaTester) return;
+            if (!currentEditingArticleId || !user) return;
 
             // Extra safety check
             const localArticle = articleData[currentEditingArticleId];
@@ -1222,11 +1235,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         let bannerHTML = '';
         if (hasMultipleBanners) {
             bannerHTML = `
-                <div class="article-banner slideshow ${hasMultipleBanners ? 'slideshow-active' : ''} ${!isBetaTester ? 'beta-restricted' : ''}" id="slideshow-${article.id}">
+                <div class="article-banner slideshow ${hasMultipleBanners ? 'slideshow-active' : ''}" id="slideshow-${article.id}">
                     ${banners.map((b, i) => `
                         <div class="slide ${i === 0 ? 'active' : ''}" style="background-image: ${b.startsWith('#') ? 'none' : `url(${b})`}; background-color: ${b.startsWith('#') ? b : 'transparent'}"></div>
                     `).join('')}
-                    <div class="slideshow-nav ${!isBetaTester ? 'locked' : ''}">
+                    <div class="slideshow-nav">
                         <button class="ss-prev">❮</button>
                         <div class="ss-dots">
                             ${banners.map((_, i) => `<span class="ss-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
@@ -1243,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.innerHTML = `
             ${bannerHTML}
             <div class="article-info">
-                ${(user && isBetaTester && (String(user.id) === String(article.authorId) || isDeveloper)) ? `
+                ${(user && (String(user.id) === String(article.authorId) || isDeveloper)) ? `
                     <div class="article-settings-trigger" title="Article Settings" data-article-id="${article.id}">
                         ⚙️
                     </div>
@@ -1339,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Initialize slideshow events if multiple banners (BETA feature)
-        if (hasMultipleBanners && isBetaTester) {
+        if (hasMultipleBanners) {
             let currentIndex = 0;
             const slides = card.querySelectorAll('.slide');
             const dots = card.querySelectorAll('.ss-dot');
@@ -1891,7 +1904,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const article = articleData[currentArticleIdForComments];
         const isArticleAuthor = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
-        const canManageArticle = isArticleAuthor && isBetaTester;
+        const canManageArticle = isArticleAuthor;
 
         // Separate pinned and unpinned, and organize into threads
         const pinnedComments = comments.filter(c => c.pinned).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -2054,7 +2067,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
          const article = articleData[currentArticleIdForComments];
          const isArticleAuthor = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
-         const canManageArticle = isArticleAuthor && isBetaTester;
+         const canManageArticle = isArticleAuthor;
          const isCommentOwner = user && String(commentToDelete.authorId) === String(user.id);
  
          if (!canManageArticle && !isCommentOwner) {
@@ -2078,7 +2091,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     const remoteCommentToDelete = comments[index];
                     const isArticleAuthorRemote = user && article && (String(article.authorId) === String(user.id) || isDeveloper);
-                    const canManageArticleRemote = isArticleAuthorRemote && isBetaTester;
+                    const canManageArticleRemote = isArticleAuthorRemote;
                     const isCommentOwnerRemote = user && String(remoteCommentToDelete.authorId) === String(user.id);
 
                     if (!canManageArticleRemote && !isCommentOwnerRemote) {
@@ -2116,7 +2129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
     window.togglePinComment = async function(commentId) {
-        if (!currentArticleIdForComments || !user || !isBetaTester) return;
+        if (!currentArticleIdForComments || !user) return;
         
         const article = articleData[currentArticleIdForComments];
         if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;

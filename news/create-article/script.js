@@ -66,14 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPublish = document.getElementById('btn-publish');
     const markPrivateToggle = document.getElementById('mark-private-toggle');
     
-    // BETA feature restriction for "Mark As Private"
-    const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || String(user.id) === String(GitHubAPI.DEVELOPER_ID));
-    if (!isBetaTester && markPrivateToggle) {
-        markPrivateToggle.disabled = true;
-        const privateContainer = markPrivateToggle.closest('.setting-item');
-        if (privateContainer) privateContainer.classList.add('beta-restricted');
-    }
-
     const bannerFileInput = document.getElementById('article-banner-file');
     const bannerPreviewContainer = document.getElementById('banner-preview-container');
     const slideshowPreview = document.getElementById('banner-slideshow-preview');
@@ -159,16 +151,6 @@ document.addEventListener('DOMContentLoaded', () => {
     bannerFileInput.addEventListener('change', async (e) => {
         let files = Array.from(e.target.files);
         if (files.length > 0) {
-            // BETA restriction for Slideshow (multiple banners)
-            if (!isBetaTester) {
-                if (files.length > 1) {
-                    alert('Multiple banners (Slideshow) is a BETA feature. Only the first image will be used.');
-                }
-                files = [files[0]];
-                // Also clear existing if they already had one (only one allowed for non-beta)
-                currentBannersBase64 = [];
-            }
-
             const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
             
             try {
@@ -279,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
             authorName: user.username,
             authorPfp: user.pfp,
             timestamp: new Date().toISOString(),
-            isPrivate: isBetaTester ? !!markPrivateToggle.checked : false,
+            isPrivate: !!markPrivateToggle.checked,
             reactions: {
                 "🔥": 0, "✨": 0, "👍": 0, "🎉": 0, "🤣": 0, "😂": 0, "😃": 0, "🤔": 0, "🥵": 0, "🥶": 0, "🤡": 0, "🤖": 0, "💀": 0
             }

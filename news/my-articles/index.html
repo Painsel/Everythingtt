@@ -8,13 +8,11 @@
     <link rel="stylesheet" href="../articles/article-styler.css">
     <link rel="stylesheet" href="styler.css">
     <script>
-        // Redirect if not logged in or not BETA
+        // Redirect if not logged in
         (function() {
             try {
                 const user = JSON.parse(localStorage.getItem('current_user'));
-                const DEVELOPER_ID = '382156063438888';
-                const isBeta = user && (user.role === 'beta' || user.role === 'admin' || user.id === DEVELOPER_ID);
-                if (!isBeta) {
+                if (!user) {
                     window.location.replace('../articles/');
                 }
             } catch (e) {
@@ -54,7 +52,7 @@
             <div id="single-article-header" class="hidden">
                 <button id="btn-back-to-feed">← Back to My Articles</button>
             </div>
-            <h2 id="explore-title">My Articles <span class="beta-tool-badge">BETA</span></h2>
+            <h2 id="explore-title">My Articles</h2>
             <div id="articles-list" class="articles-grid">
                 <!-- Articles will be loaded here -->
             </div>
@@ -137,7 +135,7 @@
                     </div>
 
                     <div class="management-section">
-                        <label>Banner Images <span class="beta-tool-badge">BETA Slideshow</span></label>
+                        <label>Banner Images <span>Slideshow</span></label>
                         <div class="banner-edit-container">
                             <div class="banner-preview-large slideshow-preview-container">
                                 <div id="edit-slideshow-preview" class="edit-slideshow-preview">
@@ -156,7 +154,7 @@
                                 <button id="btn-edit-next" class="edit-nav-btn">❯</button>
                                 <button id="btn-edit-remove" class="edit-remove-btn" title="Remove current banner">🗑️</button>
                             </div>
-                            <p class="help-text">BETA Testers can add up to 5 images for a slideshow. Recommended size: 1200x400.</p>
+                            <p class="help-text">You can add up to 5 images for a slideshow. Recommended size: 1200x400.</p>
                         </div>
                     </div>
 

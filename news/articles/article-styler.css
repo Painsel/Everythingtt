@@ -1194,6 +1194,110 @@
     text-decoration: underline;
 }
 
+/* Changelog Modal Styles */
+.changelog-container {
+    max-width: 500px;
+    background-color: #36393f;
+    border-radius: 8px;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.changelog-header {
+    background-color: #5865f2;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+}
+
+.changelog-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close-changelog-modal {
+    font-size: 1.5rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.close-changelog-modal:hover {
+    opacity: 1;
+}
+
+.changelog-body {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.changelog-item {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+}
+
+.changelog-icon {
+    font-size: 1.8rem;
+    background: #2f3136;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.changelog-info {
+    flex: 1;
+}
+
+.changelog-info strong {
+    display: block;
+    color: #fff;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.changelog-info p {
+    color: #b9bbbe;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.changelog-footer {
+    padding: 1.5rem 2rem;
+    background-color: #2f3136;
+    display: flex;
+    justify-content: center;
+}
+
+.changelog-btn {
+    background-color: #5865f2;
+    color: #fff;
+    border: none;
+    padding: 10px 40px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.changelog-btn:hover {
+    background-color: #4752c4;
+}
+
 /* Reactions */
 .reactions-wrapper {
     position: relative;
@@ -2479,41 +2583,7 @@
     padding: 20px;
 }
 
-.beta-restricted {
-    position: relative;
-    opacity: 0.7;
-    pointer-events: none;
-    user-select: none;
-}
-
-.beta-restricted::after {
-    content: "BETA FEATURE";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-5deg);
-    background: #5865f2;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-weight: 800;
-    font-size: 0.7rem;
-    letter-spacing: 1px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    z-index: 10;
-    pointer-events: auto;
-}
-
-.beta-tool-badge {
-    background: #5865f2;
-    color: white;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: bold;
-    margin-left: 8px;
-    vertical-align: middle;
-}
+/* Beta styles removed for official release */
 
 /* Temporary Link Styles */
 .temp-link-container {
