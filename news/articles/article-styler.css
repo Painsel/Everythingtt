@@ -97,6 +97,25 @@
     background: #5865f2;
 }
 
+/* My Articles Sidebar Item */
+#btn-my-articles {
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+#btn-my-articles.active {
+    background: #5865f2;
+    color: white;
+}
+
+/* Private Article UI */
+.private-badge {
+    font-size: 0.9rem;
+    vertical-align: middle;
+    margin-left: 8px;
+    opacity: 0.8;
+}
+
 #single-article-header.hidden {
     display: none;
 }

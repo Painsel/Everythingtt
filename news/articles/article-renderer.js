@@ -316,13 +316,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // UI Listeners for Notifications
     const btnNotif = document.getElementById('btn-notifications');
+    const btnMyArticles = document.getElementById('btn-my-articles');
+    const exploreTitle = document.getElementById('explore-title');
     const notifModal = document.getElementById('notifications-modal');
     const closeNotifModal = document.querySelector('.close-notifications-modal');
+
+    window.currentFilter = 'all';
 
     if (btnNotif) {
         btnNotif.addEventListener('click', () => {
             notifModal.classList.remove('hidden');
             updateNotificationUI();
+        });
+    }
+
+    if (btnMyArticles) {
+        btnMyArticles.addEventListener('click', () => {
+            if (window.currentFilter === 'my') {
+                window.currentFilter = 'all';
+                btnMyArticles.classList.remove('active');
+                exploreTitle.innerText = 'Explore Articles';
+            } else {
+                window.currentFilter = 'my';
+                btnMyArticles.classList.add('active');
+                exploreTitle.innerText = 'My Articles';
+            }
+            loadArticles();
         });
     }
 
@@ -367,6 +386,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 const article = JSON.parse(data.content);
+                
+                // Private check for single view
+                if (article.isPrivate && (!user || user.id !== article.authorId)) {
+                    articlesList.innerHTML = '<p class="status-msg">This article is private and can only be viewed by the author.</p>';
+                    return;
+                }
+
                 articleSHAs[article.id] = data.sha;
                 articleData[article.id] = article;
                 articlesList.innerHTML = '';
@@ -413,7 +439,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log(`Total valid articles: ${validArticles.length}`);
 
                 const filteredArticles = validArticles
-                    .filter(a => !a.isPrivate || (user && user.id === a.authorId)) // Filter out private articles unless author
+                    .filter(a => {
+                        const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || user.id === GitHubAPI.DEVELOPER_ID);
+                        
+                        // "My Articles" filter check
+                        if (window.currentFilter === 'my' && user) {
+                            return a.authorId === user.id;
+                        }
+
+                        // Private articles restriction (BETA Feature)
+                        if (a.isPrivate) {
+                            // If BETA Feature is active for private articles: only show in direct link
+                            // We are in Feed View here (isSingleArticle is false)
+                            return false; 
+                        }
+
+                        return true;
+                    })
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
                 console.log(`Articles after privacy filtering: ${filteredArticles.length}`);
@@ -947,7 +989,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ⚙️
                     </div>
                 ` : ''}
-                <h3>${article.title}</h3>
+                <h3>${article.title} ${article.isPrivate ? '<span class="private-badge" title="Private Article">🔒</span>' : ''}</h3>
                 <div class="author-info" data-author-id="${article.authorId}">
                     <img src="${article.authorPfp}" alt="${article.authorName}" class="author-pfp">
                     <span>By ${article.authorName}</span>
