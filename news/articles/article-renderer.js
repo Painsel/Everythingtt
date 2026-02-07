@@ -84,6 +84,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isDeveloper = user && String(user.id) === String(GitHubAPI.DEVELOPER_ID);
     const isBetaTester = user && (user.role === 'beta' || user.role === 'admin' || isDeveloper);
 
+    // Article Management Modal Logic
+    const settingsModal = document.getElementById('article-settings-modal');
+    const closeSettingsModal = document.querySelector('.close-management-modal');
+    const editTitle = document.getElementById('edit-article-title');
+    const editContent = document.getElementById('edit-article-content');
+    const editBannerPreview = document.getElementById('edit-banner-preview');
+    const editBannerUpload = document.getElementById('edit-banner-upload');
+    const markPrivateToggle = document.getElementById('mark-private-toggle');
+    const muteUserIdInput = document.getElementById('mute-user-id');
+    const muteDurationSelect = document.getElementById('mute-duration');
+    const btnMuteUser = document.getElementById('btn-mute-user');
+    const mutedUsersList = document.getElementById('muted-users-list');
+    const btnSaveSettings = document.getElementById('btn-save-article-changes');
+    const btnDeleteArticle = document.getElementById('btn-delete-article');
+
+    // Temporary Link UI Elements
+    const tempLinkSection = document.getElementById('temp-link-section');
+    const btnGenerateTempLink = document.getElementById('btn-generate-temp-link');
+    const tempLinkDisplay = document.getElementById('temp-link-display');
+    const tempLinkInput = document.getElementById('temp-link-input');
+    const btnCopyTempLink = document.getElementById('btn-copy-temp-link');
+    const tempLinkStatus = document.getElementById('temp-link-status');
+
+    // Slideshow Edit Logic
+    const editBannerControls = document.getElementById('edit-banner-controls');
+    const editBannerCountText = document.getElementById('edit-banner-count');
+    const btnEditPrev = document.getElementById('btn-edit-prev');
+    const btnEditNext = document.getElementById('btn-edit-next');
+    const btnEditRemove = document.getElementById('btn-edit-remove');
+
+    // Tab Logic
+    const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    let currentEditingArticleId = null;
+    let currentEditingBannerBase64 = null;
+    let editSlideshowIndex = 0;
+    let editSlideshowImages = [];
+
     // Security check: IP Address restriction
     async function checkIP() {
         if (!user) return;
@@ -545,41 +584,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Article Management Modal
     // Article Management Modal Logic
-    const settingsModal = document.getElementById('article-settings-modal');
-    const closeSettingsModal = document.querySelector('.close-management-modal');
-    const editTitle = document.getElementById('edit-article-title');
-    const editContent = document.getElementById('edit-article-content');
-    const editBannerPreview = document.getElementById('edit-banner-preview');
-    const editBannerUpload = document.getElementById('edit-banner-upload');
-    const markPrivateToggle = document.getElementById('mark-private-toggle');
-    const muteUserIdInput = document.getElementById('mute-user-id');
-    const muteDurationSelect = document.getElementById('mute-duration');
-    const btnMuteUser = document.getElementById('btn-mute-user');
-    const mutedUsersList = document.getElementById('muted-users-list');
-    const btnSaveSettings = document.getElementById('btn-save-article-changes');
-    const btnDeleteArticle = document.getElementById('btn-delete-article');
-
-    // Temporary Link UI Elements
-    const tempLinkSection = document.getElementById('temp-link-section');
-    const btnGenerateTempLink = document.getElementById('btn-generate-temp-link');
-    const tempLinkDisplay = document.getElementById('temp-link-display');
-    const tempLinkInput = document.getElementById('temp-link-input');
-    const btnCopyTempLink = document.getElementById('btn-copy-temp-link');
-    const tempLinkStatus = document.getElementById('temp-link-status');
-
-    // Slideshow Edit Logic
-    const editBannerControls = document.getElementById('edit-banner-controls');
-    const editBannerCountText = document.getElementById('edit-banner-count');
-    const btnEditPrev = document.getElementById('btn-edit-prev');
-    const btnEditNext = document.getElementById('btn-edit-next');
-    const btnEditRemove = document.getElementById('btn-edit-remove');
-    let editSlideshowIndex = 0;
-    let editSlideshowImages = [];
-
-    let currentEditingArticleId = null;
-    let currentEditingBannerBase64 = null;
 
     function updateEditBannerPreview() {
+        if (!editBannerPreview || !editBannerCountText || !editBannerControls) return;
         if (editSlideshowImages.length > 0) {
             const currentImg = editSlideshowImages[editSlideshowIndex];
             editBannerPreview.src = (currentImg && !currentImg.startsWith('#')) ? currentImg : 'https://placehold.co/400x150';
@@ -592,99 +599,114 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    btnEditPrev.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (editSlideshowImages.length <= 1) return;
-        editSlideshowIndex = (editSlideshowIndex - 1 + editSlideshowImages.length) % editSlideshowImages.length;
-        updateEditBannerPreview();
-    });
+    if (btnEditPrev) {
+        btnEditPrev.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (editSlideshowImages.length <= 1) return;
+            editSlideshowIndex = (editSlideshowIndex - 1 + editSlideshowImages.length) % editSlideshowImages.length;
+            updateEditBannerPreview();
+        });
+    }
 
-    btnEditNext.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (editSlideshowImages.length <= 1) return;
-        editSlideshowIndex = (editSlideshowIndex + 1) % editSlideshowImages.length;
-        updateEditBannerPreview();
-    });
+    if (btnEditNext) {
+        btnEditNext.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (editSlideshowImages.length <= 1) return;
+            editSlideshowIndex = (editSlideshowIndex + 1) % editSlideshowImages.length;
+            updateEditBannerPreview();
+        });
+    }
 
-    btnEditRemove.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (editSlideshowImages.length === 0) return;
-        editSlideshowImages.splice(editSlideshowIndex, 1);
-        if (editSlideshowIndex >= editSlideshowImages.length && editSlideshowImages.length > 0) {
-            editSlideshowIndex = editSlideshowImages.length - 1;
-        } else if (editSlideshowImages.length === 0) {
-            editSlideshowIndex = 0;
-        }
-        updateEditBannerPreview();
-    });
+    if (btnEditRemove) {
+        btnEditRemove.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (editSlideshowImages.length === 0) return;
+            editSlideshowImages.splice(editSlideshowIndex, 1);
+            if (editSlideshowIndex >= editSlideshowImages.length && editSlideshowImages.length > 0) {
+                editSlideshowIndex = editSlideshowImages.length - 1;
+            } else if (editSlideshowImages.length === 0) {
+                editSlideshowIndex = 0;
+            }
+            updateEditBannerPreview();
+        });
+    }
 
     // Tab Logic
-    const sidebarTabs = document.querySelectorAll('.sidebar-tab');
-    const tabPanes = document.querySelectorAll('.tab-pane');
 
-    sidebarTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const targetTab = tab.getAttribute('data-tab');
-            
-            // Update tabs
-            sidebarTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
+    if (sidebarTabs) {
+        sidebarTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.getAttribute('data-tab');
+                
+                // Update tabs
+                sidebarTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
 
-            // Update panes
-            tabPanes.forEach(pane => {
-                pane.classList.remove('active');
-                if (pane.id === `tab-${targetTab}`) {
-                    pane.classList.add('active');
+                // Update panes
+                if (tabPanes) {
+                    tabPanes.forEach(pane => {
+                        pane.classList.remove('active');
+                        if (pane.id === `tab-${targetTab}`) {
+                            pane.classList.add('active');
+                        }
+                    });
                 }
             });
         });
-    });
+    }
 
     async function openArticleSettings(articleId) {
+        if (!settingsModal) return;
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
         if (!article || !user || !isBetaTester || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
 
         // Reset to first tab
-        sidebarTabs[0].click();
+        if (sidebarTabs && sidebarTabs[0]) sidebarTabs[0].click();
 
-        editTitle.value = article.title;
-        editContent.value = article.content;
+        if (editTitle) editTitle.value = article.title;
+        if (editContent) editContent.value = article.content;
         
         // Handle banner preview (handle both single string and array/slideshow)
         editSlideshowImages = Array.isArray(article.banner) ? [...article.banner] : (article.banner ? [article.banner] : []);
         editSlideshowIndex = 0;
         updateEditBannerPreview();
         
-        markPrivateToggle.checked = !!article.isPrivate;
+        if (markPrivateToggle) markPrivateToggle.checked = !!article.isPrivate;
         
         // Handle Temporary Link Section visibility
-        if (article.isPrivate) {
-            tempLinkSection.classList.remove('hidden');
-            tempLinkDisplay.classList.add('hidden');
-            tempLinkStatus.innerText = '';
-        } else {
-            tempLinkSection.classList.add('hidden');
-        }
-
-        // Toggle visibility when checkbox changes
-        markPrivateToggle.onchange = () => {
-            if (markPrivateToggle.checked) {
+        if (tempLinkSection) {
+            if (article.isPrivate) {
                 tempLinkSection.classList.remove('hidden');
+                if (tempLinkDisplay) tempLinkDisplay.classList.add('hidden');
+                if (tempLinkStatus) tempLinkStatus.innerText = '';
             } else {
                 tempLinkSection.classList.add('hidden');
             }
-        };
+
+            // Toggle visibility when checkbox changes
+            if (markPrivateToggle) {
+                markPrivateToggle.onchange = () => {
+                    if (markPrivateToggle.checked) {
+                        tempLinkSection.classList.remove('hidden');
+                    } else {
+                        tempLinkSection.classList.add('hidden');
+                    }
+                };
+            }
+        }
 
         // "Mark As Private" is a BETA feature
-        const privateFeatureContainer = markPrivateToggle.closest('.setting-item');
-        if (privateFeatureContainer) {
-            if (!isBetaTester) {
-                privateFeatureContainer.classList.add('beta-restricted');
-                markPrivateToggle.disabled = true;
-            } else {
-                privateFeatureContainer.classList.remove('beta-restricted');
-                markPrivateToggle.disabled = false;
+        if (markPrivateToggle) {
+            const privateFeatureContainer = markPrivateToggle.closest('.setting-item');
+            if (privateFeatureContainer) {
+                if (!isBetaTester) {
+                    privateFeatureContainer.classList.add('beta-restricted');
+                    markPrivateToggle.disabled = true;
+                } else {
+                    privateFeatureContainer.classList.remove('beta-restricted');
+                    markPrivateToggle.disabled = false;
+                }
             }
         }
 
@@ -693,7 +715,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (bannerSection) {
             const bannerUpload = document.getElementById('edit-banner-upload');
             if (!isBetaTester) {
-                bannerUpload.multiple = false;
+                if (bannerUpload) bannerUpload.multiple = false;
                 bannerSection.classList.add('beta-restricted');
                 // Limit to 1 image if they have more
                 if (editSlideshowImages.length > 1) {
@@ -701,7 +723,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     updateEditBannerPreview();
                 }
             } else {
-                bannerUpload.multiple = true;
+                if (bannerUpload) bannerUpload.multiple = true;
                 bannerSection.classList.remove('beta-restricted');
             }
         }
@@ -709,7 +731,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingBannerBase64 = article.banner; // Deprecated but kept for compatibility during save if needed
         // Note: we now use editSlideshowImages as the source of truth during editing
 
-        renderMutedUsers(article.mutes || {});
+        if (mutedUsersList) renderMutedUsers(article.mutes || {});
 
         settingsModal.classList.remove('hidden');
     }
@@ -771,240 +793,300 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    btnMuteUser.addEventListener('click', async () => {
-        // ... (existing mute logic)
-    });
+    if (btnMuteUser) {
+        btnMuteUser.addEventListener('click', async () => {
+            if (!currentEditingArticleId || !user || !isBetaTester) return;
+            const targetId = muteUserIdInput ? muteUserIdInput.value.trim() : null;
+            const duration = muteDurationSelect ? muteDurationSelect.value : null;
+            if (!targetId) return alert('Please enter a User ID');
+
+            btnMuteUser.disabled = true;
+            btnMuteUser.innerText = 'Muting...';
+
+            try {
+                const res = await GitHubAPI.safeUpdateFile(
+                    `news/created-articles-storage/${currentEditingArticleId}.json`,
+                    (content) => {
+                        let article = JSON.parse(content);
+                        if (!article.mutes) article.mutes = {};
+                        
+                        const expiry = duration === 'permanent' ? 'permanent' : (Date.now() + (parseInt(duration) * 1000));
+                        article.mutes[targetId] = expiry;
+                        
+                        return JSON.stringify(article);
+                    },
+                    `Mute user ${targetId} on article ${currentEditingArticleId}`
+                );
+
+                if (res.finalContent) {
+                    const updated = JSON.parse(res.finalContent);
+                    articleData[currentEditingArticleId] = updated;
+                    if (mutedUsersList) renderMutedUsers(updated.mutes);
+                    if (muteUserIdInput) muteUserIdInput.value = '';
+                }
+            } catch (e) {
+                console.error('Mute failed:', e);
+                alert('Failed to mute user: ' + e.message);
+            } finally {
+                btnMuteUser.disabled = false;
+                btnMuteUser.innerText = 'Mute';
+            }
+        });
+    }
 
     // Temporary Link Generation Logic
-    btnGenerateTempLink.addEventListener('click', async () => {
-        if (!currentEditingArticleId || !user) return;
-        
-        const article = articleData[currentEditingArticleId];
-        if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
-
-        btnGenerateTempLink.disabled = true;
-        btnGenerateTempLink.innerText = 'Generating...';
-        tempLinkStatus.innerText = 'Creating temporary access token...';
-        tempLinkStatus.className = 'temp-link-status';
-
-        try {
-            const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            const expiry = Date.now() + (60 * 60 * 1000); // 1 hour from now
-
-            const accessData = {
-                articleId: currentEditingArticleId,
-                token: token,
-                expiry: expiry,
-                createdBy: user.id,
-                createdAt: new Date().toISOString()
-            };
-
-            // Save the token to GitHub storage
-            await GitHubAPI.safeUpdateFile(
-                `news/temp-access-links/${token}.json`,
-                accessData,
-                `Generate temporary link for article: ${currentEditingArticleId}`
-            );
-
-            // Construct the link
-            const baseUrl = window.location.href.split('#')[0].split('?')[0];
-            const tempLink = `${baseUrl}?access=${token}#article-${currentEditingArticleId}`;
+    if (btnGenerateTempLink) {
+        btnGenerateTempLink.addEventListener('click', async () => {
+            if (!currentEditingArticleId || !user) return;
             
-            tempLinkInput.value = tempLink;
-            tempLinkDisplay.classList.remove('hidden');
-            tempLinkStatus.innerText = 'Link generated! Valid for 1 hour.';
-            tempLinkStatus.className = 'temp-link-status success';
-        } catch (e) {
-            console.error('Failed to generate temporary link:', e);
-            tempLinkStatus.innerText = 'Error: ' + e.message;
-            tempLinkStatus.className = 'temp-link-status error';
-        } finally {
-            btnGenerateTempLink.disabled = false;
-            btnGenerateTempLink.innerText = 'Generate Link';
-        }
-    });
+            const article = articleData[currentEditingArticleId];
+            if (!article || (String(article.authorId) !== String(user.id) && !isDeveloper)) return;
 
-    btnCopyTempLink.addEventListener('click', () => {
-        tempLinkInput.select();
-        document.execCommand('copy');
-        const originalText = btnCopyTempLink.innerText;
-        btnCopyTempLink.innerText = 'Copied!';
-        setTimeout(() => {
-            btnCopyTempLink.innerText = originalText;
-        }, 2000);
-    });
+            btnGenerateTempLink.disabled = true;
+            btnGenerateTempLink.innerText = 'Generating...';
+            if (tempLinkStatus) {
+                tempLinkStatus.innerText = 'Creating temporary access token...';
+                tempLinkStatus.className = 'temp-link-status';
+            }
 
-    closeSettingsModal.addEventListener('click', () => {
-        settingsModal.classList.add('hidden');
-        currentEditingArticleId = null;
-        currentEditingBannerBase64 = null;
-    });
+            try {
+                const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                const expiry = Date.now() + (60 * 60 * 1000); // 1 hour from now
 
-    editBannerUpload.addEventListener('change', async (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        // BETA limit: 5 images
-        if (editSlideshowImages.length + files.length > 5) {
-            alert('BETA Testers can add up to 5 images for a slideshow.');
-            return;
-        }
-
-        for (const file of files) {
-            const reader = new FileReader();
-            const promise = new Promise((resolve) => {
-                reader.onload = (event) => {
-                    editSlideshowImages.push(event.target.result);
-                    resolve();
+                const accessData = {
+                    articleId: currentEditingArticleId,
+                    token: token,
+                    expiry: expiry,
+                    createdBy: user.id,
+                    createdAt: new Date().toISOString()
                 };
-            });
-            reader.readAsDataURL(file);
-            await promise;
-        }
-        
-        editSlideshowIndex = editSlideshowImages.length - 1;
-        updateEditBannerPreview();
-    });
 
-    btnSaveSettings.addEventListener('click', async () => {
-        if (!currentEditingArticleId || !user || !isBetaTester) return;
+                // Save the token to GitHub storage
+                await GitHubAPI.safeUpdateFile(
+                    `news/temp-access-links/${token}.json`,
+                    accessData,
+                    `Generate temporary link for article: ${currentEditingArticleId}`
+                );
 
-        // Extra safety check
-        const localArticle = articleData[currentEditingArticleId];
-        if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
-            return alert('You do not have permission to edit this article.');
-        }
-
-        btnSaveSettings.disabled = true;
-        btnSaveSettings.innerText = 'Saving...';
-
-        try {
-            // Get latest UI state for mutes
-            const currentMutes = localArticle.mutes || {};
-
-            // Decide banner format: single string if 1 image, array if multiple
-            const finalBanner = editSlideshowImages.length > 1 ? editSlideshowImages : (editSlideshowImages[0] || null);
-
-            const res = await GitHubAPI.safeUpdateFile(
-                `news/created-articles-storage/${currentEditingArticleId}.json`,
-                {
-                    title: editTitle.value.trim(),
-                    content: editContent.value.trim(),
-                    banner: finalBanner,
-                    isPrivate: isBetaTester ? markPrivateToggle.checked : (localArticle.isPrivate || false),
-                    mutes: currentMutes,
-                    lastUpdated: new Date().toISOString()
-                },
-                `Update article: ${editTitle.value.trim()}`
-            );
-            
-            if (res.finalContent) {
-                const finalArticle = JSON.parse(res.finalContent);
+                // Construct the link - Always point to the main articles page
+                let baseUrl = window.location.href.split('#')[0].split('?')[0];
+                if (baseUrl.includes('/my-articles/')) {
+                    baseUrl = baseUrl.replace('/my-articles/', '/articles/');
+                }
+                const tempLink = `${baseUrl}?access=${token}#article-${currentEditingArticleId}`;
                 
-                // Update local state
-                articleData[currentEditingArticleId] = finalArticle;
-                articleSHAs[currentEditingArticleId] = res.content.sha;
-                
-                // Reload or update UI
-                settingsModal.classList.add('hidden');
-                loadArticles(); // Refresh to show changes
-                alert('Article updated successfully!');
-            }
-        } catch (e) {
-            console.error('Failed to update article:', e);
-            alert('Failed to save changes: ' + e.message);
-        } finally {
-            btnSaveSettings.disabled = false;
-            btnSaveSettings.innerText = 'Save Changes';
-        }
-    });
-
-    btnDeleteArticle.addEventListener('click', async () => {
-        if (!currentEditingArticleId || !user || !isBetaTester) return;
-
-        // Extra safety check
-        const localArticle = articleData[currentEditingArticleId];
-        if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
-            return alert('You do not have permission to delete this article.');
-        }
-
-        if (!confirm('Are you absolutely sure you want to delete this article? This action cannot be undone.')) {
-            return;
-        }
-
-        btnDeleteArticle.disabled = true;
-        btnDeleteArticle.innerText = 'Deleting...';
-
-        try {
-            // 1. Fetch latest SHA to ensure we can delete without conflict
-            const latest = await GitHubAPI.getFile(`news/created-articles-storage/${currentEditingArticleId}.json`);
-            if (!latest) throw new Error('Could not find article to delete.');
-            
-            const currentSha = latest.sha;
-
-            // 2. Delete article file
-            await GitHubAPI.request(`/contents/news/created-articles-storage/${currentEditingArticleId}.json`, 'DELETE', {
-                message: `Delete article: ${currentEditingArticleId}`,
-                sha: currentSha
-            });
-
-            // 3. Optionally delete comments file
-            try {
-                const commentsRes = await GitHubAPI.getFile(`news/article-comments-storage/${currentEditingArticleId}.json`);
-                if (commentsRes) {
-                    await GitHubAPI.request(`/contents/news/article-comments-storage/${currentEditingArticleId}.json`, 'DELETE', {
-                        message: `Delete comments for article: ${currentEditingArticleId}`,
-                        sha: commentsRes.sha
-                    });
+                if (tempLinkInput) tempLinkInput.value = tempLink;
+                if (tempLinkDisplay) tempLinkDisplay.classList.remove('hidden');
+                if (tempLinkStatus) {
+                    tempLinkStatus.innerText = 'Link generated! Valid for 1 hour.';
+                    tempLinkStatus.className = 'temp-link-status success';
                 }
             } catch (e) {
-                console.warn('Comments file deletion skipped or failed:', e);
+                console.error('Failed to generate temporary link:', e);
+                if (tempLinkStatus) {
+                    tempLinkStatus.innerText = 'Error: ' + e.message;
+                    tempLinkStatus.className = 'temp-link-status error';
+                }
+            } finally {
+                btnGenerateTempLink.disabled = false;
+                btnGenerateTempLink.innerText = 'Generate Link';
+            }
+        });
+    }
+
+    if (btnCopyTempLink) {
+        btnCopyTempLink.addEventListener('click', () => {
+            if (tempLinkInput) {
+                tempLinkInput.select();
+                document.execCommand('copy');
+                const originalText = btnCopyTempLink.innerText;
+                btnCopyTempLink.innerText = 'Copied!';
+                setTimeout(() => {
+                    btnCopyTempLink.innerText = originalText;
+                }, 2000);
+            }
+        });
+    }
+
+    if (closeSettingsModal) {
+        closeSettingsModal.addEventListener('click', () => {
+            if (settingsModal) settingsModal.classList.add('hidden');
+            currentEditingArticleId = null;
+            currentEditingBannerBase64 = null;
+        });
+    }
+
+    if (editBannerUpload) {
+        editBannerUpload.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            // BETA limit: 5 images
+            if (editSlideshowImages.length + files.length > 5) {
+                alert('BETA Testers can add up to 5 images for a slideshow.');
+                return;
             }
 
-            // 4. Update user contributions count
+            for (const file of files) {
+                const reader = new FileReader();
+                const promise = new Promise((resolve) => {
+                    reader.onload = (event) => {
+                        editSlideshowImages.push(event.target.result);
+                        resolve();
+                    };
+                });
+                reader.readAsDataURL(file);
+                await promise;
+            }
+            
+            editSlideshowIndex = editSlideshowImages.length - 1;
+            updateEditBannerPreview();
+        });
+    }
+
+    if (btnSaveSettings) {
+        btnSaveSettings.addEventListener('click', async () => {
+            if (!currentEditingArticleId || !user || !isBetaTester) return;
+
+            // Extra safety check
+            const localArticle = articleData[currentEditingArticleId];
+            if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
+                return alert('You do not have permission to edit this article.');
+            }
+
+            btnSaveSettings.disabled = true;
+            btnSaveSettings.innerText = 'Saving...';
+
             try {
-                const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
-                if (userData) {
-                    const profile = JSON.parse(userData.content);
-                    profile.contributions = Math.max(0, (profile.contributions || 1) - 1);
-                    await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${user.id}.json`,
-                        JSON.stringify(profile),
-                        `Decrement contributions for ${user.username}`,
-                        userData.sha
-                    );
-                    localStorage.setItem('current_user', JSON.stringify(profile));
+                // Get latest UI state for mutes
+                const currentMutes = localArticle.mutes || {};
+
+                // Decide banner format: single string if 1 image, array if multiple
+                const finalBanner = editSlideshowImages.length > 1 ? editSlideshowImages : (editSlideshowImages[0] || null);
+
+                const res = await GitHubAPI.safeUpdateFile(
+                    `news/created-articles-storage/${currentEditingArticleId}.json`,
+                    {
+                        title: editTitle ? editTitle.value.trim() : localArticle.title,
+                        content: editContent ? editContent.value.trim() : localArticle.content,
+                        banner: finalBanner,
+                        isPrivate: (isBetaTester && markPrivateToggle) ? markPrivateToggle.checked : (localArticle.isPrivate || false),
+                        mutes: currentMutes,
+                        lastUpdated: new Date().toISOString()
+                    },
+                    `Update article: ${editTitle ? editTitle.value.trim() : currentEditingArticleId}`
+                );
+                
+                if (res.finalContent) {
+                    const finalArticle = JSON.parse(res.finalContent);
+                    
+                    // Update local state
+                    articleData[currentEditingArticleId] = finalArticle;
+                    articleSHAs[currentEditingArticleId] = res.content.sha;
+                    
+                    // Reload or update UI
+                    if (settingsModal) settingsModal.classList.add('hidden');
+                    loadArticles(); // Refresh to show changes
+                    alert('Article updated successfully!');
                 }
             } catch (e) {
-                console.warn('Failed to update contributions count:', e);
+                console.error('Failed to update article:', e);
+                alert('Failed to save changes: ' + e.message);
+            } finally {
+                btnSaveSettings.disabled = false;
+                btnSaveSettings.innerText = 'Save Changes';
+            }
+        });
+    }
+
+    if (btnDeleteArticle) {
+        btnDeleteArticle.addEventListener('click', async () => {
+            if (!currentEditingArticleId || !user || !isBetaTester) return;
+
+            // Extra safety check
+            const localArticle = articleData[currentEditingArticleId];
+            if (!localArticle || (String(localArticle.authorId) !== String(user.id) && !isDeveloper)) {
+                return alert('You do not have permission to delete this article.');
             }
 
-            // 5. Cleanup local state
-            delete articleData[currentEditingArticleId];
-            delete articleSHAs[currentEditingArticleId];
-            
-            // 6. UI Update
-            settingsModal.classList.add('hidden');
-            
-            // If we are in single view, go back to feed
-            if (window.location.hash.includes(currentEditingArticleId)) {
-                window.location.hash = '';
-            } else {
-                // Just remove the card if in feed view for better responsiveness
-                const card = document.getElementById(`article-${currentEditingArticleId}`);
-                if (card) card.remove();
+            if (!confirm('Are you absolutely sure you want to delete this article? This action cannot be undone.')) {
+                return;
             }
 
-            alert('Article deleted successfully.');
-            loadArticles(); // Final refresh to be sure
-        } catch (e) {
-            console.error('Failed to delete article:', e);
-            alert('Failed to delete article: ' + e.message);
-        } finally {
-            btnDeleteArticle.disabled = false;
-            btnDeleteArticle.innerText = 'Delete Article';
-        }
-    });
+            btnDeleteArticle.disabled = true;
+            btnDeleteArticle.innerText = 'Deleting...';
+
+            try {
+                // 1. Fetch latest SHA to ensure we can delete without conflict
+                const latest = await GitHubAPI.getFile(`news/created-articles-storage/${currentEditingArticleId}.json`);
+                if (!latest) throw new Error('Could not find article to delete.');
+                
+                const currentSha = latest.sha;
+
+                // 2. Delete article file
+                await GitHubAPI.request(`/contents/news/created-articles-storage/${currentEditingArticleId}.json`, 'DELETE', {
+                    message: `Delete article: ${currentEditingArticleId}`,
+                    sha: currentSha
+                });
+
+                // 3. Optionally delete comments file
+                try {
+                    const commentsRes = await GitHubAPI.getFile(`news/article-comments-storage/${currentEditingArticleId}.json`);
+                    if (commentsRes) {
+                        await GitHubAPI.request(`/contents/news/article-comments-storage/${currentEditingArticleId}.json`, 'DELETE', {
+                            message: `Delete comments for article: ${currentEditingArticleId}`,
+                            sha: commentsRes.sha
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Comments file deletion skipped or failed:', e);
+                }
+
+                // 4. Update user contributions count
+                try {
+                    const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                    if (userData) {
+                        const profile = JSON.parse(userData.content);
+                        profile.contributions = Math.max(0, (profile.contributions || 1) - 1);
+                        await GitHubAPI.updateFile(
+                            `news/created-news-accounts-storage/${user.id}.json`,
+                            JSON.stringify(profile),
+                            `Decrement contributions for ${user.username}`,
+                            userData.sha
+                        );
+                        localStorage.setItem('current_user', JSON.stringify(profile));
+                    }
+                } catch (e) {
+                    console.warn('Failed to update contributions count:', e);
+                }
+
+                // 5. Cleanup local state
+                delete articleData[currentEditingArticleId];
+                delete articleSHAs[currentEditingArticleId];
+                
+                // 6. UI Update
+                if (settingsModal) settingsModal.classList.add('hidden');
+                
+                // If we are in single view, go back to feed
+                if (window.location.hash.includes(currentEditingArticleId)) {
+                    window.location.hash = '';
+                } else {
+                    // Just remove the card if in feed view for better responsiveness
+                    const card = document.getElementById(`article-${currentEditingArticleId}`);
+                    if (card) card.remove();
+                }
+
+                alert('Article deleted successfully.');
+                loadArticles(); // Final refresh to be sure
+            } catch (e) {
+                console.error('Failed to delete article:', e);
+                alert('Failed to delete article: ' + e.message);
+            } finally {
+                btnDeleteArticle.disabled = false;
+                btnDeleteArticle.innerText = 'Delete Article';
+            }
+        });
+    }
  
      // Listen for hash changes to switch between single and feed view
      window.addEventListener('hashchange', loadArticles);
@@ -1220,11 +1302,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const activeSlide = bannerElement.querySelector('.slide.active');
                     if (activeSlide) {
                         const bgImg = activeSlide.style.backgroundImage;
-                        if (bgImg && bgImg !== 'none') url = bgImg.slice(5, -2);
+                        if (bgImg && bgImg !== 'none') {
+                            url = bgImg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+                        }
                     }
                 } else {
                     const bgImg = bannerElement.style.backgroundImage;
-                    if (bgImg && bgImg !== 'none') url = bgImg.slice(5, -2);
+                    if (bgImg && bgImg !== 'none') {
+                        url = bgImg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+                    }
                 }
 
                 if (url) {
@@ -1666,33 +1752,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Attachment handling
-    commentFileUpload.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    if (commentFileUpload) {
+        commentFileUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-        try {
-            // Re-use optimizeImage if available or simple base64
-            const base64 = await fileToBase64(file);
-            currentAttachmentBase64 = base64;
-            
-            attachmentPreview.innerHTML = `
-                <div class="preview-item">
-                    <img src="${base64}" alt="Attachment preview">
-                    <button class="remove-attachment">&times;</button>
-                </div>
-            `;
-            attachmentPreview.classList.remove('hidden');
-            
-            attachmentPreview.querySelector('.remove-attachment').onclick = () => {
-                currentAttachmentBase64 = null;
-                attachmentPreview.innerHTML = '';
-                attachmentPreview.classList.add('hidden');
-                commentFileUpload.value = '';
-            };
-        } catch (err) {
-            alert('Error loading image');
-        }
-    });
+            try {
+                // Re-use optimizeImage if available or simple base64
+                const base64 = await fileToBase64(file);
+                currentAttachmentBase64 = base64;
+                
+                if (attachmentPreview) {
+                    attachmentPreview.innerHTML = `
+                        <div class="preview-item">
+                            <img src="${base64}" alt="Attachment preview">
+                            <button class="remove-attachment">&times;</button>
+                        </div>
+                    `;
+                    attachmentPreview.classList.remove('hidden');
+                    
+                    const removeBtn = attachmentPreview.querySelector('.remove-attachment');
+                    if (removeBtn) {
+                        removeBtn.onclick = () => {
+                            currentAttachmentBase64 = null;
+                            attachmentPreview.innerHTML = '';
+                            attachmentPreview.classList.add('hidden');
+                            if (commentFileUpload) commentFileUpload.value = '';
+                        };
+                    }
+                }
+            } catch (err) {
+                alert('Error loading image');
+            }
+        });
+    }
 
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
@@ -2312,48 +2405,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    btnSubmitComment.addEventListener('click', async () => {
-        const text = commentInput.value.trim();
-        if (!text && !currentAttachmentBase64) return;
-        if (!user) return alert('You must be logged in to comment');
+    if (btnSubmitComment) {
+        btnSubmitComment.addEventListener('click', async () => {
+            if (!commentInput) return;
+            const text = commentInput.value.trim();
+            if (!text && !currentAttachmentBase64) return;
+            if (!user) return alert('You must be logged in to comment');
 
-        // Check if user is muted on this article
-        const article = articleData[currentArticleIdForComments];
-        if (article && article.mutes && article.mutes[user.id]) {
-            const expiry = article.mutes[user.id];
-            if (expiry === 'permanent') {
-                return alert('You have been permanently muted from commenting on this article.');
-            } else {
-                const expiryTime = parseInt(expiry);
-                if (expiryTime > Date.now()) {
-                    return alert(`You are muted from commenting on this article until ${new Date(expiryTime).toLocaleString()}.`);
+            // Check if user is muted on this article
+            const article = articleData[currentArticleIdForComments];
+            if (article && article.mutes && article.mutes[user.id]) {
+                const expiry = article.mutes[user.id];
+                if (expiry === 'permanent') {
+                    return alert('You have been permanently muted from commenting on this article.');
+                } else {
+                    const expiryTime = parseInt(expiry);
+                    if (expiryTime > Date.now()) {
+                        return alert(`You are muted from commenting on this article until ${new Date(expiryTime).toLocaleString()}.`);
+                    }
                 }
             }
-        }
 
-        // --- OPTIMISTIC UI PREP ---
-        const newComment = {
-            id: GitHubAPI.generateID().toString(),
-            authorId: user.id,
-            authorName: user.username,
-            authorPfp: user.pfp,
-            authorJoinDate: user.joinDate,
-            text: text,
-            timestamp: new Date().toISOString(),
-            replyToId: currentReplyToId,
-            attachment: currentAttachmentBase64,
-            pinned: false,
-            votes: { up: [], down: [] }
-        };
+            // --- OPTIMISTIC UI PREP ---
+            const newComment = {
+                id: GitHubAPI.generateID().toString(),
+                authorId: user.id,
+                authorName: user.username,
+                authorPfp: user.pfp,
+                authorJoinDate: user.joinDate,
+                text: text,
+                timestamp: new Date().toISOString(),
+                replyToId: currentReplyToId,
+                attachment: currentAttachmentBase64,
+                pinned: false,
+                votes: { up: [], down: [] }
+            };
 
-        const savedText = text;
-        const savedAttachment = currentAttachmentBase64;
-        const savedReplyToId = currentReplyToId;
+            const savedText = text;
+            const savedAttachment = currentAttachmentBase64;
+            const savedReplyToId = currentReplyToId;
 
-        // Clear input immediately for snappiness
-        resetCommentInput();
-        btnSubmitComment.disabled = true;
-        btnSubmitComment.innerText = 'Posting...';
+            // Clear input immediately for snappiness
+            resetCommentInput();
+            btnSubmitComment.disabled = true;
+            btnSubmitComment.innerText = 'Posting...';
 
         // Use safeUpdateFile to handle persistence with atomicity and queuing
         try {
@@ -2470,4 +2565,5 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnSubmitComment.innerText = 'Post';
         }
     });
+}
 });
