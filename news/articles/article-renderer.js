@@ -926,13 +926,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="slide ${i === 0 ? 'active' : ''}" style="background-image: ${b.startsWith('#') ? 'none' : `url(${b})`}; background-color: ${b.startsWith('#') ? b : 'transparent'}"></div>
                     `).join('')}
                     <div class="slideshow-nav ${!isBetaTester ? 'locked' : ''}">
-                        <button class="ss-prev" ${!isBetaTester ? 'disabled title="BETA Feature: Testing only"' : ''}>❮</button>
+                        <button class="ss-prev">❮</button>
                         <div class="ss-dots">
                             ${banners.map((_, i) => `<span class="ss-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`).join('')}
                         </div>
-                        <button class="ss-next" ${!isBetaTester ? 'disabled title="BETA Feature: Testing only"' : ''}>❯</button>
+                        <button class="ss-next">❯</button>
                     </div>
-                    ${!isBetaTester ? `<div class="beta-lock-overlay"><span>🧪 BETA FEATURE</span></div>` : ''}
                 </div>
             `;
         } else {

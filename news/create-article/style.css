@@ -98,6 +98,26 @@
     align-items: center;
     justify-content: center;
     gap: 15px;
+}
+
+/* BETA Tool Badge */
+.beta-tool-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.beta-tool-badge {
+    background: #9c27b0;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
     margin-top: 10px;
     color: #dcddde;
     font-size: 0.9rem;
