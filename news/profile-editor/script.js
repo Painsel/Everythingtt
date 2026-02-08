@@ -92,6 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('edit-status-type').value = user.statusType || 'auto';
     }
 
+    // Initial UI render from localStorage
+    updateUI(currentUser);
+
     function updateStatusPreview(userOverride = null) {
         const msg = document.getElementById('edit-status-msg').value;
         const type = document.getElementById('edit-status-type').value;
@@ -124,11 +127,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Background profile sync
     async function pollUserProfile() {
-        await GitHubAPI.syncUserProfile((remoteUser) => {
-            currentUser = remoteUser;
-            updateUI(currentUser);
-            console.log('Profile synced in editor background');
+        // Skip polling if page is hidden or user is typing/editing
+        if (document.hidden) return;
+        
+        const activeElement = document.activeElement;
+        const isEditing = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');
+        if (isEditing) return;
+
+        const updated = await GitHubAPI.syncUserProfile((newUser) => {
+            currentUser = newUser;
+            updateUI(newUser);
         });
+        if (updated) {
+            currentUser = updated;
+        }
     }
     
     // Initial sync
@@ -136,12 +148,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Poll every 30s
     setInterval(pollUserProfile, 30000);
 
+    let pendingPfpBase64 = null;
+    let pendingBannerBase64 = null;
+
     const btnSave = document.getElementById('btn-save-profile');
     const btnLogout = document.getElementById('btn-logout');
     const uploadPfp = document.getElementById('upload-pfp');
     const uploadBanner = document.getElementById('upload-banner');
 
-    async function optimizeImage(file, maxWidth, maxHeight) {
+    async function optimizeImage(file, maxWidth, maxHeight, quality = 0.8) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -169,8 +184,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Export as JPEG with 90% quality
-                    resolve(canvas.toDataURL('image/jpeg', 0.9));
+                    // Export as JPEG with variable quality
+                    resolve(canvas.toDataURL('image/jpeg', quality));
                 };
                 img.onerror = reject;
                 img.src = e.target.result;
@@ -198,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             btnSave.disabled = true;
-            btnSave.innerText = 'Processing Images...';
+            btnSave.innerText = 'Processing...';
 
             let pfp = currentUser.pfp;
             let banner = currentUser.banner;
@@ -210,26 +225,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 
             if (pfpFile) {
-                if (pfpFile.size > MAX_SIZE) {
-                    throw new Error('Profile Picture is too large (max 2MB)');
-                }
-                if (pfpFile.type === 'image/gif') {
-                    throw new Error('GIFs are not allowed for Profile Pictures');
-                }
-                pfp = await optimizeImage(pfpFile, 512, 512);
+                if (pfpFile.size > MAX_SIZE) throw new Error('Profile Picture is too large (max 2MB)');
+                if (pfpFile.type === 'image/gif') throw new Error('GIFs are not allowed');
+                pfp = pendingPfpBase64 || await optimizeImage(pfpFile, 256, 256, 0.7);
             }
 
             if (bannerFile) {
-                if (bannerFile.size > MAX_SIZE) {
-                    throw new Error('Profile Banner is too large (max 2MB)');
-                }
-                if (bannerFile.type === 'image/gif') {
-                    throw new Error('GIFs are not allowed for Profile Banners');
-                }
-                banner = await optimizeImage(bannerFile, 1920, 640);
+                if (bannerFile.size > MAX_SIZE) throw new Error('Profile Banner is too large (max 2MB)');
+                if (bannerFile.type === 'image/gif') throw new Error('GIFs are not allowed');
+                banner = pendingBannerBase64 || await optimizeImage(bannerFile, 1200, 400, 0.6);
             }
 
-            btnSave.innerText = 'Saving Profile...';
+            btnSave.innerText = 'Saving...';
 
             const updatedUser = {
                 ...currentUser,
@@ -249,13 +256,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             userSha = res.content.sha;
             currentUser = updatedUser;
-            currentUser.sha = userSha; // Preserve SHA for status tracking
+            currentUser.sha = userSha; 
             localStorage.setItem('current_user', JSON.stringify(currentUser));
             updateUI(currentUser);
             
             // Clear file inputs
             uploadPfp.value = '';
             uploadBanner.value = '';
+            pendingPfpBase64 = null;
+            pendingBannerBase64 = null;
             
             alert('Profile updated successfully!');
         } catch (e) {
@@ -272,8 +281,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const file = e.target.files[0];
         if (file) {
             try {
-                const optimized = await optimizeImage(file, 512, 512);
-                document.getElementById('profile-pfp').src = optimized;
+                pendingPfpBase64 = await optimizeImage(file, 256, 256, 0.7);
+                document.getElementById('profile-pfp').src = pendingPfpBase64;
             } catch (err) {
                 console.error('PFP preview failed:', err);
             }
@@ -284,8 +293,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const file = e.target.files[0];
         if (file) {
             try {
-                const optimized = await optimizeImage(file, 1920, 640);
-                document.getElementById('profile-banner').style.background = `url(${optimized})`;
+                pendingBannerBase64 = await optimizeImage(file, 1200, 400, 0.6);
+                document.getElementById('profile-banner').style.background = `url(${pendingBannerBase64})`;
                 document.getElementById('profile-banner').style.backgroundSize = 'cover';
             } catch (err) {
                 console.error('Banner preview failed:', err);
