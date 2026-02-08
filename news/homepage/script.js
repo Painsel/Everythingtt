@@ -407,6 +407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Sidebar Toggle Logic
         const sidebar = document.querySelector('.sidebar');
         const toggleBtn = document.getElementById('sidebar-toggle');
+        const overlay = document.getElementById('sidebar-overlay');
         
         // Load state from local storage
         const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
@@ -414,10 +415,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             sidebar.classList.add('collapsed');
         }
 
-        toggleBtn.addEventListener('click', () => {
+        const toggleSidebar = () => {
             const nowCollapsed = sidebar.classList.toggle('collapsed');
             localStorage.setItem('sidebar_collapsed', nowCollapsed);
-        });
+        };
+
+        toggleBtn.addEventListener('click', toggleSidebar);
+        overlay.addEventListener('click', toggleSidebar);
 
         const files = await GitHubAPI.listFiles('news/created-articles-storage');
         if (!files || files.length === 0) {
