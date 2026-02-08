@@ -131,7 +131,7 @@
             <form id="form-change-pw">
                 <div class="input-group">
                     <label for="new-pw">New Password:</label>
-                    <input type="password" id="new-pw" placeholder="Enter new password">
+                    <input type="password" id="new-pw" placeholder="Enter new password" autocomplete="new-password">
                 </div>
                 <div class="modal-actions">
                     <button type="submit" id="btn-confirm-pw" class="btn-primary">Change Password</button>
@@ -159,10 +159,34 @@
             <h3 style="color: #ff4d4d;">Ban IP Address</h3>
             <p>Target User: <span id="ban-target-user" style="font-weight: bold;"></span></p>
             <p>Current IP: <span id="ban-target-ip" style="font-family: monospace;"></span></p>
-            <p style="margin-top: 10px;">Banning this IP will prevent <b>any</b> user from logging in or creating an account from this address.</p>
+            
+            <div class="input-group" style="margin-top: 15px;">
+                <label for="ban-reason">Reason for Ban:</label>
+                <textarea id="ban-reason" placeholder="Enter reason for this ban..." style="width: 100%; min-height: 80px; background: #2f3136; border: 1px solid #40444b; color: #dcddde; border-radius: 4px; padding: 8px; margin-top: 5px;"></textarea>
+            </div>
+
+            <p style="margin-top: 10px; font-size: 0.9em; color: #b9bbbe;">Banning this IP will prevent <b>any</b> user from logging in or creating an account from this address.</p>
             <div class="modal-actions" style="margin-top: 20px;">
                 <button id="btn-confirm-ban" class="btn-danger">Ban This IP</button>
                 <button id="btn-cancel-ban" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="unban-ip-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 style="color: #43b581;">Unban IP Address</h3>
+            <p>Enter the IP address you want to remove from the blacklist.</p>
+            
+            <div class="input-group" style="margin-top: 15px;">
+                <label for="unban-ip-input">IP Address:</label>
+                <input type="text" id="unban-ip-input" placeholder="e.g. 192.168.1.1" style="width: 100%; background: #2f3136; border: 1px solid #40444b; color: #dcddde; border-radius: 4px; padding: 8px; margin-top: 5px;">
+            </div>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="btn-confirm-unban" class="btn-primary" style="background: #43b581;">Unban IP</button>
+                <button id="btn-cancel-unban" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>
@@ -247,6 +271,6 @@
 
     <script src="../utils.js?v=1.5.8"></script>
     <script src="../sidebar-shared.js"></script>
-    <script src="script.js?v=1.0.5"></script>
+    <script src="script.js?v=1.0.6"></script>
 </body>
 </html>

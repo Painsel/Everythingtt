@@ -147,6 +147,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         openBanIp(currentEditingUserId, currentEditingUsername, currentEditingUserIp);
     };
 
+    document.getElementById('tile-unban-ip').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        document.getElementById('unban-ip-input').value = '';
+        unbanIpModal.classList.remove('hidden');
+    };
+
     document.getElementById('tile-change-pw').onclick = () => {
         accountActionsModal.classList.add('hidden');
         openChangePw(currentEditingUserId, currentEditingUsername);
@@ -386,6 +392,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-cancel-ban').onclick = () => {
         banIpModal.classList.add('hidden');
+    };
+
+    document.getElementById('btn-cancel-unban').onclick = () => {
+        unbanIpModal.classList.add('hidden');
     };
 
     // Action Confirmations
