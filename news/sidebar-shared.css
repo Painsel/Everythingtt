@@ -164,11 +164,11 @@ body.is-beta-tester .beta-only {
 }
 
 /* Modal Exception: BETA modals should not be forced visible */
-body.is-beta-tester .modal.beta-only {
+body.is-beta-tester div.modal.beta-only {
     display: none !important;
 }
 
-body.is-beta-tester .modal.beta-only.active {
+body.is-beta-tester div.modal.beta-only.active {
     display: flex !important;
 }
 

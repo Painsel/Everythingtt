@@ -302,7 +302,7 @@
 
 /* Modal & Cropper Styles */
 .modal {
-    display: none;
+    display: none !important;
     position: fixed;
     z-index: 2000; /* Ensure it's above everything */
     left: 0;
@@ -316,7 +316,7 @@
 }
 
 .modal.active {
-    display: flex;
+    display: flex !important;
 }
 
 .modal-content {
