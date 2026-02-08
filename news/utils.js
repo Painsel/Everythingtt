@@ -576,37 +576,35 @@ window.GitHubAPI = {
 
     async safeUpdateFile(path, transform, message) {
         // Optimization: Atomic push via Middleware
-        // [IMPORTANT] Only allow atomic push for strings (which are already encoded via _encode)
-        // JSON objects must use the local fallback to ensure proper decoding/merging/encoding of ett_enc_v1 data
-        const canUseMiddleware = this.middlewareURL && typeof transform === 'string';
+        // [IMPORTANT] Now fully supported for both strings and objects
+        const canUseMiddleware = this.middlewareURL && (typeof transform === 'string' || typeof transform === 'object');
 
         if (canUseMiddleware) {
             try {
-                const encodedTransform = this._encode(transform);
+                // If it's a string, we encode it so the middleware knows how to decode it
+                const encodedTransform = typeof transform === 'string' ? this._encode(transform) : transform;
 
                 const res = await this.request(`${path}?action=push`, 'POST', {
                     transform: encodedTransform,
                     message: message
                 });
                 
-                if (res.skipped) return res;
+                const finalContentToCache = res.finalContent;
+                const decodedFinalContent = this._decode(finalContentToCache);
+
+                if (res.skipped) return { ...res, finalContent: decodedFinalContent };
                 
                 // Update local cache with new content
-                // Ensure the cached content includes our encoding prefix
-                const finalContentToCache = res.finalContent;
-                const encodedForCache = finalContentToCache.startsWith('ett_enc_v1:') 
-                    ? finalContentToCache 
-                    : this._encode(finalContentToCache);
-                
+                // res.finalContent from middleware is guaranteed to be ett_enc_v1 encoded
                 this._fileCache.set(`/contents/${path}`, {
                     data: {
-                        content: btoa(unescape(encodeURIComponent(encodedForCache))),
+                        content: btoa(unescape(encodeURIComponent(finalContentToCache))),
                         sha: res.content ? res.content.sha : (res.commit ? res.commit.sha : null)
                     },
                     timestamp: Date.now()
                 });
 
-                return res;
+                return { ...res, finalContent: decodedFinalContent };
             } catch (e) {
                 console.warn('[GitHubAPI] Atomic push failed, falling back to safe update:', e);
                 // Fallback to standard safe update
