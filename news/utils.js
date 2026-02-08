@@ -6,6 +6,25 @@ window.GitHubAPI = {
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (High Performance Mode)`);
+        
+        // [SECURITY] Clear any legacy PATs from localStorage
+        localStorage.removeItem('gh_pat');
+        
+        // Pre-fetch configuration to get middleware URL without exposing PAT
+        this._fetchConfig();
+    },
+    async _fetchConfig() {
+        const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
+        try {
+            const res = await fetch(MAIN_BIN, { headers: { 'X-Bin-Meta': 'false' } });
+            const data = await res.json();
+            const config = data.record || data;
+            if (config.middleware_url) {
+                this.middlewareURL = config.middleware_url;
+            }
+        } catch (e) {
+            console.error('[GitHubAPI] Failed to fetch config:', e);
+        }
     },
     cachedPAT: null,
     _loadingPAT: null, // Promise lock for concurrent getPAT calls
@@ -58,46 +77,9 @@ window.GitHubAPI = {
         return null;
     },
     async getPAT() {
-        if (this.cachedPAT) return this.cachedPAT;
-        if (this._loadingPAT) return this._loadingPAT;
-
-        this._loadingPAT = (async () => {
-            const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
-            try {
-                const mainRes = await fetch(MAIN_BIN, {
-                    headers: { 'X-Bin-Meta': 'false' }
-                });
-                const mainData = await mainRes.json();
-                const mainConfig = mainData.record || mainData;
-
-                if (mainConfig.middleware_url) {
-                    this.middlewareURL = mainConfig.middleware_url;
-                }
-
-                if (mainConfig.github_pat) {
-                    this.cachedPAT = mainConfig.github_pat;
-                    localStorage.setItem('gh_pat', this.cachedPAT);
-                    return this.cachedPAT;
-                }
-                
-                const local = localStorage.getItem('gh_pat');
-                if (local) {
-                    this.cachedPAT = local;
-                    return local;
-                }
-                return null;
-            } catch (e) {
-                const local = localStorage.getItem('gh_pat');
-                if (local) {
-                    this.cachedPAT = local;
-                    return local;
-                }
-                return null;
-            } finally {
-                this._loadingPAT = null;
-            }
-        })();
-        return this._loadingPAT;
+        // [SECURITY] PAT is no longer stored or fetched client-side.
+        // All authenticated requests must go through the secure middleware.
+        return null;
     },
 
     async getClientIP() {
@@ -232,7 +214,8 @@ window.GitHubAPI = {
             let base = this.middlewareURL;
             if (!base.endsWith('/')) base += '/';
             
-            // Check authorization for the middleware
+            // [SECURITY] All storage/critical paths MUST go through the middleware.
+            // The middleware now holds the PAT securely on the server-side.
             const isAuthorized = apiPath.startsWith(mainRepoPath) || apiPath.startsWith(criticalRepoPath);
             
             if (isAuthorized) {
@@ -242,29 +225,30 @@ window.GitHubAPI = {
                 }
                 queueName = 'middleware';
             } else {
-                console.warn(`Middleware restricted: Attempted to access non-authorized path: ${apiPath}. Falling back to direct API.`);
-                if (!pat) throw new Error('Middleware restricted and no GitHub token available for direct access.');
-                
+                // Public repo paths can still be accessed directly as they don't require authentication
                 url = basePath.startsWith('http') ? basePath : this.getAPIURL(basePath);
                 if (queryStr) {
                     url += (url.includes('?') ? '&' : '?') + queryStr;
                 }
-                headers['Authorization'] = `token ${pat}`;
             }
         } else {
-            // Direct GitHub API
-            if (!pat) throw new Error('No GitHub token available.');
+            // [SECURITY] If middleware is not configured, critical operations should fail 
+            // instead of attempting direct access with a non-existent token.
+            const isCritical = apiPath.startsWith(criticalRepoPath);
+            if (isCritical) {
+                throw new Error('Secure connection unavailable. Critical operations are restricted.');
+            }
+            
             url = basePath.startsWith('http') ? basePath : this.getAPIURL(basePath);
             if (queryStr) {
                 url += (url.includes('?') ? '&' : '?') + queryStr;
             }
-            headers['Authorization'] = `token ${pat}`;
         }
 
-        // Store direct API info for fallback
+        // Store info for logging/fallback (direct access no longer uses PAT)
         const directInfo = {
             url: basePath.startsWith('http') ? basePath : this.getAPIURL(basePath),
-            headers: { ...headers, 'Authorization': pat ? `token ${pat}` : headers['Authorization'] }
+            headers: { ...headers }
         };
         if (queryStr) {
             directInfo.url += (directInfo.url.includes('?') ? '&' : '?') + queryStr;
@@ -287,15 +271,17 @@ window.GitHubAPI = {
             try {
                 return await this._proceedWithFetch(url, options, method, body, retries, path);
             } catch (e) {
-                // Fallback to direct API if middleware fails (500/502/503/504, Network Error, or Specific Config Error)
+                // [SECURITY] Fallback to direct API is only allowed for non-critical paths
+                const isCritical = apiPath.startsWith(criticalRepoPath);
+                
                 const isMiddlewareError = queueName === 'middleware' && (
                     e.status >= 500 || 
                     !e.status || 
                     e.message.includes('Server configuration error')
                 );
 
-                if (isMiddlewareError && pat) {
-                    console.warn(`[GitHubAPI] Middleware unavailable or misconfigured: ${e.message}. Falling back to direct GitHub API.`);
+                if (isMiddlewareError && !isCritical) {
+                    console.warn(`[GitHubAPI] Middleware unavailable: ${e.message}. Falling back to direct access.`);
                     const directOptions = { ...options, headers: directInfo.headers };
                     return this._proceedWithFetch(directInfo.url, directOptions, method, body, retries, path);
                 }
