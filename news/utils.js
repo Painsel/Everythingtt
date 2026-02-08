@@ -494,8 +494,28 @@ window.GitHubAPI = {
 
             if (!content || content.trim() === "") return null;
 
+            // Protocol: Check for legacy plain-text in storage folders
+            const storageFolders = [
+                'article-comments-storage',
+                'created-articles-storage',
+                'created-news-accounts-storage',
+                'notifications-storage',
+                'banned-ips.json'
+            ];
+            const isStorageFile = storageFolders.some(folder => path.includes(folder));
+            const isLegacy = !content.startsWith('ett_enc_v1:');
+            const decodedContent = this._decode(content);
+
+            // Auto-migration: If legacy storage data is found, encode it and save back
+            if (isStorageFile && isLegacy && path && data.sha) {
+                console.log(`[GitHubAPI] Storage Migration Protocol: Encoding legacy data for ${path}`);
+                // Run update in background so fetch is not delayed
+                this.updateFile(path, decodedContent, `System: Auto-migrate legacy data to encoded format`, data.sha)
+                    .catch(err => console.error(`[GitHubAPI] Migration failed for ${path}:`, err));
+            }
+
             return {
-                content: this._decode(content),
+                content: decodedContent,
                 sha: data.sha
             };
         } catch (e) {
