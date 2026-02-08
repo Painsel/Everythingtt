@@ -300,26 +300,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnSave.disabled = true;
             btnSave.innerText = 'Processing...';
 
-            let pfp = currentUser.pfp;
-            let banner = currentUser.banner;
+            // Start with current values, then apply any pending updates (cropped or optimized)
+            let pfp = pendingPfpBase64 || currentUser.pfp;
+            let banner = pendingBannerBase64 || currentUser.banner;
 
-            // Handle file uploads by converting to Base64
+            // Handle file uploads as fallback (though they should already be in pendingBase64)
             const pfpFile = uploadPfp.files[0];
             const bannerFile = uploadBanner.files[0];
 
-            const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
-
-            if (pfpFile) {
-                if (pfpFile.size > MAX_SIZE) throw new Error('Profile Picture is too large (max 2MB)');
-                if (pfpFile.type === 'image/gif') throw new Error('GIFs are not allowed');
-                pfp = pendingPfpBase64 || await optimizeImage(pfpFile, 256, 256, 0.7);
+            if (pfpFile && !pendingPfpBase64) {
+                pfp = await optimizeImage(pfpFile, 256, 256, 0.7);
             }
 
-            if (bannerFile) {
-                if (bannerFile.size > MAX_SIZE) throw new Error('Profile Banner is too large (max 2MB)');
-                if (bannerFile.type === 'image/gif') throw new Error('GIFs are not allowed');
-                // Ensure we use the pending cropped base64 if available, otherwise optimize original
-                banner = pendingBannerBase64 || await optimizeImage(bannerFile, 1200, 400, 0.6);
+            if (bannerFile && !pendingBannerBase64) {
+                banner = await optimizeImage(bannerFile, 1200, 400, 0.6);
             }
 
             btnSave.innerText = 'Saving...';
@@ -366,6 +360,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     uploadPfp.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
+            const MAX_SIZE = 2 * 1024 * 1024;
+            if (file.size > MAX_SIZE) {
+                alert('Profile Picture is too large (max 2MB)');
+                uploadPfp.value = '';
+                return;
+            }
+            if (file.type === 'image/gif') {
+                alert('GIFs are not allowed');
+                uploadPfp.value = '';
+                return;
+            }
+
             // BETA Feature: Cropping Tool
             if (GitHubAPI.isBetaTester(currentUser)) {
                 openCropper(file, 'pfp');
@@ -383,6 +389,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     uploadBanner.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
+            const MAX_SIZE = 2 * 1024 * 1024;
+            if (file.size > MAX_SIZE) {
+                alert('Profile Banner is too large (max 2MB)');
+                uploadBanner.value = '';
+                return;
+            }
+            if (file.type === 'image/gif') {
+                alert('GIFs are not allowed');
+                uploadBanner.value = '';
+                return;
+            }
+
             // BETA Feature: Cropping Tool
             if (GitHubAPI.isBetaTester(currentUser)) {
                 openCropper(file, 'banner');
