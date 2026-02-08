@@ -1,5 +1,5 @@
 const user = JSON.parse(localStorage.getItem('current_user'));
-const DEVELOPER_ID = '382156063438888';
+const DEVELOPER_ID = '845829137251567';
 
 // Top-level Security Check (Backup to inline check)
 if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {

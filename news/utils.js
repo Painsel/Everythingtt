@@ -636,7 +636,7 @@ window.GitHubAPI = {
         return this.renderBadge(badgePath, 'EverythingTT Elite', 'A distinguished member of the EverythingTT community.', className);
     },
 
-    DEVELOPER_ID: '382156063438888', // The unique ID of the developer
+    DEVELOPER_ID: '845829137251567', // The unique ID of the developer
 
     /**
      * Renders a role badge (e.g., Admin, BETA Tester) with enhanced tooltips.

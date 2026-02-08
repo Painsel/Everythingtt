@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Show admin panel if user is admin
-    if (user.id === '382156063438888') {
+    if (user.id === '845829137251567') {
         const adminNavItem = document.getElementById('admin-nav-item');
         if (adminNavItem) adminNavItem.classList.remove('hidden');
     }
@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== `${user.id}.json`);
             
             let alts = [];
-            const ADMIN_ID = '382156063438888';
+            const ADMIN_ID = '845829137251567';
             const isUserAdmin = user.id === ADMIN_ID;
 
             // Fetch ALL accounts with the same IP first

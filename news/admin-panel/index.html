@@ -9,7 +9,7 @@
         (function() {
             try {
                 const user = JSON.parse(localStorage.getItem('current_user'));
-                const DEVELOPER_ID = '382156063438888';
+                const DEVELOPER_ID = '845829137251567';
                 if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {
                     window.location.replace('../homepage/');
                 }
