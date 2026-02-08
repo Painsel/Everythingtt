@@ -114,7 +114,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Show admin panel if user is admin
-    if (user.id === '845829137251567') {
+    const ADMIN_ID = '845829137251567';
+    if (user.id === ADMIN_ID) {
         const adminNavItem = document.getElementById('admin-nav-item');
         if (adminNavItem) adminNavItem.classList.remove('hidden');
     }

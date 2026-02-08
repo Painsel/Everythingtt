@@ -163,7 +163,58 @@
     font-style: italic;
 }
 
-/* Responsive adjustments */
+/* Alt Switcher Styles */
+.alt-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border-radius: 8px;
+    background: #2f3136;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.alt-item:hover {
+    background: #34373c;
+    border-color: #5865f2;
+}
+
+.alt-pfp {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 12px;
+    object-fit: cover;
+}
+
+.alt-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.alt-username {
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.alt-id {
+    font-size: 0.75rem;
+    color: #b9bbbe;
+}
+
+/* Modal specific tweaks */
+.switch-modal-content {
+    max-width: 400px !important;
+}
+
+#alts-list {
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
 @media (max-width: 900px) {
     .home-header {
         flex-direction: column;
