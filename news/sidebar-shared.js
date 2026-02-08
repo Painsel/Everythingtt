@@ -5,6 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = document.body;
     
     if (sidebar && sidebarToggle) {
+        // Apply BETA tester class if applicable
+        try {
+            const user = JSON.parse(localStorage.getItem('current_user'));
+            if (window.GitHubAPI && GitHubAPI.isBetaTester(user)) {
+                body.classList.add('is-beta-tester');
+            }
+        } catch (e) {}
+
         // Function to update body class based on sidebar state
         const updateBodyState = (isCollapsed) => {
             if (isCollapsed) {

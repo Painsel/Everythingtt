@@ -154,6 +154,20 @@ body.sidebar-open .sidebar-toggle {
     background-color: #36393f;
 }
 
+/* BETA Feature System */
+.beta-only {
+    display: none !important;
+}
+
+body.is-beta-tester .beta-only {
+    display: flex !important; /* Default to flex for sidebar items, can be overridden */
+}
+
+/* Ensure block-level beta items work too */
+body.is-beta-tester div.beta-only {
+    display: block !important;
+}
+
 /* Responsive Logic */
 @media (max-width: 768px) {
     .sidebar {

@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('actions-target-user').innerText = username;
         
         // Developer-only check for "Make Admin" and "Make BETA" tiles
-        const DEVELOPER_ID = '382156063438888';
+        const DEVELOPER_ID = '845829137251567';
         const makeAdminTile = document.getElementById('tile-make-admin');
         const makeBetaTile = document.getElementById('tile-make-beta');
         
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         accountActionsModal.classList.add('hidden');
         
         // Final security check: Only the developer can manage BETA roles
-        const DEVELOPER_ID = '382156063438888';
+        const DEVELOPER_ID = '845829137251567';
         if (user.id !== DEVELOPER_ID) {
             alert('Unauthorized: Only the Developer can manage BETA roles.');
             return;

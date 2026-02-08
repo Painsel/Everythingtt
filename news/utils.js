@@ -639,6 +639,14 @@ window.GitHubAPI = {
     DEVELOPER_ID: '845829137251567', // The unique ID of the developer
 
     /**
+     * Checks if the current user is a BETA Tester or Developer.
+     */
+    isBetaTester(user) {
+        if (!user) return false;
+        return user.role === 'beta' || user.role === 'admin' || String(user.id) === String(this.DEVELOPER_ID);
+    },
+
+    /**
      * Renders a role badge (e.g., Admin, BETA Tester) with enhanced tooltips.
      */
     renderRoleBadge(role, className = 'admin-badge') {
