@@ -302,9 +302,9 @@
 
 /* Modal & Cropper Styles */
 .modal {
-    display: none !important;
+    display: none;
     position: fixed;
-    z-index: 2000; /* Ensure it's above everything */
+    z-index: 2000;
     left: 0;
     top: 0;
     width: 100%;

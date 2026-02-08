@@ -159,16 +159,8 @@ body.sidebar-open .sidebar-toggle {
     display: none !important;
 }
 
-body.is-beta-tester .beta-only {
-    display: flex !important;
-}
-
-/* Modal Exception: BETA modals should not be forced visible */
-body.is-beta-tester div.modal.beta-only {
-    display: none !important;
-}
-
-body.is-beta-tester div.modal.beta-only.active {
+/* Show beta-only items for testers, but EXCLUDE modals which handle their own visibility */
+body.is-beta-tester .beta-only:not(.modal) {
     display: flex !important;
 }
 

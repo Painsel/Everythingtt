@@ -158,6 +158,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnApplyCrop = document.getElementById('btn-apply-crop');
     const btnCancelCrop = document.getElementById('btn-cancel-crop');
     const closeModal = document.querySelector('.close-modal');
+    const uploadPfp = document.getElementById('upload-pfp');
+    const uploadBanner = document.getElementById('upload-banner');
+    const btnSave = document.getElementById('btn-save-profile');
+    const btnLogout = document.getElementById('btn-logout');
 
     function openCropper(file, type) {
         const reader = new FileReader();
@@ -230,17 +234,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     [btnCancelCrop, closeModal].forEach(btn => {
-        btn.addEventListener('click', closeCropperModal);
+        if (btn) btn.addEventListener('click', closeCropperModal);
     });
 
     window.addEventListener('click', (e) => {
         if (e.target === modal) closeCropperModal();
     });
-
-    const btnSave = document.getElementById('btn-save-profile');
-    const btnLogout = document.getElementById('btn-logout');
-    const uploadPfp = document.getElementById('upload-pfp');
-    const uploadBanner = document.getElementById('upload-banner');
 
     async function optimizeImage(file, maxWidth, maxHeight, quality = 0.8) {
         return new Promise((resolve, reject) => {
