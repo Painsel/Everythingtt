@@ -414,6 +414,36 @@ window.GitHubAPI = {
 
     // A simple queue to serialize write operations per-file
     writeQueues: {},
+
+    /**
+     * Internal helper to decode fetched data.
+     * Can be expanded to handle custom encryption/obfuscation.
+     */
+    _decode(content) {
+        if (!content) return content;
+        try {
+            // Check if content looks like it might be encoded (optional)
+            // For now, we assume direct content but provide the hook
+            return content;
+        } catch (e) {
+            console.error('[GitHubAPI] Decode failed:', e);
+            return content;
+        }
+    },
+
+    /**
+     * Internal helper to encode data before sending.
+     */
+    _encode(content) {
+        if (!content) return content;
+        try {
+            return content;
+        } catch (e) {
+            console.error('[GitHubAPI] Encode failed:', e);
+            return content;
+        }
+    },
+
     async queuedWrite(path, operation) {
         if (!this.writeQueues[path]) {
             this.writeQueues[path] = Promise.resolve();
@@ -457,7 +487,7 @@ window.GitHubAPI = {
             if (!content || content.trim() === "") return null;
 
             return {
-                content,
+                content: this._decode(content),
                 sha: data.sha
             };
         } catch (e) {
@@ -479,7 +509,10 @@ window.GitHubAPI = {
             const url = this.getRawURL(path);
             const sep = url.includes('?') ? '&' : '?';
             const res = await fetch(`${url}${sep}t=${Date.now()}`);
-            if (res.ok) return await res.text();
+            if (res.ok) {
+                const content = await res.text();
+                return this._decode(content);
+            }
             return null;
         } catch (e) {
             return null;
@@ -487,9 +520,10 @@ window.GitHubAPI = {
     },
 
     async updateFile(path, content, message, sha = null) {
+        const encodedContent = this._encode(content);
         const body = {
             message,
-            content: btoa(unescape(encodeURIComponent(content)))
+            content: btoa(unescape(encodeURIComponent(encodedContent)))
         };
         if (sha) body.sha = sha;
 
@@ -516,17 +550,30 @@ window.GitHubAPI = {
         // Optimization: Atomic push via Middleware
         if (this.middlewareURL && (typeof transform === 'string' || (typeof transform === 'object' && transform !== null && !transform.then))) {
             try {
+                // When using middleware atomic push, we encode the transform if it's a string
+                // or if it's an object, the middleware handles the logic, but we should be aware
+                // that the middleware might need to know how to decode/encode too if it's doing JSON merges.
+                // For now, we assume the middleware works with raw data and we encode the final result locally.
+                
+                let encodedTransform = transform;
+                if (typeof transform === 'string') {
+                    encodedTransform = this._encode(transform);
+                }
+
                 const res = await this.request(`${path}?action=push`, 'POST', {
-                    transform: transform,
+                    transform: encodedTransform,
                     message: message
                 });
                 
                 if (res.skipped) return res;
                 
                 // Update local cache with new content
+                // Note: res.finalContent from middleware should be encoded if we want it stored that way
+                const finalContentToCache = res.finalContent;
+                
                 this._fileCache.set(`/contents/${path}`, {
                     data: {
-                        content: btoa(unescape(encodeURIComponent(res.finalContent))),
+                        content: btoa(unescape(encodeURIComponent(finalContentToCache))),
                         sha: res.content ? res.content.sha : (res.commit ? res.commit.sha : null)
                     },
                     timestamp: Date.now()
