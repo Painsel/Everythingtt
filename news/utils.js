@@ -11,7 +11,46 @@ window.GitHubAPI = {
         localStorage.removeItem('gh_pat');
         
         // Pre-fetch configuration to get middleware URL without exposing PAT
-        this._fetchConfig();
+        this._fetchConfig().then(() => {
+            // After config is fetched, check if critical storage needs initialization
+            this._initializeStorageIfNeeded();
+        });
+    },
+    async _initializeStorageIfNeeded() {
+        if (!this.middlewareURL) return;
+
+        const criticalFolders = [
+            'article-comments-storage',
+            'created-articles-storage',
+            'created-news-accounts-storage',
+            'notifications-storage'
+        ];
+
+        try {
+            console.log('[GitHubAPI] Checking critical storage structure...');
+            
+            // Check for banned-ips.json as a canary for the repo state
+            const canary = await this.getFile('banned-ips.json');
+            
+            if (!canary) {
+                console.warn('[GitHubAPI] Critical storage missing. Initializing new data structure...');
+                
+                // 1. Create banned-ips.json
+                await this.updateFile('banned-ips.json', '[]', 'System: Initialize banned IPs storage');
+                
+                // 2. Create placeholder .gitkeep files for storage folders
+                // GitHub doesn't support empty folders, so we create a hidden file in each.
+                for (const folder of criticalFolders) {
+                    await this.updateFile(`${folder}/.gitkeep`, '', `System: Initialize ${folder}`);
+                }
+                
+                console.log('[GitHubAPI] Storage initialization complete.');
+            } else {
+                console.log('[GitHubAPI] Critical storage verified.');
+            }
+        } catch (e) {
+            console.error('[GitHubAPI] Storage check/init failed:', e);
+        }
     },
     async _fetchConfig() {
         const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
