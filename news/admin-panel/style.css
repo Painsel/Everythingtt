@@ -207,6 +207,9 @@
 .action-tile.ban-ip { background: #faa61a; }
 .action-tile.ban-ip:hover { background: #d48d15; }
 
+.action-tile.unban-ip { background: #3ba55d; }
+.action-tile.unban-ip:hover { background: #2d7d46; }
+
 .action-tile.change-pw { background: #3ba55d; }
 .action-tile.change-pw:hover { background: #2d7d46; }
 

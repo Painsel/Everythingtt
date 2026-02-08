@@ -19,10 +19,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const changePwModal = document.getElementById('change-pw-modal');
     const deleteAccountModal = document.getElementById('delete-account-modal');
     const banIpModal = document.getElementById('ban-ip-modal');
+    const unbanIpModal = document.getElementById('unban-ip-modal');
     const accountInfoModal = document.getElementById('account-info-modal');
     const accountActionsModal = document.getElementById('account-actions-modal');
     const closeModals = document.querySelectorAll('.close-modal');
-    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, accountInfoModal, accountActionsModal];
+    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal];
     
     // Close modals when clicking outside
     window.onclick = (event) => {
@@ -373,6 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             changePwModal.classList.add('hidden');
             deleteAccountModal.classList.add('hidden');
             banIpModal.classList.add('hidden');
+            unbanIpModal.classList.add('hidden');
             accountInfoModal.classList.add('hidden');
             accountActionsModal.classList.add('hidden');
         };
@@ -465,6 +467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('btn-confirm-ban').onclick = async () => {
         const ip = document.getElementById('ban-target-ip').innerText;
+        const reason = document.getElementById('ban-reason').value.trim() || 'No reason provided';
         if (!ip || ip === 'Unknown' || ip === 'None') return alert('No valid IP to ban');
         
         const btn = document.getElementById('btn-confirm-ban');
@@ -473,10 +476,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.disabled = true;
             btn.innerText = 'Banning...';
             
+            const banData = {
+                ip: ip,
+                reason: reason,
+                bannedBy: user.username,
+                timestamp: Date.now()
+            };
+
             await GitHubAPI.safeUpdateFile(
                 'news/banned-ips.json',
-                { _action: 'append', data: ip },
-                `Admin: Banned IP ${ip} (Associated with user ${currentEditingUserId})`
+                { _action: 'append', data: banData },
+                `Admin: Banned IP ${ip} - Reason: ${reason} (By: ${user.username})`
             );
             
             alert(`IP ${ip} has been banned.`);
@@ -486,6 +496,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             btn.disabled = false;
             btn.innerText = 'Ban This IP';
+        }
+    };
+
+    document.getElementById('btn-confirm-unban').onclick = async () => {
+        const ip = document.getElementById('unban-ip-input').value.trim();
+        if (!ip) return alert('Please enter an IP address to unban');
+
+        const btn = document.getElementById('btn-confirm-unban');
+
+        try {
+            btn.disabled = true;
+            btn.innerText = 'Unbanning...';
+
+            await GitHubAPI.safeUpdateFile(
+                'news/banned-ips.json',
+                { _action: 'remove_by_key', key: 'ip', value: ip },
+                `Admin: Unbanned IP ${ip} (By: ${user.username})`
+            );
+
+            alert(`IP ${ip} has been unbanned.`);
+            unbanIpModal.classList.add('hidden');
+        } catch (e) {
+            alert('Failed to unban IP: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Unban IP';
         }
     };
 

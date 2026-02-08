@@ -84,10 +84,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const banListData = await GitHubAPI.getFile('news/banned-ips.json');
             if (banListData) {
                 const bannedIps = JSON.parse(banListData.content);
-                if (bannedIps.includes(currentIp)) {
+                const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
+                
+                if (banRecord) {
                     btnLogin.disabled = false;
                     btnLogin.innerText = 'Login / Sign Up';
-                    return alert('Security Error: Your IP address has been banned from this service.');
+                    
+                    if (typeof banRecord === 'object') {
+                        const reason = banRecord.reason || 'No reason provided';
+                        const admin = banRecord.bannedBy || 'System';
+                        return alert(`Access Denied: Your IP address has been banned.\n\nReason: ${reason}\nBanned by: ${admin}`);
+                    } else {
+                        return alert('Security Error: Your IP address has been banned from this service.');
+                    }
                 }
             }
 
