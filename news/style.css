@@ -71,6 +71,34 @@ body {
     letter-spacing: -1px;
 }
 
+.rules-notice {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(88, 101, 242, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(88, 101, 242, 0.2);
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.rules-notice p {
+    margin: 0;
+    color: #b9bbbe;
+}
+
+.rules-notice a {
+    color: #5865f2;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.2s ease;
+}
+
+.rules-notice a:hover {
+    color: #4752c4;
+    text-decoration: underline;
+}
+
 #auth-container .hint {
     margin-top: 2rem;
     font-size: 0.85rem;
