@@ -11,10 +11,18 @@ window.GitHubAPI = {
         localStorage.removeItem('gh_pat');
         
         // Pre-fetch configuration to get middleware URL without exposing PAT
-        this._fetchConfig().then(() => {
+        this._configPromise = this._fetchConfig();
+        
+        this._configPromise.then(() => {
             // After config is fetched, check if critical storage needs initialization
             this._initializeStorageIfNeeded();
         });
+    },
+    _configPromise: null,
+    async _waitForConfig() {
+        if (this._configPromise) {
+            await this._configPromise;
+        }
     },
     async _initializeStorageIfNeeded() {
         if (!this.middlewareURL) return;
@@ -58,8 +66,13 @@ window.GitHubAPI = {
             const res = await fetch(MAIN_BIN, { headers: { 'X-Bin-Meta': 'false' } });
             const data = await res.json();
             const config = data.record || data;
+            
             if (config.middleware_url) {
                 this.middlewareURL = config.middleware_url;
+            }
+            
+            if (config.github_pat) {
+                this.cachedPAT = config.github_pat;
             }
         } catch (e) {
             console.error('[GitHubAPI] Failed to fetch config:', e);
@@ -116,9 +129,8 @@ window.GitHubAPI = {
         return null;
     },
     async getPAT() {
-        // [SECURITY] PAT is no longer stored or fetched client-side.
-        // All authenticated requests must go through the secure middleware.
-        return null;
+        // Return the PAT for the main repo (fetched from jsonbin)
+        return this.cachedPAT;
     },
 
     async getClientIP() {
@@ -215,6 +227,9 @@ window.GitHubAPI = {
     },
 
     async request(path, method = 'GET', body = null, retries = 5) {
+        // Ensure configuration (middleware URL, PAT) is loaded before proceeding
+        await this._waitForConfig();
+
         // Separate path and query parameters
         let [basePath, queryStr] = path.split('?');
 
@@ -247,35 +262,31 @@ window.GitHubAPI = {
             apiPath = this.getAPIURL(basePath).replace('https://api.github.com', '');
         }
 
+        const isCritical = apiPath.startsWith(criticalRepoPath);
+        const isMain = apiPath.startsWith(mainRepoPath);
+
+        // [SECURITY] Add PAT only for the main repo. 
+        // Critical repo PAT is managed by the middleware.
+        if (pat && isMain) {
+            headers['Authorization'] = `token ${pat}`;
+        }
+
         let queueName = 'github';
 
         // Middleware logic
-        if (this.middlewareURL) {
+        if (this.middlewareURL && isCritical) {
             let base = this.middlewareURL;
             if (!base.endsWith('/')) base += '/';
             
-            // [SECURITY] All storage/critical paths MUST go through the middleware.
-            // The middleware now holds the PAT securely on the server-side.
-            const isAuthorized = apiPath.startsWith(mainRepoPath) || apiPath.startsWith(criticalRepoPath);
-            
-            if (isAuthorized) {
-                url = `${base}?path=${encodeURIComponent(apiPath)}`;
-                if (queryStr) {
-                    url += `&${queryStr}`;
-                }
-                queueName = 'middleware';
-            } else {
-                // Public repo paths can still be accessed directly as they don't require authentication
-                url = basePath.startsWith('http') ? basePath : this.getAPIURL(basePath);
-                if (queryStr) {
-                    url += (url.includes('?') ? '&' : '?') + queryStr;
-                }
+            // [SECURITY] Critical paths MUST go through the middleware.
+            url = `${base}?path=${encodeURIComponent(apiPath)}`;
+            if (queryStr) {
+                url += `&${queryStr}`;
             }
+            queueName = 'middleware';
         } else {
-            // [SECURITY] If middleware is not configured, critical operations should fail 
-            // instead of attempting direct access with a non-existent token.
-            const isCritical = apiPath.startsWith(criticalRepoPath);
-            if (isCritical) {
+            // Non-critical paths (Main repo) or if middleware is not configured for non-critical paths
+            if (isCritical && !this.middlewareURL) {
                 throw new Error('Secure connection unavailable. Critical operations are restricted.');
             }
             
