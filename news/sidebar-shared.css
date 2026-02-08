@@ -160,11 +160,20 @@ body.sidebar-open .sidebar-toggle {
 }
 
 body.is-beta-tester .beta-only {
-    display: flex !important; /* Default to flex for sidebar items, can be overridden */
+    display: flex !important;
+}
+
+/* Modal Exception: BETA modals should not be forced visible */
+body.is-beta-tester .modal.beta-only {
+    display: none !important;
+}
+
+body.is-beta-tester .modal.beta-only.active {
+    display: flex !important;
 }
 
 /* Ensure block-level beta items work too */
-body.is-beta-tester div.beta-only {
+body.is-beta-tester div.beta-only:not(.modal) {
     display: block !important;
 }
 
