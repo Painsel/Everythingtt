@@ -106,7 +106,8 @@ window.GitHubAPI = {
             'article-comments-storage',
             'created-articles-storage',
             'created-news-accounts-storage',
-            'notifications-storage'
+            'notifications-storage',
+            'banned-ips.json'
         ];
         
         const isStorage = storageFolders.some(folder => path.includes(folder));
