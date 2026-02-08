@@ -85,6 +85,65 @@ window.GitHubAPI = {
     _fileCache: new Map(), // Client-side cache for GET requests
     CACHE_TTL: 10000, // 10 seconds client-side cache
     
+    _flaggedWords: null,
+    async getFlaggedWords() {
+        if (this._flaggedWords) return this._flaggedWords;
+        try {
+            // Find relative path to root rules folder
+            const pathParts = window.location.pathname.split('/');
+            const newsIndex = pathParts.indexOf('news');
+            const rulesIndex = pathParts.indexOf('rules');
+            let root = '';
+            
+            if (newsIndex !== -1) {
+                root = '../'.repeat(pathParts.length - newsIndex - 1);
+            } else if (rulesIndex !== -1) {
+                root = '../'.repeat(pathParts.length - rulesIndex - 1);
+            } else {
+                root = './';
+            }
+            
+            const res = await fetch(`${root}news/rules/flagged-words.json`);
+            this._flaggedWords = await res.json();
+            return this._flaggedWords;
+        } catch (e) {
+            console.error('Failed to load flagged words:', e);
+            return [];
+        }
+    },
+
+    async checkContentForRules(text) {
+        if (!text) return true;
+        const words = await this.getFlaggedWords();
+        const lowerText = text.toLowerCase();
+        for (const word of words) {
+            if (word && lowerText.includes(word.toLowerCase())) {
+                return false; // Violates rules
+            }
+        }
+        return true; // Clean
+    },
+
+    async isRuleBreaker(user) {
+        if (!user) return false;
+        // Check if explicitly flagged
+        if (user.ruleBreaker === true) return true;
+        
+        // Check current profile content
+        const contentToCheck = [
+            user.username,
+            user.bio || '',
+            user.statusMsg || ''
+        ];
+
+        for (const content of contentToCheck) {
+            const isClean = await this.checkContentForRules(content);
+            if (!isClean) return true;
+        }
+
+        return false;
+    },
+    
     /**
      * Synchronize the current user's profile metadata from remote storage.
      * @param {Function} onUpdate Optional callback when data is updated

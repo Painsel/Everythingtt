@@ -73,6 +73,21 @@
     letter-spacing: 0.5px;
 }
 
+.rule-breaker-badge {
+    background: #ed4245;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.account-card.rule-breaker {
+    border-color: rgba(237, 66, 69, 0.4);
+    background: linear-gradient(90deg, #2f3136 0%, rgba(237, 66, 69, 0.05) 100%);
+}
+
 .account-details p {
     margin: 2px 0 0;
     font-size: 0.85rem;

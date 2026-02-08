@@ -52,6 +52,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (data) {
                     const account = JSON.parse(data.content);
                     account.sha = data.sha;
+                    // Check if they broke rules
+                    account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
                     return account;
                 }
                 return null;
@@ -72,11 +74,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         accountsList.innerHTML = accounts.map(acc => `
-            <div class="account-card" data-id="${acc.id}">
+            <div class="account-card ${acc.isRuleBreaker ? 'rule-breaker' : ''}" data-id="${acc.id}">
                 <div class="account-info-main">
                     <img src="${acc.pfp}" class="account-pfp">
                     <div class="account-details">
-                        <h4>${acc.username} ${acc.role === 'admin' ? '<span class="admin-badge">ADMIN</span>' : ''}</h4>
+                        <h4>${acc.username} 
+                            ${acc.role === 'admin' ? '<span class="admin-badge">ADMIN</span>' : ''}
+                            ${acc.isRuleBreaker ? '<span class="rule-breaker-badge">Rule-Breaker</span>' : ''}
+                        </h4>
                         <p>ID: ${acc.id} | IP: ${acc.allowedIp || 'None'}</p>
                     </div>
                 </div>
@@ -135,6 +140,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         accountActionsModal.classList.remove('hidden');
+
+        // Disable Ban/Delete for non-rule breakers
+        const acc = allAccounts.find(a => a.id === userId);
+        const banTile = document.getElementById('tile-ban-ip');
+        const deleteTile = document.getElementById('tile-delete-acc');
+
+        if (acc && !acc.isRuleBreaker && acc.role !== 'admin' && acc.id !== DEVELOPER_ID) {
+            banTile.style.opacity = '0.3';
+            banTile.style.pointerEvents = 'none';
+            banTile.title = 'Only rule breakers can be banned';
+            
+            deleteTile.style.opacity = '0.3';
+            deleteTile.style.pointerEvents = 'none';
+            deleteTile.title = 'Only rule breakers can be deleted';
+        } else {
+            banTile.style.opacity = '1';
+            banTile.style.pointerEvents = 'auto';
+            banTile.title = '';
+            
+            deleteTile.style.opacity = '1';
+            deleteTile.style.pointerEvents = 'auto';
+            deleteTile.title = '';
+        }
     };
 
     document.getElementById('tile-reset-ip').onclick = () => {

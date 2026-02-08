@@ -30,6 +30,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const article = JSON.parse(data.content);
                         article.sha = data.sha;
                         article.filePath = file.path;
+                        
+                        // Check if article breaks rules
+                        const contentToCheck = `${article.title || ''} ${article.content || ''}`;
+                        article.isRuleBreaker = !(await GitHubAPI.checkContentForRules(contentToCheck));
+                        
                         return article;
                     } catch (e) {
                         console.warn('Failed to parse article:', file.path);
@@ -56,21 +61,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        articlesList.innerHTML = articles.map(art => `
-            <div class="article-card">
-                <div class="article-info-main">
-                    <h4 class="article-title">${art.title || 'Untitled Article'}</h4>
-                    <div class="article-meta">
-                        <span><b>ID:</b> ${art.id}</span>
-                        <span><b>Author:</b> ${art.authorName || 'Unknown'} (${art.authorId})</span>
-                        <span><b>Date:</b> ${art.timestamp ? new Date(art.timestamp).toLocaleDateString() : 'N/A'}</span>
+        articlesList.innerHTML = articles.map(art => {
+            const isRuleBreaker = art.isRuleBreaker;
+            const deleteBtnAttr = isRuleBreaker ? '' : 'disabled title="Only articles that break rules can be deleted"';
+            const deleteBtnStyle = isRuleBreaker ? '' : 'style="opacity: 0.3; cursor: not-allowed;"';
+
+            return `
+                <div class="article-card ${isRuleBreaker ? 'rule-breaker' : ''}">
+                    <div class="article-info-main">
+                        <div class="title-row">
+                            <h4 class="article-title">${art.title || 'Untitled Article'}</h4>
+                            ${isRuleBreaker ? '<span class="badge badge-danger">Rule-Breaker</span>' : ''}
+                        </div>
+                        <div class="article-meta">
+                            <span><b>ID:</b> ${art.id}</span>
+                            <span><b>Author:</b> ${art.authorName || 'Unknown'} (${art.authorId})</span>
+                            <span><b>Date:</b> ${art.timestamp ? new Date(art.timestamp).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div class="article-actions">
+                        <button class="btn-delete" onclick="openDeleteModal('${art.id}')" ${deleteBtnAttr} ${deleteBtnStyle}>Delete</button>
                     </div>
                 </div>
-                <div class="article-actions">
-                    <button class="btn-delete" onclick="openDeleteModal('${art.id}')">Delete</button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     // Search functionality

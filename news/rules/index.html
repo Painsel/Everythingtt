@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverythingTT - Community Rules</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../sidebar-shared.css">
+    <style>
+        :root {
+            --bg-dark: #1e1f22;
+            --bg-card: #2b2d31;
+            --text-main: #dbdee1;
+            --accent: #5865f2;
+            --danger: #f23f42;
+            --success: #23a559;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+        }
+
+        .rules-container {
+            flex: 1;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .rules-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .rules-header h1 {
+            font-size: 2.5rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .rules-header p {
+            color: #b5bac1;
+            font-size: 1.1rem;
+        }
+
+        .rule-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .rule-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .rule-card h2 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rule-card p {
+            color: #dbdee1;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        .rule-number {
+            background: var(--accent);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .flagged-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(242, 63, 66, 0.1);
+            border: 1px solid rgba(242, 63, 66, 0.2);
+            border-radius: 6px;
+            color: #f23f42;
+            font-size: 0.9rem;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 30px;
+            transition: opacity 0.2s;
+        }
+
+        .back-btn:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="rules-container">
+        <a href="../homepage/" class="back-btn">← Back to Dashboard</a>
+        
+        <header class="rules-header">
+            <h1>Community Rules</h1>
+            <p>To keep EverythingTT a safe and professional environment, please follow these guidelines.</p>
+        </header>
+
+        <div class="rules-list">
+            <div class="rule-card">
+                <h2><span class="rule-number">1</span> Content Standards</h2>
+                <p>We strictly prohibit any content that contains offensive language, hate speech, or inappropriate terms. This applies to all user-generated content across the platform.</p>
+                <div class="flagged-info">
+                    <strong>Enforcement:</strong> Usernames, Bios, Status Messages, Articles, and Comments are automatically scanned for flagged words.
+                </div>
+            </div>
+
+            <div class="rule-card">
+                <h2><span class="rule-number">2</span> User Identity</h2>
+                <p>Usernames must be professional and free of any flagged terms. Impersonation of staff or other users is strictly prohibited.</p>
+            </div>
+
+            <div class="rule-card">
+                <h2><span class="rule-number">3</span> Consequence of Violations</h2>
+                <p>Users who violate these rules will be labeled as <strong>Rule-Breaker</strong>. Rule-Breakers are subject to administrative actions, including IP bans and content deletion.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -49,6 +49,30 @@
     transition: transform 0.2s, background 0.2s;
 }
 
+.article-card.rule-breaker {
+    border-left: 4px solid #ed4245;
+    background: rgba(237, 66, 69, 0.05);
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-danger {
+    background: #ed4245;
+    color: #fff;
+}
+
 .article-card:hover {
     background: #34373c;
     transform: translateX(5px);
