@@ -166,6 +166,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             modal.classList.add('active');
             currentCroppingType = type;
 
+            if (type === 'pfp') {
+                modal.classList.add('is-pfp-crop');
+            } else {
+                modal.classList.remove('is-pfp-crop');
+            }
+
             if (cropper) cropper.destroy();
             
             const aspectRatio = type === 'pfp' ? 1 : 3; // 1:1 for PFP, 3:1 for Banner
@@ -188,11 +194,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function closeCropperModal() {
         modal.classList.remove('active');
+        modal.classList.remove('is-pfp-crop');
         if (cropper) {
             cropper.destroy();
             cropper = null;
         }
         currentCroppingType = null;
+        
+        // Reset file inputs so change event triggers again if same file selected
+        uploadPfp.value = '';
+        uploadBanner.value = '';
     }
 
     btnApplyCrop.addEventListener('click', () => {
