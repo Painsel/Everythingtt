@@ -150,6 +150,81 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let pendingPfpBase64 = null;
     let pendingBannerBase64 = null;
+    let cropper = null;
+    let currentCroppingType = null; // 'pfp' or 'banner'
+
+    const modal = document.getElementById('cropper-modal');
+    const cropperImage = document.getElementById('cropper-image');
+    const btnApplyCrop = document.getElementById('btn-apply-crop');
+    const btnCancelCrop = document.getElementById('btn-cancel-crop');
+    const closeModal = document.querySelector('.close-modal');
+
+    function openCropper(file, type) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            cropperImage.src = e.target.result;
+            modal.classList.add('active');
+            currentCroppingType = type;
+
+            if (cropper) cropper.destroy();
+            
+            const aspectRatio = type === 'pfp' ? 1 : 3; // 1:1 for PFP, 3:1 for Banner
+            cropper = new Cropper(cropperImage, {
+                aspectRatio: aspectRatio,
+                viewMode: 1,
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function closeCropperModal() {
+        modal.classList.remove('active');
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        currentCroppingType = null;
+    }
+
+    btnApplyCrop.addEventListener('click', () => {
+        if (!cropper) return;
+
+        const canvasOptions = currentCroppingType === 'pfp' 
+            ? { width: 256, height: 256 } 
+            : { width: 1200, height: 400 };
+
+        const croppedCanvas = cropper.getCroppedCanvas(canvasOptions);
+        const quality = currentCroppingType === 'pfp' ? 0.7 : 0.6;
+        const base64 = croppedCanvas.toDataURL('image/jpeg', quality);
+
+        if (currentCroppingType === 'pfp') {
+            pendingPfpBase64 = base64;
+            document.getElementById('profile-pfp').src = base64;
+        } else {
+            pendingBannerBase64 = base64;
+            document.getElementById('profile-banner').style.background = `url(${base64})`;
+            document.getElementById('profile-banner').style.backgroundSize = 'cover';
+        }
+
+        closeCropperModal();
+    });
+
+    [btnCancelCrop, closeModal].forEach(btn => {
+        btn.addEventListener('click', closeCropperModal);
+    });
+
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeCropperModal();
+    });
 
     const btnSave = document.getElementById('btn-save-profile');
     const btnLogout = document.getElementById('btn-logout');
@@ -280,11 +355,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     uploadPfp.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-            try {
-                pendingPfpBase64 = await optimizeImage(file, 256, 256, 0.7);
-                document.getElementById('profile-pfp').src = pendingPfpBase64;
-            } catch (err) {
-                console.error('PFP preview failed:', err);
+            // BETA Feature: Cropping Tool
+            if (GitHubAPI.isBetaTester(currentUser)) {
+                openCropper(file, 'pfp');
+            } else {
+                try {
+                    pendingPfpBase64 = await optimizeImage(file, 256, 256, 0.7);
+                    document.getElementById('profile-pfp').src = pendingPfpBase64;
+                } catch (err) {
+                    console.error('PFP preview failed:', err);
+                }
             }
         }
     });
@@ -292,12 +372,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     uploadBanner.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (file) {
-            try {
-                pendingBannerBase64 = await optimizeImage(file, 1200, 400, 0.6);
-                document.getElementById('profile-banner').style.background = `url(${pendingBannerBase64})`;
-                document.getElementById('profile-banner').style.backgroundSize = 'cover';
-            } catch (err) {
-                console.error('Banner preview failed:', err);
+            // BETA Feature: Cropping Tool
+            if (GitHubAPI.isBetaTester(currentUser)) {
+                openCropper(file, 'banner');
+            } else {
+                try {
+                    pendingBannerBase64 = await optimizeImage(file, 1200, 400, 0.6);
+                    document.getElementById('profile-banner').style.background = `url(${pendingBannerBase64})`;
+                    document.getElementById('profile-banner').style.backgroundSize = 'cover';
+                } catch (err) {
+                    console.error('Banner preview failed:', err);
+                }
             }
         }
     });

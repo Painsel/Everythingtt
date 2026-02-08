@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="../sidebar-shared.css">
     <link rel="stylesheet" href="style.css">
+    <!-- Cropper.js for BETA cropping tool -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 </head>
 <body class="sidebar-layout">
     <div class="dashboard-container">
@@ -137,8 +139,27 @@
         </main>
     </div>
 
+    <!-- Cropping Modal (BETA Only) -->
+    <div id="cropper-modal" class="modal beta-only">
+        <div class="modal-content cropper-container">
+            <div class="modal-header">
+                <h3>Crop Image</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="cropper-wrapper">
+                <img id="cropper-image" src="" alt="Source image">
+            </div>
+            <div class="modal-footer">
+                <button id="btn-cancel-crop" class="btn-secondary">Cancel</button>
+                <button id="btn-apply-crop" class="btn-primary">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../utils.js"></script>
     <script src="../sidebar-shared.js"></script>
+    <!-- Cropper.js for BETA cropping tool -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
