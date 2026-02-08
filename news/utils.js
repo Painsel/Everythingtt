@@ -152,7 +152,7 @@ window.GitHubAPI = {
         const isStorage = storageFolders.some(folder => path.includes(folder));
         
         if (isStorage) {
-            return { owner: 'Painsel', repo: 'Everything-TT-Critical-Data' };
+            return { owner: 'Painsel', repo: 'EverythingTT-Critical-Data' };
         }
         return { owner: 'Painsel', repo: 'Everythingtt' };
     },
@@ -163,7 +163,7 @@ window.GitHubAPI = {
         
         // If it's a storage path in the private repo, remove the 'news/' prefix
         // The storage folders themselves exist in the root of the private repo.
-        if (repo === 'Everything-TT-Critical-Data') {
+        if (repo === 'EverythingTT-Critical-Data') {
             cleanPath = cleanPath.replace(/^news\//, '');
         }
         
@@ -176,7 +176,7 @@ window.GitHubAPI = {
         
         // If it's a storage path in the private repo, remove the 'news/' prefix
         // The storage folders themselves exist in the root of the private repo.
-        if (repo === 'Everything-TT-Critical-Data') {
+        if (repo === 'EverythingTT-Critical-Data') {
             cleanPath = cleanPath.replace(/^news\//, '');
         }
         
@@ -237,7 +237,7 @@ window.GitHubAPI = {
         };
 
         const mainRepoPath = '/repos/Painsel/Everythingtt';
-        const criticalRepoPath = '/repos/Painsel/Everything-TT-Critical-Data';
+        const criticalRepoPath = '/repos/Painsel/EverythingTT-Critical-Data';
         
         let apiPath;
         if (basePath.startsWith('http')) {
@@ -459,7 +459,7 @@ window.GitHubAPI = {
             const { repo } = this.getRepoInfo(path);
             
             // For private repo, use getFile() to ensure we go through the middleware with PAT
-            if (repo === 'Everything-TT-Critical-Data') {
+            if (repo === 'EverythingTT-Critical-Data') {
                 const data = await this.getFile(path);
                 return data ? data.content : null;
             }
