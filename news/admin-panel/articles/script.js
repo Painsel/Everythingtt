@@ -33,7 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         // Check if article breaks rules
                         const contentToCheck = `${article.title || ''} ${article.content || ''}`;
-                        article.isRuleBreaker = !(await GitHubAPI.checkContentForRules(contentToCheck));
+                        const ruleCheck = await GitHubAPI.checkContentForRules(contentToCheck);
+                        article.isRuleBreaker = !ruleCheck.isClean;
                         
                         return article;
                     } catch (e) {

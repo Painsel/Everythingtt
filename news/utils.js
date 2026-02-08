@@ -113,15 +113,74 @@ window.GitHubAPI = {
     },
 
     async checkContentForRules(text) {
-        if (!text) return true;
+        if (!text) return { isClean: true, violatedWords: [] };
         const words = await this.getFlaggedWords();
         const lowerText = text.toLowerCase();
+        const violatedWords = [];
+        
+        // Use regex to find whole words to avoid false positives (e.g., "analysis" containing "anal")
         for (const word of words) {
-            if (word && lowerText.includes(word.toLowerCase())) {
-                return false; // Violates rules
+            if (!word) continue;
+            const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`\\b${escapedWord}\\b`, 'i');
+            if (regex.test(lowerText)) {
+                violatedWords.push(word);
             }
         }
-        return true; // Clean
+        
+        return {
+            isClean: violatedWords.length === 0,
+            violatedWords: [...new Set(violatedWords)] // Remove duplicates
+        };
+    },
+
+    /**
+     * Shows a styled warning modal when content violates rules
+     * @param {string[]} violatedWords - List of words that triggered the violation
+     * @param {string} rootPath - Relative path to the news/ folder root (e.g. '../' or './')
+     */
+    showRulesWarningModal(violatedWords, rootPath = './') {
+        // Remove existing modal if any
+        const existing = document.getElementById('rules-warning-modal');
+        if (existing) existing.remove();
+
+        const modalHtml = `
+            <div id="rules-warning-modal" class="rules-warning-modal">
+                <div class="rules-warning-content">
+                    <div class="rules-warning-header">
+                        <span class="warning-icon">⚠️</span>
+                        <h2>Rule Violation Detected</h2>
+                    </div>
+                    <div class="rules-warning-body">
+                        <p>Your content contains language that violates our community standards. Please remove the following flagged terms before submitting:</p>
+                        <div class="violated-words-container">
+                            <span class="violated-words-label">Flagged Terms Found:</span>
+                            <div class="violated-words-list">
+                                ${violatedWords.map(word => `<span class="violated-word-tag">${word}</span>`).join('')}
+                            </div>
+                        </div>
+                        <p style="font-size: 0.9rem; color: #b5bac1;">Repeated violations may lead to account restrictions or IP bans.</p>
+                    </div>
+                    <div class="rules-warning-footer">
+                        <button class="rules-warning-btn btn-secondary-warning" onclick="document.getElementById('rules-warning-modal').classList.remove('active')">Go Back & Edit</button>
+                        <a href="${rootPath}rules/index.html" class="rules-warning-btn btn-primary-warning">View Rules</a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Trigger reflow for animation
+        const modal = document.getElementById('rules-warning-modal');
+        setTimeout(() => modal.classList.add('active'), 10);
+        
+        // Handle click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
     },
 
     async isRuleBreaker(user) {
@@ -137,8 +196,8 @@ window.GitHubAPI = {
         ];
 
         for (const content of contentToCheck) {
-            const isClean = await this.checkContentForRules(content);
-            if (!isClean) return true;
+            const result = await this.checkContentForRules(content);
+            if (!result.isClean) return true;
         }
 
         return false;

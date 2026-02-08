@@ -2295,6 +2295,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // Check for rule violations
+            const ruleCheck = await GitHubAPI.checkContentForRules(newText);
+            if (!ruleCheck.isClean) {
+                GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
+                return;
+            }
+
             saveBtn.disabled = true;
             saveBtn.innerText = 'Saving...';
 
@@ -2466,6 +2473,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return alert(`You are muted from commenting on this article until ${new Date(expiryTime).toLocaleString()}.`);
                     }
                 }
+            }
+
+            // Check for rule violations
+            const ruleCheck = await GitHubAPI.checkContentForRules(text);
+            if (!ruleCheck.isClean) {
+                GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
+                return;
             }
 
             // --- OPTIMISTIC UI PREP ---

@@ -102,9 +102,147 @@ body.sidebar-layout .dashboard-container {
     transition: all 0.2s ease;
 }
 
-.logout-btn-compact:hover {
-    background: #ed4245;
+/* Rules Warning Modal */
+.rules-warning-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.rules-warning-modal.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.rules-warning-content {
+    background: #2b2d31;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border: 1px solid rgba(242, 63, 66, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.rules-warning-modal.active .rules-warning-content {
+    transform: scale(1);
+}
+
+.rules-warning-header {
+    background: #f23f42;
+    padding: 24px;
+    text-align: center;
     color: white;
+}
+
+.rules-warning-header i, .rules-warning-header .warning-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.rules-warning-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.rules-warning-body {
+    padding: 32px;
+    color: #dbdee1;
+}
+
+.rules-warning-body p {
+    margin: 0 0 20px 0;
+    line-height: 1.6;
+    font-size: 1.05rem;
+}
+
+.violated-words-container {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    border: 1px dashed rgba(242, 63, 66, 0.4);
+}
+
+.violated-words-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #f23f42;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.violated-words-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.violated-word-tag {
+    background: rgba(242, 63, 66, 0.15);
+    color: #f23f42;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.rules-warning-footer {
+    padding: 24px 32px;
+    background: #232428;
+    display: flex;
+    gap: 12px;
+}
+
+.rules-warning-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.btn-secondary-warning {
+    background: transparent;
+    border: 1px solid #4f545c;
+    color: #dbdee1;
+}
+
+.btn-secondary-warning:hover {
+    background: #4f545c;
+}
+
+.btn-primary-warning {
+    background: #f23f42;
+    border: none;
+    color: white;
+}
+
+.btn-primary-warning:hover {
+    background: #d83c3e;
 }
 
 /* Toggle Button Styling */

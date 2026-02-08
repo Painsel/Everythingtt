@@ -252,6 +252,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (contentCount > CONTENT_LIMIT) return alert(`Content is too long (${contentCount}/${CONTENT_LIMIT})`);
         if (!title || !content) return alert('Title and Content are required');
 
+        // Check for rule violations
+        const contentToCheck = `${title} ${content}`;
+        const ruleCheck = await GitHubAPI.checkContentForRules(contentToCheck);
+        
+        if (!ruleCheck.isClean) {
+            GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
+            return;
+        }
+
         const article = {
             id: GitHubAPI.generateID().toString(),
             title,

@@ -296,6 +296,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (bio.length > 300) return alert('Bio cannot be longer than 300 characters');
         if (statusMsg.length > 30) return alert('Status Message cannot be longer than 30 characters');
 
+        // Check for rule violations
+        const contentToCheck = `${username} ${bio} ${statusMsg}`;
+        const ruleCheck = await GitHubAPI.checkContentForRules(contentToCheck);
+        
+        if (!ruleCheck.isClean) {
+            GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
+            return;
+        }
+
         try {
             btnSave.disabled = true;
             btnSave.innerText = 'Processing...';
