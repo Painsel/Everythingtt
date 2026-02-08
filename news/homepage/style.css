@@ -1,3 +1,67 @@
+/* Sidebar Toggle & Animation */
+.dashboard-container {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 280px;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    transform-origin: left;
+    overflow-x: hidden;
+}
+
+.sidebar.collapsed {
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-100%);
+}
+
+.sidebar-toggle {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #5865f2;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sidebar-toggle:hover {
+    transform: scale(1.1) rotate(90deg);
+    background: #4752c4;
+}
+
+.sidebar-toggle:active {
+    transform: scale(0.95);
+}
+
+.sidebar.collapsed + .content {
+    margin-left: 0;
+    width: 100%;
+}
+
+.content {
+    flex: 1;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
 /* Status UI Styles */
 .side-pfp-wrapper, .header-pfp-wrapper {
     position: relative;

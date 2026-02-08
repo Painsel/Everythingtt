@@ -404,6 +404,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load recent articles
     try {
+        // Sidebar Toggle Logic
+        const sidebar = document.querySelector('.sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        
+        // Load state from local storage
+        const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+        }
+
+        toggleBtn.addEventListener('click', () => {
+            const nowCollapsed = sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebar_collapsed', nowCollapsed);
+        });
+
         const files = await GitHubAPI.listFiles('news/created-articles-storage');
         if (!files || files.length === 0) {
             recentList.innerHTML = '<p class="empty">No news yet. Be the first to publish!</p>';
