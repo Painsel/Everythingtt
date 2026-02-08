@@ -22,6 +22,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const accountInfoModal = document.getElementById('account-info-modal');
     const accountActionsModal = document.getElementById('account-actions-modal');
     const closeModals = document.querySelectorAll('.close-modal');
+    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, accountInfoModal, accountActionsModal];
+    
+    // Close modals when clicking outside
+    window.onclick = (event) => {
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    };
     
     let allAccounts = [];
     let currentEditingUserId = null;
@@ -94,7 +104,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('actions-target-user').innerText = username;
         
         // Developer-only check for "Make Admin" and "Make BETA" tiles
-        const DEVELOPER_ID = '845829137251567';
         const makeAdminTile = document.getElementById('tile-make-admin');
         const makeBetaTile = document.getElementById('tile-make-beta');
         
@@ -166,7 +175,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         accountActionsModal.classList.add('hidden');
         
         // Final security check: Only the developer can manage admin roles
-        const DEVELOPER_ID = '382156063438888';
         if (user.id !== DEVELOPER_ID) {
             alert('Unauthorized: Only the Developer can manage admin roles.');
             return;
@@ -205,7 +213,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         accountActionsModal.classList.add('hidden');
         
         // Final security check: Only the developer can manage BETA roles
-        const DEVELOPER_ID = '845829137251567';
         if (user.id !== DEVELOPER_ID) {
             alert('Unauthorized: Only the Developer can manage BETA roles.');
             return;

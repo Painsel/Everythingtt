@@ -326,12 +326,41 @@
     display: none;
 }
 
+/* Modal Improvements */
 .modal-content {
-    background: #36393f;
-    padding: 2rem;
-    border-radius: 8px;
-    width: 400px;
+    background: #2f3136;
+    border-radius: 12px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
     position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.action-tile {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-tile:hover {
+    transform: translateY(-5px);
+    background: #40444b;
+}
+
+.action-tile.danger:hover {
+    background: #ed4245;
+}
+
+.action-tile:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .close-modal {
