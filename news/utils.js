@@ -576,17 +576,13 @@ window.GitHubAPI = {
 
     async safeUpdateFile(path, transform, message) {
         // Optimization: Atomic push via Middleware
-        if (this.middlewareURL && (typeof transform === 'string' || (typeof transform === 'object' && transform !== null && !transform.then))) {
+        // [IMPORTANT] Only allow atomic push for strings (which are already encoded via _encode)
+        // JSON objects must use the local fallback to ensure proper decoding/merging/encoding of ett_enc_v1 data
+        const canUseMiddleware = this.middlewareURL && typeof transform === 'string';
+
+        if (canUseMiddleware) {
             try {
-                // When using middleware atomic push, we encode the transform if it's a string
-                // or if it's an object, the middleware handles the logic, but we should be aware
-                // that the middleware might need to know how to decode/encode too if it's doing JSON merges.
-                // For now, we assume the middleware works with raw data and we encode the final result locally.
-                
-                let encodedTransform = transform;
-                if (typeof transform === 'string') {
-                    encodedTransform = this._encode(transform);
-                }
+                const encodedTransform = this._encode(transform);
 
                 const res = await this.request(`${path}?action=push`, 'POST', {
                     transform: encodedTransform,
@@ -596,12 +592,15 @@ window.GitHubAPI = {
                 if (res.skipped) return res;
                 
                 // Update local cache with new content
-                // Note: res.finalContent from middleware should be encoded if we want it stored that way
+                // Ensure the cached content includes our encoding prefix
                 const finalContentToCache = res.finalContent;
+                const encodedForCache = finalContentToCache.startsWith('ett_enc_v1:') 
+                    ? finalContentToCache 
+                    : this._encode(finalContentToCache);
                 
                 this._fileCache.set(`/contents/${path}`, {
                     data: {
-                        content: btoa(unescape(encodeURIComponent(finalContentToCache))),
+                        content: btoa(unescape(encodeURIComponent(encodedForCache))),
                         sha: res.content ? res.content.sha : (res.commit ? res.commit.sha : null)
                     },
                     timestamp: Date.now()
