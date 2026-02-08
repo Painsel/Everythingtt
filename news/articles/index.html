@@ -11,34 +11,64 @@
     <meta name="theme-color" content="#5865f2">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../sidebar-shared.css">
     <link rel="stylesheet" href="article-styler.css">
 </head>
-<body>
-    <div class="container dashboard-container">
-        <aside class="sidebar">
-            <div id="logged-in-user" class="user-info hidden">
-                <div class="side-pfp-wrapper">
-                    <img id="side-pfp" src="" alt="PFP">
-                    <div id="side-status-icon" class="status-icon"></div>
-                </div>
-                <div class="side-user-details">
-                    <div class="side-username-row">
-                        <span id="side-username"></span>
-                        <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+<body class="sidebar-layout">
+    <div class="dashboard-container">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <span class="toggle-icon">☰</span>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar collapsed">
+            <div class="sidebar-header">
+                <div id="logged-in-user" class="user-info">
+                    <div class="side-pfp-wrapper">
+                        <img id="side-pfp" src="" alt="PFP">
+                        <div id="side-status-icon" class="status-icon"></div>
+                    </div>
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="side-username"></span>
+                            <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <nav>
-                <a href="../homepage/" class="nav-item">Dashboard</a>
-                <div id="btn-my-articles" class="nav-item hidden">
-                    My Articles
+            
+            <nav class="sidebar-nav">
+                <div class="nav-links">
+                    <a href="../homepage/" class="nav-item">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="../articles/" class="nav-item active">
+                        <span class="nav-icon">📰</span>
+                        <span class="nav-text">Explore Feed</span>
+                    </a>
+                    <a href="../create-article/" class="nav-item">
+                        <span class="nav-icon">✍️</span>
+                        <span class="nav-text">Publish News</span>
+                    </a>
+                    <a href="../profile-editor/index.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                    <a href="../admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">
+                        <span class="nav-icon">🛡️</span>
+                        <span class="nav-text">Admin</span>
+                    </a>
                 </div>
-                <div class="nav-item notification-nav" id="btn-notifications" title="Notifications">
-                    🔔
-                    <span id="notification-badge" class="notification-badge hidden">0</span>
-                </div>
-                <a href="../create-article/" class="nav-item">Publish News</a>
             </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="logout-btn-compact">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
         </aside>
 
         <main class="content">
@@ -274,6 +304,7 @@
     </div>
 
     <script src="../utils.js?v=1.5.8"></script>
+    <script src="../sidebar-shared.js"></script>
     <script src="../status-manager.js?v=1.1.1"></script>
     <script src="article-renderer.js?v=1.1.2"></script>
 </body>

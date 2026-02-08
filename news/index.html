@@ -11,6 +11,7 @@
     <meta name="theme-color" content="#5865f2">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="sidebar-shared.css">
 </head>
 <body>
     <div id="auth-container" class="container">
@@ -23,29 +24,60 @@
         <p class="hint">Don't have an account? Entering a new username will create one.</p>
     </div>
 
-    <div id="dashboard-container" class="container hidden">
-        <aside class="sidebar">
-            <div class="user-info">
-                <img id="side-pfp" src="" alt="PFP">
-                <span id="side-username"></span>
+    <div id="dashboard-container" class="dashboard-container hidden">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <span class="toggle-icon">☰</span>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar collapsed">
+            <div class="sidebar-header">
+                <div id="logged-in-user" class="user-info">
+                    <div class="side-pfp-wrapper">
+                        <img id="side-pfp" src="" alt="PFP">
+                        <div id="side-status-icon" class="status-icon"></div>
+                    </div>
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="side-username"></span>
+                            <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <nav>
-                <a href="homepage/index.html" class="nav-item">
-                    <span>🏠</span> Home Dashboard
-                </a>
-                <a href="profile-editor/index.html" class="nav-item active">
-                    <span>👤</span> Edit Profile
-                </a>
-                <a href="articles/index.html" class="nav-item">
-                    <span>📰</span> Explore Articles
-                </a>
-                <a href="create-article/index.html" class="nav-item">
-                    <span>✍️</span> Create Article
-                </a>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-links">
+                    <a href="homepage/" class="nav-item">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="articles/" class="nav-item">
+                        <span class="nav-icon">📰</span>
+                        <span class="nav-text">Explore Feed</span>
+                    </a>
+                    <a href="create-article/" class="nav-item">
+                        <span class="nav-icon">✍️</span>
+                        <span class="nav-text">Publish News</span>
+                    </a>
+                    <a href="profile-editor/index.html" class="nav-item active">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                    <a href="admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">
+                        <span class="nav-icon">🛡️</span>
+                        <span class="nav-text">Admin</span>
+                    </a>
+                </div>
             </nav>
-            <button id="btn-logout">
-                <span>🚪</span> Logout
-            </button>
+
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="logout-btn-compact">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
         </aside>
 
         <main class="content">
@@ -83,6 +115,7 @@
     </div>
 
     <script src="utils.js?v=1.5.8"></script>
+    <script src="sidebar-shared.js"></script>
     <script src="script.js?v=1.1.3"></script>
 
     <!-- Privacy Notice Modal -->

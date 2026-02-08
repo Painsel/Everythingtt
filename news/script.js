@@ -270,6 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('current_user', JSON.stringify(user));
         authContainer.classList.add('hidden');
         dashboardContainer.classList.remove('hidden');
+        document.body.classList.add('sidebar-layout');
 
         document.getElementById('welcome-msg').innerText = `Hello ${user.username}, welcome to EverythingTT's News Dashboard. Please read our guidelines before you can publish your news.`;
         document.getElementById('side-username').innerText = user.username;

@@ -1,14 +1,6 @@
-.admin-container {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    height: 100vh;
-    background: #2f3136;
-}
-
+/* Admin Panel Styles */
 .admin-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid #40444b;
+    margin-bottom: 2.5rem;
 }
 
 .admin-section {

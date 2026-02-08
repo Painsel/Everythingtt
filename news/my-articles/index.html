@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Articles - EverythingTT News</title>
     <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../sidebar-shared.css">
     <link rel="stylesheet" href="../articles/article-styler.css">
     <link rel="stylesheet" href="styler.css">
     <script>
@@ -21,31 +22,61 @@
         })();
     </script>
 </head>
-<body class="my-articles-page">
-    <div class="container dashboard-container">
-        <aside class="sidebar">
-            <div id="logged-in-user" class="user-info">
-                <div class="side-pfp-wrapper">
-                    <img id="side-pfp" src="" alt="PFP">
-                    <div id="side-status-icon" class="status-icon"></div>
-                </div>
-                <div class="side-user-details">
-                    <div class="side-username-row">
-                        <span id="side-username"></span>
-                        <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+<body class="my-articles-page sidebar-layout">
+    <div class="dashboard-container">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <span class="toggle-icon">☰</span>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar collapsed">
+            <div class="sidebar-header">
+                <div id="logged-in-user" class="user-info">
+                    <div class="side-pfp-wrapper">
+                        <img id="side-pfp" src="" alt="PFP">
+                        <div id="side-status-icon" class="status-icon"></div>
+                    </div>
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="side-username"></span>
+                            <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <nav>
-                <a href="../homepage/" class="nav-item">Dashboard</a>
-                <a href="../articles/" class="nav-item">Explore Articles</a>
-                <div class="nav-item notification-nav" id="btn-notifications" title="Notifications">
-                    🔔
-                    <span id="notification-badge" class="notification-badge hidden">0</span>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-links">
+                    <a href="../homepage/" class="nav-item">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="../articles/" class="nav-item">
+                        <span class="nav-icon">📰</span>
+                        <span class="nav-text">Explore Feed</span>
+                    </a>
+                    <a href="../create-article/" class="nav-item">
+                        <span class="nav-icon">✍️</span>
+                        <span class="nav-text">Publish News</span>
+                    </a>
+                    <a href="../profile-editor/index.html" class="nav-item">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                    <a href="../admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">
+                        <span class="nav-icon">🛡️</span>
+                        <span class="nav-text">Admin</span>
+                    </a>
                 </div>
-                <div id="btn-my-articles" class="nav-item hidden">My Articles</div>
-                <a href="../create-article/" class="nav-item">Publish News</a>
             </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="logout-btn-compact">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
         </aside>
 
         <main class="content">
@@ -247,6 +278,7 @@
     </div>
 
     <script src="../utils.js"></script>
+    <script src="../sidebar-shared.js"></script>
     <script src="../status-manager.js"></script>
     <script src="../articles/article-renderer.js"></script>
     <script src="renderer.js"></script>
