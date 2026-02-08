@@ -417,13 +417,18 @@ window.GitHubAPI = {
 
     /**
      * Internal helper to decode fetched data.
-     * Can be expanded to handle custom encryption/obfuscation.
+     * Uses a prefix-based detection to support both encoded and legacy plain-text data.
      */
     _decode(content) {
         if (!content) return content;
         try {
-            // Check if content looks like it might be encoded (optional)
-            // For now, we assume direct content but provide the hook
+            // Check for our custom encoding prefix
+            if (content.startsWith('ett_enc_v1:')) {
+                const encoded = content.substring('ett_enc_v1:'.length);
+                // Standard Base64 decode with UTF-8 support
+                return decodeURIComponent(escape(atob(encoded.replace(/\s/g, ''))));
+            }
+            // If it's not our custom encoding, return as is (legacy support)
             return content;
         } catch (e) {
             console.error('[GitHubAPI] Decode failed:', e);
@@ -433,11 +438,14 @@ window.GitHubAPI = {
 
     /**
      * Internal helper to encode data before sending.
+     * Adds a prefix so the decoder knows how to handle it.
      */
     _encode(content) {
         if (!content) return content;
         try {
-            return content;
+            // Apply custom encoding: UTF-8 safe Base64 with prefix
+            const encoded = btoa(unescape(encodeURIComponent(content)));
+            return `ett_enc_v1:${encoded}`;
         } catch (e) {
             console.error('[GitHubAPI] Encode failed:', e);
             return content;
