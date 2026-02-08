@@ -15,34 +15,38 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <aside class="sidebar">
-            <div id="logged-in-user" class="user-info">
-                <div class="side-pfp-wrapper">
-                    <img id="side-pfp" src="" alt="PFP">
-                    <div id="side-status-icon" class="status-icon"></div>
-                </div>
-                <div class="side-user-details">
-                    <div class="side-username-row">
-                        <span id="side-username"></span>
-                        <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+        <nav class="topbar">
+            <div class="topbar-left">
+                <div id="logged-in-user" class="user-info">
+                    <div class="side-pfp-wrapper">
+                        <img id="side-pfp" src="" alt="PFP">
+                        <div id="side-status-icon" class="status-icon"></div>
+                    </div>
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="side-username"></span>
+                            <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <nav>
-                <a href="../articles/" class="nav-item">Explore Feed</a>
-                <a href="../create-article/" class="nav-item">Publish News</a>
-                <a href="../profile-editor/index.html" class="nav-item">Profile Settings</a>
-                <a href="../admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">Admin Panel</a>
-                <a href="#" id="nav-switch-accounts" class="nav-item hidden">Switch Accounts</a>
-            </nav>
-            <button id="btn-logout" class="logout-btn">Logout</button>
-        </aside>
+            
+            <div class="topbar-center">
+                <div class="nav-links">
+                    <a href="../articles/" class="nav-item">Explore Feed</a>
+                    <a href="../create-article/" class="nav-item">Publish News</a>
+                    <a href="../profile-editor/index.html" class="nav-item">Settings</a>
+                    <a href="../admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">Admin</a>
+                </div>
+            </div>
 
-        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
-            <span class="toggle-icon">◀</span>
-        </button>
-
-        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+            <div class="topbar-right">
+                <div class="topbar-actions">
+                    <button id="btn-logout" class="logout-btn-compact">Logout</button>
+                    <button id="mobile-menu-toggle" class="mobile-toggle">☰</button>
+                </div>
+            </div>
+        </nav>
 
         <main class="content">
             <header class="home-header">

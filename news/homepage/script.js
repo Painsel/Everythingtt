@@ -405,23 +405,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load recent articles
     try {
         // Sidebar Toggle Logic
-        const sidebar = document.querySelector('.sidebar');
-        const toggleBtn = document.getElementById('sidebar-toggle');
-        const overlay = document.getElementById('sidebar-overlay');
+        // Mobile menu toggle logic
+        const mobileToggle = document.getElementById('mobile-menu-toggle');
+        const navLinks = document.querySelector('.nav-links');
         
-        // Load state from local storage
-        const isCollapsed = localStorage.getItem('sidebar_collapsed') === 'true';
-        if (isCollapsed) {
-            sidebar.classList.add('collapsed');
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', () => {
+                const isVisible = navLinks.style.display === 'flex';
+                navLinks.style.display = isVisible ? 'none' : 'flex';
+                navLinks.style.flexDirection = 'column';
+                navLinks.style.position = 'absolute';
+                navLinks.style.top = '64px';
+                navLinks.style.left = '0';
+                navLinks.style.width = '100%';
+                navLinks.style.backgroundColor = '#202225';
+                navLinks.style.padding = '1rem';
+                navLinks.style.borderBottom = '2px solid #2f3136';
+            });
         }
-
-        const toggleSidebar = () => {
-            const nowCollapsed = sidebar.classList.toggle('collapsed');
-            localStorage.setItem('sidebar_collapsed', nowCollapsed);
-        };
-
-        toggleBtn.addEventListener('click', toggleSidebar);
-        overlay.addEventListener('click', toggleSidebar);
 
         const files = await GitHubAPI.listFiles('news/created-articles-storage');
         if (!files || files.length === 0) {
