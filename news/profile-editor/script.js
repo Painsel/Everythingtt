@@ -318,6 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (bannerFile) {
                 if (bannerFile.size > MAX_SIZE) throw new Error('Profile Banner is too large (max 2MB)');
                 if (bannerFile.type === 'image/gif') throw new Error('GIFs are not allowed');
+                // Ensure we use the pending cropped base64 if available, otherwise optimize original
                 banner = pendingBannerBase64 || await optimizeImage(bannerFile, 1200, 400, 0.6);
             }
 

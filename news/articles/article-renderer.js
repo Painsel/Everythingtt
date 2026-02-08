@@ -192,10 +192,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         updateSideProfileWithStatus(user);
+        // Initial sync
         pollUserProfile(); // Initial fetch
         pollNotifications(); // Initial notifications fetch
         checkIP(); // Initial IP check
         checkChangelog(); // Check for updates
+
+        // SYNC: Update article author data (pfp/username) in the current page
+        const updateAuthorDataInFeed = (updatedUser) => {
+            const authorBlocks = document.querySelectorAll(`.author-info[data-author-id="${updatedUser.id}"]`);
+            authorBlocks.forEach(block => {
+                const img = block.querySelector('.author-pfp');
+                const span = block.querySelector('span');
+                if (img) img.src = updatedUser.pfp;
+                if (span) span.innerText = window.currentFilter === 'my' ? 'You' : `By ${updatedUser.username}`;
+            });
+
+            // Also update comments if open
+            const commentPfps = document.querySelectorAll(`.comment-pfp-wrapper img[onclick*="'${updatedUser.id}'"]`);
+            commentPfps.forEach(img => img.src = updatedUser.pfp);
+            const commentNames = document.querySelectorAll(`.comment-author-info .comment-author-name[onclick*="'${updatedUser.id}'"]`);
+            commentNames.forEach(name => name.innerText = updatedUser.username);
+        };
+
+        // Hook into syncUserProfile to refresh author data if it's the current user
+        const originalSync = GitHubAPI.syncUserProfile;
+        GitHubAPI.syncUserProfile = async function(onUpdate) {
+            return await originalSync.call(this, (newUser) => {
+                updateAuthorDataInFeed(newUser);
+                if (onUpdate) onUpdate(newUser);
+            });
+        };
     }
 
     async function addNotification(targetUserId, type, data) {
