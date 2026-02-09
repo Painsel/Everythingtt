@@ -1,0 +1,130 @@
+.mail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 25px;
+}
+
+.mail-address-display {
+    font-size: 0.9rem;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.compose-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    transition: background 0.2s;
+}
+
+.compose-btn:hover {
+    background: var(--primary-hover);
+}
+
+.mail-list {
+    display: grid;
+    gap: 2px;
+}
+
+.mail-item {
+    background: var(--card-bg);
+    padding: 15px 20px;
+    display: grid;
+    grid-template-columns: 200px 1fr 150px;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    transition: background 0.2s;
+}
+
+.mail-item:hover {
+    background: #36393f;
+}
+
+.mail-item.unread {
+    background: rgba(88, 101, 242, 0.05);
+    font-weight: 700;
+}
+
+.mail-sender {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mail-subject-preview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.8;
+}
+
+.mail-date {
+    font-size: 0.85rem;
+    opacity: 0.5;
+    text-align: right;
+}
+
+.modal-content.large {
+    max-width: 800px;
+    width: 90%;
+}
+
+#compose-body {
+    width: 100%;
+    min-height: 300px;
+    background: var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: white;
+    padding: 15px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.mail-view-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+.mail-view-meta {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    opacity: 0.7;
+}
+
+.mail-view-body {
+    line-height: 1.6;
+    white-space: pre-wrap;
+    padding: 20px 0;
+}
+
+.loading-state, .empty-state {
+    text-align: center;
+    padding: 50px;
+    opacity: 0.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.nav-item {
+    cursor: pointer;
+}

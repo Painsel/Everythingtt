@@ -1,0 +1,201 @@
+import { GitHubAPI } from '../../news/utils.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const mailAcc = JSON.parse(sessionStorage.getItem('current_mail_acc'));
+    if (!mailAcc) {
+        window.location.href = '../index.html';
+        return;
+    }
+
+    // UI Elements
+    document.getElementById('mail-display-address').innerText = mailAcc.email;
+    const mailList = document.getElementById('mail-list');
+    const folderTitle = document.getElementById('folder-title');
+    const mailCount = document.getElementById('mail-count');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const btnCompose = document.getElementById('btn-compose');
+    const composeModal = document.getElementById('compose-modal');
+    const viewMailModal = document.getElementById('view-mail-modal');
+    const composeForm = document.getElementById('compose-form');
+
+    let currentFolder = 'incoming';
+    let allMessages = [];
+
+    // Sidebar Logic
+    sidebarToggle.onclick = () => sidebar.classList.toggle('collapsed');
+
+    // Folder Navigation
+    document.querySelectorAll('.nav-item[data-folder]').forEach(item => {
+        item.onclick = (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            currentFolder = item.dataset.folder;
+            folderTitle.innerText = currentFolder.charAt(0).toUpperCase() + currentFolder.slice(1);
+            renderMail();
+        };
+    });
+
+    // Load Mail
+    async function loadMail() {
+        mailList.innerHTML = '<div class="loading-state">Syncing with critical storage...</div>';
+        try {
+            // Check if folder exists by listing contents
+            let files = [];
+            try {
+                files = await GitHubAPI.getFolderContents(`news/mail-storage/${mailAcc.mailboxId}`);
+            } catch (e) {
+                // Folder might not exist yet if no mail sent
+                files = [];
+            }
+            
+            const jsonFiles = files.filter(f => f.name.endsWith('.json'));
+            const promises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
+            allMessages = await Promise.all(promises);
+            
+            // Sort by date newest first
+            allMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            renderMail();
+        } catch (error) {
+            mailList.innerHTML = `<div class="error-state">Error loading mail: ${error.message}</div>`;
+        }
+    }
+
+    function renderMail() {
+        const filtered = allMessages.filter(m => m.type === currentFolder);
+        mailList.innerHTML = '';
+        mailCount.innerText = `${filtered.length} messages`;
+
+        if (filtered.length === 0) {
+            mailList.innerHTML = `<div class="empty-state">No messages in ${currentFolder}.</div>`;
+            return;
+        }
+
+        filtered.forEach(msg => {
+            const item = document.createElement('div');
+            item.className = `mail-item ${!msg.isRead && msg.type === 'incoming' ? 'unread' : ''}`;
+            item.innerHTML = `
+                <div class="mail-sender">${msg.sender}</div>
+                <div class="mail-subject-preview">${msg.subject}</div>
+                <div class="mail-date">${new Date(msg.timestamp).toLocaleDateString()}</div>
+            `;
+            item.onclick = () => openMail(msg);
+            mailList.appendChild(item);
+        });
+    }
+
+    async function openMail(msg) {
+        const content = document.getElementById('mail-view-content');
+        content.innerHTML = `
+            <div class="mail-view-header">
+                <h2>${msg.subject}</h2>
+                <div class="mail-view-meta">
+                    <div><strong>From:</strong> ${msg.sender}</div>
+                    <div><strong>Date:</strong> ${new Date(msg.timestamp).toLocaleString()}</div>
+                </div>
+            </div>
+            <div class="mail-view-body">${msg.content}</div>
+        `;
+
+        if (!msg.isRead && msg.type === 'incoming') {
+            msg.isRead = true;
+            await GitHubAPI.safeUpdateFile(
+                `news/mail-storage/${mailAcc.mailboxId}/${msg.id}.json`,
+                msg,
+                `Mail: Mark as read ${msg.id}`
+            );
+            renderMail(); // Update UI
+        }
+
+        viewMailModal.classList.remove('hidden');
+    }
+
+    // Compose Logic
+    btnCompose.onclick = () => composeModal.classList.remove('hidden');
+    
+    composeForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const to = document.getElementById('compose-to').value.trim();
+        const subject = document.getElementById('compose-subject').value.trim();
+        const body = document.getElementById('compose-body').value.trim();
+
+        try {
+            // Find recipient's mailbox ID
+            let recipientMailboxId = null;
+            let recipientEmail = to;
+
+            if (to.includes('@ett.mail')) {
+                const prefix = to.split('@')[0];
+                const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
+                if (mapData) {
+                    const map = JSON.parse(atob(mapData.content));
+                    recipientMailboxId = map.mailboxId;
+                }
+            } else {
+                // Assume User ID
+                const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${to}.json`);
+                if (accData) {
+                    const acc = JSON.parse(atob(accData.content));
+                    recipientMailboxId = acc.mailboxId;
+                    recipientEmail = acc.email;
+                }
+            }
+
+            if (!recipientMailboxId) {
+                alert('Recipient not found. Please check the Email or User ID.');
+                return;
+            }
+
+            const mailId = `msg_${Date.now()}`;
+            const mailData = {
+                id: mailId,
+                sender: mailAcc.email,
+                senderId: mailAcc.userId,
+                recipientId: to,
+                subject: subject,
+                content: body,
+                timestamp: new Date().toISOString(),
+                isRead: false
+            };
+
+            // 1. Save to sender's Outgoing
+            await GitHubAPI.safeUpdateFile(
+                `news/mail-storage/${mailAcc.mailboxId}/${mailId}.json`,
+                { ...mailData, type: 'outgoing' },
+                `Mail: Sent message ${mailId}`
+            );
+
+            // 2. Save to recipient's Incoming
+            await GitHubAPI.safeUpdateFile(
+                `news/mail-storage/${recipientMailboxId}/${mailId}.json`,
+                { ...mailData, type: 'incoming' },
+                `Mail: Received message ${mailId}`
+            );
+
+            alert('Mail sent successfully!');
+            composeModal.classList.add('hidden');
+            composeForm.reset();
+            loadMail();
+        } catch (error) {
+            alert('Failed to send mail: ' + error.message);
+        }
+    };
+
+    // Global Close Modals
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.onclick = () => {
+            composeModal.classList.add('hidden');
+            viewMailModal.classList.add('hidden');
+        };
+    });
+
+    document.getElementById('btn-refresh-mail').onclick = loadMail;
+    document.getElementById('btn-mail-logout').onclick = () => {
+        sessionStorage.removeItem('current_mail_acc');
+        window.location.href = '../index.html';
+    };
+
+    loadMail();
+});

@@ -96,8 +96,14 @@
                 <!-- Populated by JS -->
             </div>
             <div class="modal-actions" id="modal-form-actions">
-                <button id="btn-accept-form" class="btn-primary">Accept Appeal</button>
-                <button id="btn-reject-form" class="btn-danger">Reject Appeal</button>
+                <div class="action-reason-container">
+                    <label for="action-reason">Reason for decision (included in email to user):</label>
+                    <textarea id="action-reason" placeholder="Explain why this appeal was accepted or rejected..."></textarea>
+                </div>
+                <div class="action-buttons">
+                    <button id="btn-accept-form" class="btn-primary">Accept Appeal</button>
+                    <button id="btn-reject-form" class="btn-danger">Reject Appeal</button>
+                </div>
             </div>
         </div>
     </div>

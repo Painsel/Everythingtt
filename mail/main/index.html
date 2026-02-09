@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox - EverythingTT Mail</title>
+    <link rel="icon" href="../../logo/EverythingTT.png">
+    <link rel="stylesheet" href="../../news/style.css">
+    <link rel="stylesheet" href="../../news/sidebar-shared.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="sidebar-layout">
+    <div class="dashboard-container">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <span class="toggle-icon">☰</span>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <img src="../../logo/EverythingTT.png" class="sidebar-brand-img" alt="EverythingTT Logo">
+                <span class="sidebar-brand-text">ETT Mail</span>
+            </div>
+            
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="mail-display-address" class="mail-address-display">loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-links">
+                    <button id="btn-compose" class="compose-btn">
+                        <span class="nav-icon">✏️</span>
+                        <span class="nav-text">Compose</span>
+                    </button>
+                    <a href="#" class="nav-item active" data-folder="incoming">
+                        <span class="nav-icon">📥</span>
+                        <span class="nav-text">Inbox</span>
+                    </a>
+                    <a href="#" class="nav-item" data-folder="outgoing">
+                        <span class="nav-icon">📤</span>
+                        <span class="nav-text">Sent</span>
+                    </a>
+                    <a href="#" class="nav-item" data-folder="draft">
+                        <span class="nav-icon">📝</span>
+                        <span class="nav-text">Drafts</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../../news/homepage/" class="nav-item" style="margin-bottom: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Back to News</span>
+                </a>
+                <button id="btn-mail-logout" class="logout-btn-compact">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header class="mail-header">
+                <div class="header-left">
+                    <h1 id="folder-title">Inbox</h1>
+                    <p id="mail-count">Loading messages...</p>
+                </div>
+                <div class="header-right">
+                    <button id="btn-refresh-mail" class="btn-secondary">🔄 Refresh</button>
+                </div>
+            </header>
+
+            <div id="mail-list" class="mail-list">
+                <!-- Populated by JS -->
+                <div class="loading-state">Syncing with critical storage...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Mail Modal -->
+    <div id="view-mail-modal" class="modal hidden">
+        <div class="modal-content large">
+            <span class="close-modal">&times;</span>
+            <div id="mail-view-content">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Compose Modal -->
+    <div id="compose-modal" class="modal hidden">
+        <div class="modal-content large">
+            <span class="close-modal">&times;</span>
+            <h2>Compose New Mail</h2>
+            <form id="compose-form">
+                <div class="form-group">
+                    <label>To (User ID or @ett.mail)</label>
+                    <input type="text" id="compose-to" placeholder="e.g. 1234567 or user@ett.mail" required>
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="compose-subject" placeholder="Enter subject" required>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="compose-body" placeholder="Write your message here..." required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Send Message</button>
+                    <button type="button" id="btn-save-draft" class="btn-secondary">Save Draft</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

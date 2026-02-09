@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeModal = document.querySelector('.close-modal');
     const btnAccept = document.getElementById('btn-accept-form');
     const btnReject = document.getElementById('btn-reject-form');
+    const actionReason = document.getElementById('action-reason');
 
     async function loadForms() {
         formsList.innerHTML = '<div class="loading-state">Loading support forms...</div>';
@@ -145,6 +146,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function handleFormAction(status) {
         if (!currentViewingForm) return;
         
+        const reason = actionReason.value.trim();
+        if (!reason) {
+            alert('Please provide a reason for this decision.');
+            return;
+        }
+        
         const confirmMsg = `Are you sure you want to ${status} this appeal?`;
         if (!confirm(confirmMsg)) return;
 
@@ -152,13 +159,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnReject.disabled = true;
 
         try {
-            const updatedForm = { ...currentViewingForm, status: status, processedBy: user.id, processedAt: new Date().toISOString() };
+            const updatedForm = { 
+                ...currentViewingForm, 
+                status: status, 
+                decisionReason: reason,
+                processedBy: user.id, 
+                processedAt: new Date().toISOString() 
+            };
             
             await GitHubAPI.safeUpdateFile(
                 `news/support-forms-storage/${currentViewingForm.id}.json`,
                 updatedForm,
                 `Support: ${status.toUpperCase()} appeal ${currentViewingForm.id} by ${user.username}`
             );
+
+            // Send official EverythingTT Email
+            try {
+                const mailData = {
+                    id: `SUPPORT-${Date.now()}`,
+                    sender: 'EverythingTT Support',
+                    recipientId: currentViewingForm.submittedBy,
+                    subject: `Update on your ${currentViewingForm.subject === 'rule-violation' ? 'Violation' : 'IP Ban'} Appeal`,
+                    content: `Hello ${currentViewingForm.username},\n\nYour appeal (ID: ${currentViewingForm.id}) has been **${status.toUpperCase()}**.\n\n**Decision Reason:**\n${reason}\n\nThank you for your patience.\n\n— EverythingTT Support Team`,
+                    timestamp: new Date().toISOString(),
+                    type: 'incoming',
+                    isRead: false
+                };
+
+                // Get user's mail ID
+                const mailAccounts = await GitHubAPI.getFolderContents('news/mail-accounts-storage');
+                const userMailAcc = mailAccounts.find(f => f.name === `${currentViewingForm.submittedBy}.json`);
+                
+                if (userMailAcc) {
+                    const mailAccData = await GitHubAPI.getFile(userMailAcc.path);
+                    const mailAcc = JSON.parse(atob(mailAccData.content));
+                    const mailBoxId = mailAcc.mailBoxId;
+
+                    await GitHubAPI.safeUpdateFile(
+                        `news/mail-storage/${mailBoxId}/${mailData.id}.json`,
+                        mailData,
+                        `Support: Email sent to ${currentViewingForm.username} regarding appeal ${currentViewingForm.id}`
+                    );
+                }
+            } catch (mailError) {
+                console.error('Failed to send support email:', mailError);
+                // We don't block the whole process if email fails, but maybe alert admin?
+            }
 
             alert(`Appeal ${status} successfully.`);
             viewModal.classList.add('hidden');

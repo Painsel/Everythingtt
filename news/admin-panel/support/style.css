@@ -141,6 +141,35 @@
     background: #d84040;
 }
 
+.action-reason-container {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.action-reason-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.action-reason-container textarea {
+    width: 100%;
+    min-height: 80px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    color: white;
+    padding: 10px;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+}
+
 .hidden {
-    display: none;
+    display: none !important;
 }

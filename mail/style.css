@@ -1,0 +1,74 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.close-modal:hover {
+    opacity: 1;
+}
+
+.mail-suffix {
+    background: var(--input-bg);
+    padding: 10px;
+    border-radius: 0 5px 5px 0;
+    opacity: 0.7;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: none;
+}
+
+#new-mail-prefix {
+    border-radius: 5px 0 0 5px;
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-logo {
+    width: 80px;
+    margin-bottom: 15px;
+}
+
+.auth-footer {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.auth-footer a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}

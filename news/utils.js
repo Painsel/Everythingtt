@@ -32,7 +32,9 @@ window.GitHubAPI = {
             'created-articles-storage',
             'created-news-accounts-storage',
             'notifications-storage',
-            'support-forms-storage'
+            'support-forms-storage',
+            'mail-storage',
+            'mail-accounts-storage'
         ];
 
         try {
@@ -308,6 +310,8 @@ window.GitHubAPI = {
             'created-news-accounts-storage',
             'notifications-storage',
             'support-forms-storage',
+            'mail-storage',
+            'mail-accounts-storage',
             'banned-ips.json'
         ];
         
