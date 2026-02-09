@@ -19,9 +19,15 @@
         <div class="auth-header">
             <img src="../logo/EverythingTT.png" alt="EverythingTT Logo" class="auth-logo">
             <h1>EverythingTT Mail</h1>
-            <p>Enter your mail credentials to continue</p>
+            <p id="auth-desc">Enter your mail credentials to continue</p>
         </div>
 
+        <div class="auth-tabs">
+            <button class="tab-btn active" id="tab-login">Login</button>
+            <button class="tab-btn" id="tab-signup">Sign Up</button>
+        </div>
+
+        <!-- Login Form -->
         <form id="mail-login-form" class="auth-form">
             <div class="form-group">
                 <label for="mail-email">Mail Address</label>
@@ -42,34 +48,31 @@
             <button type="submit" id="btn-login" class="btn-primary">Login to Inbox</button>
         </form>
 
-        <div class="auth-footer">
-            <p>Don't have an EverythingTT Mail? <a href="#" id="link-create-mail">Create one now</a></p>
-        </div>
-    </main>
-
-    <!-- Create Mail Modal -->
-    <div id="create-mail-modal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Create EverythingTT Mail</h2>
-            <p>Set up your official @ett.mail address.</p>
-            
-            <form id="create-mail-form">
-                <div class="form-group">
-                    <label>Desired Email</label>
-                    <div class="input-wrapper">
-                        <input type="text" id="new-mail-prefix" placeholder="username" required>
-                        <span class="mail-suffix">@ett.mail</span>
-                    </div>
+        <!-- Sign Up Form -->
+        <form id="mail-signup-form" class="auth-form hidden">
+            <div class="form-group">
+                <label>Desired Email</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">✉️</span>
+                    <input type="text" id="new-mail-prefix" placeholder="username" required>
+                    <span class="mail-suffix">@ett.mail</span>
                 </div>
-                <div class="form-group">
-                    <label>Set Password</label>
+            </div>
+            <div class="form-group">
+                <label>Set Password</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔑</span>
                     <input type="password" id="new-mail-password" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn-primary">Create Mailbox</button>
-            </form>
+            </div>
+            <button type="submit" class="btn-primary">Create Mailbox</button>
+            <p class="form-notice">Requires an active EverythingTT News account.</p>
+        </form>
+
+        <div class="auth-footer">
+            <a href="../news/homepage/index.html">Back to News Dashboard</a>
         </div>
-    </div>
+    </main>
 
     <script type="module" src="script.js"></script>
 </body>

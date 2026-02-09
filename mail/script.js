@@ -2,20 +2,30 @@ import { GitHubAPI } from '../news/utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('mail-login-form');
-    const createMailForm = document.getElementById('create-mail-form');
-    const createMailModal = document.getElementById('create-mail-modal');
-    const linkCreateMail = document.getElementById('link-create-mail');
-    const closeModal = document.querySelector('.close-modal');
+    const signupForm = document.getElementById('mail-signup-form');
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const authDesc = document.getElementById('auth-desc');
 
-    // Show/Hide Modal
-    linkCreateMail.onclick = (e) => {
-        e.preventDefault();
-        createMailModal.classList.remove('hidden');
+    // Tab Switching
+    tabLogin.onclick = () => {
+        tabLogin.classList.add('active');
+        tabSignup.classList.remove('active');
+        loginForm.classList.remove('hidden');
+        signupForm.classList.add('hidden');
+        authDesc.innerText = 'Enter your mail credentials to continue';
     };
-    closeModal.onclick = () => createMailModal.classList.add('hidden');
 
-    // Handle Registration
-    createMailForm.onsubmit = async (e) => {
+    tabSignup.onclick = () => {
+        tabSignup.classList.add('active');
+        tabLogin.classList.remove('active');
+        signupForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        authDesc.innerText = 'Create your official @ett.mail address';
+    };
+
+    // Handle Registration (Sign Up)
+    signupForm.onsubmit = async (e) => {
         e.preventDefault();
         const prefix = document.getElementById('new-mail-prefix').value.trim().toLowerCase();
         const password = document.getElementById('new-mail-password').value;
@@ -29,32 +39,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Check if email already exists
-            const existingAccounts = await GitHubAPI.getFolderContents('news/mail-accounts-storage');
+            const existingAccounts = await GitHubAPI.getFolderContents('news/mail-accounts-storage/email-map');
             const emailExists = existingAccounts.some(f => f.name === `${prefix}.json`);
             if (emailExists) {
                 alert('This email address is already taken.');
                 return;
             }
 
-            // Generate unique mailbox ID (internal folder name)
+            // Generate unique mailbox ID
             const mailboxId = 'ettm_' + Math.random().toString(36).substr(2, 9);
 
             const mailAccountData = {
                 userId: user.id,
                 email: fullEmail,
-                password: password, // In a real app, this would be hashed
+                password: password,
                 mailboxId: mailboxId,
                 createdAt: new Date().toISOString()
             };
 
-            // Save account info (mapped by News User ID for easy lookup by Admin)
+            // Save account info
             await GitHubAPI.safeUpdateFile(
                 `news/mail-accounts-storage/${user.id}.json`,
                 mailAccountData,
                 `Mail: Created account for ${user.username} (${fullEmail})`
             );
 
-            // Also save a mapping by email for login lookup
+            // Save email mapping
             await GitHubAPI.safeUpdateFile(
                 `news/mail-accounts-storage/email-map/${prefix}.json`,
                 { mailboxId: mailboxId, userId: user.id },
@@ -62,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             );
 
             alert('EverythingTT Mail created successfully! You can now login.');
-            createMailModal.classList.add('hidden');
+            tabLogin.click(); // Switch to login tab
         } catch (error) {
             alert('Failed to create mail: ' + error.message);
         }
@@ -76,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const prefix = email.split('@')[0];
 
         try {
-            // Find mapping by email
             const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
             if (!mapData) {
                 alert('Mail account not found.');
@@ -84,12 +93,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const map = JSON.parse(atob(mapData.content));
 
-            // Get full account data
             const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${map.userId}.json`);
             const acc = JSON.parse(atob(accData.content));
 
             if (acc.password === password) {
-                // Store mail session
                 sessionStorage.setItem('current_mail_acc', JSON.stringify(acc));
                 window.location.href = 'main/index.html';
             } else {
