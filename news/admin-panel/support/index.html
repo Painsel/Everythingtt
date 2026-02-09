@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Management - Admin Panel</title>
+    <meta name="theme-color" content="#5865f2">
+    <link rel="icon" href="../../../logo/EverythingTT.png">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../sidebar-shared.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="sidebar-layout">
+    <div class="dashboard-container">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <span class="toggle-icon">☰</span>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar collapsed">
+            <div class="sidebar-brand">
+                <img src="../../../logo/EverythingTT.png" class="sidebar-brand-img" alt="EverythingTT Logo">
+                <span class="sidebar-brand-text">EverythingTT</span>
+            </div>
+            <div class="sidebar-header">
+                <div id="logged-in-user" class="user-info">
+                    <div class="side-pfp-wrapper">
+                        <img id="side-pfp" src="" alt="PFP">
+                        <div id="side-status-icon" class="status-icon"></div>
+                    </div>
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="side-username"></span>
+                            <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-links">
+                    <a href="../../homepage/" class="nav-item">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="../../articles/" class="nav-item">
+                        <span class="nav-icon">📰</span>
+                        <span class="nav-text">Explore Feed</span>
+                    </a>
+                    <a href="../../admin-panel/index.html" class="nav-item active">
+                        <span class="nav-icon">🛡️</span>
+                        <span class="nav-text">Admin Panel</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="logout-btn-compact">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header class="admin-header">
+                <div class="header-left">
+                    <h1>Support Management</h1>
+                    <p>Review and handle user appeals and support requests.</p>
+                </div>
+                <div class="header-right">
+                    <button id="btn-refresh-forms" class="btn-secondary">🔄 Refresh</button>
+                </div>
+            </header>
+
+            <div class="support-filters">
+                <button class="filter-btn active" data-status="pending">Pending</button>
+                <button class="filter-btn" data-status="accepted">Accepted</button>
+                <button class="filter-btn" data-status="rejected">Rejected</button>
+            </div>
+
+            <div id="forms-list" class="forms-list">
+                <div class="loading-state">Loading support forms...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Form Modal -->
+    <div id="view-form-modal" class="modal hidden">
+        <div class="modal-content large">
+            <span class="close-modal">&times;</span>
+            <div id="modal-form-details">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-actions" id="modal-form-actions">
+                <button id="btn-accept-form" class="btn-primary">Accept Appeal</button>
+                <button id="btn-reject-form" class="btn-danger">Reject Appeal</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

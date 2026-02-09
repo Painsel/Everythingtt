@@ -541,7 +541,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function pollUserProfile() {
         if (!user || user.isGuest) return;
-        await GitHubAPI.syncUserProfile((remoteUser) => {
+        const verifiedUser = await GitHubAPI.syncUserProfile((remoteUser) => {
             // Update local user reference properties
             Object.assign(user, remoteUser);
             
@@ -550,6 +550,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log('Profile updated from remote');
         });
+
+        if (!verifiedUser) {
+            console.error('[Security] Account no longer exists. Redirecting to login.');
+            localStorage.removeItem('current_user');
+            window.location.href = '../index.html?error=account_deleted';
+        }
     }
 
     // Load articles
@@ -1595,10 +1601,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function handleReaction(articleId, emoji) {
-        if (!user) return alert('You must be logged in to react');
-        if (user.isGuest) return alert('Guests cannot react to articles. Please log in to join the conversation.');
-        
-        // --- OPTIMISTIC UI UPDATE ---
+    if (!user) return alert('You must be logged in to react');
+    if (user.isGuest) return alert('Guests cannot react to articles. Please log in to join the conversation.');
+    
+    // Threshold check: Reactions (15 violations)
+    if (user.violations >= 15 && String(user.id) !== String(GitHubAPI.DEVELOPER_ID)) {
+        alert("You have been restricted from reacting to articles due to multiple rule violations. You can appeal this restriction on the Support page.");
+        return;
+    }
+
+    // --- OPTIMISTIC UI UPDATE ---
         const container = document.querySelector(`#article-${articleId} .reactions-container`);
         if (!container) return; // Full view check
 
@@ -2543,6 +2555,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!text && !currentAttachmentBase64) return;
             if (!user) return alert('You must be logged in to comment');
             if (user.isGuest) return alert('Guests cannot post comments. Please log in to join the conversation.');
+
+            // Threshold check: Comments (10 violations)
+            if (user.violations >= 10 && String(user.id) !== String(GitHubAPI.DEVELOPER_ID)) {
+                alert("You have been restricted from commenting due to multiple rule violations. You can appeal this restriction on the Support page.");
+                return;
+            }
 
             // Check if user is muted on this article
             const article = articleData[currentArticleIdForComments];

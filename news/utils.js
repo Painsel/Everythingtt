@@ -31,7 +31,8 @@ window.GitHubAPI = {
             'article-comments-storage',
             'created-articles-storage',
             'created-news-accounts-storage',
-            'notifications-storage'
+            'notifications-storage',
+            'support-forms-storage'
         ];
 
         try {
@@ -306,6 +307,7 @@ window.GitHubAPI = {
             'created-articles-storage',
             'created-news-accounts-storage',
             'notifications-storage',
+            'support-forms-storage',
             'banned-ips.json'
         ];
         

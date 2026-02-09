@@ -73,6 +73,10 @@
                         <span class="nav-icon">📰</span>
                         <span class="nav-text">Articles</span>
                     </a>
+                    <a href="support/index.html" class="nav-item">
+                        <span class="nav-icon">🎧</span>
+                        <span class="nav-text">Support Forms</span>
+                    </a>
                     <a href="#" class="nav-item active">
                         <span class="nav-icon">🛡️</span>
                         <span class="nav-text">Admin</span>
@@ -242,34 +246,40 @@
                     <span class="tile-icon">🧪</span>
                     <span class="tile-label" id="label-make-beta">Make BETA</span>
                 </button>
+                <button class="action-tile manage-violations" id="tile-manage-violations">
+                    <span class="tile-icon">⚖️</span>
+                    <span class="tile-label">Violations</span>
+                </button>
             </div>
         </div>
     </div>
 
     <div id="account-info-modal" class="modal hidden">
+        <!-- ... existing modal ... -->
+    </div>
+
+    <div id="manage-violations-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
-            <h3>Account Information</h3>
-            <div id="info-loading" class="status-msg">Fetching detailed information...</div>
-            <div id="info-content" class="hidden">
-                <div class="info-section">
-                    <h4>Account Details</h4>
-                    <p><b>Username:</b> <span id="info-username"></span></p>
-                    <p><b>Password:</b> <span id="info-password"></span></p>
-                    <p><b>Account ID:</b> <span id="info-id"></span></p>
-                    <p><b>Join Date:</b> <span id="info-join-date"></span></p>
-                    <p><b>Privacy Consent:</b> <span id="info-privacy"></span></p>
-                </div>
-                <div class="info-section">
-                    <h4>IP & Network Information</h4>
-                    <p><b>Current IP:</b> <span id="info-ip"></span></p>
-                    <p><b>Country:</b> <span id="info-country"></span></p>
-                    <p><b>Region/State:</b> <span id="info-region"></span></p>
-                    <p><b>City:</b> <span id="info-city"></span></p>
-                    <p><b>ISP Provider:</b> <span id="info-isp"></span></p>
-                    <p><b>Organization:</b> <span id="info-org"></span></p>
-                    <p><b>Timezone:</b> <span id="info-timezone"></span></p>
-                </div>
+            <h3>Manage Rule Violations</h3>
+            <p>Target User: <span id="violations-target-user" style="font-weight: bold;"></span></p>
+            <div class="violation-controls" style="margin-top: 20px; display: flex; align-items: center; gap: 15px;">
+                <button id="btn-dec-violations" class="btn-secondary" style="font-size: 1.5rem; padding: 5px 20px;">-</button>
+                <span id="current-violation-count" style="font-size: 2rem; font-weight: bold; min-width: 40px; text-align: center;">0</span>
+                <button id="btn-inc-violations" class="btn-primary" style="font-size: 1.5rem; padding: 5px 20px;">+</button>
+            </div>
+            <div class="violation-thresholds" style="margin-top: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; font-size: 0.9rem;">
+                <h4 style="margin-bottom: 10px;">Enforcement Thresholds:</h4>
+                <ul style="list-style: none; display: grid; gap: 8px;">
+                    <li id="threshold-3">⚖️ <b>3 Violations:</b> Lose Admin role</li>
+                    <li id="threshold-5">⚖️ <b>5 Violations:</b> Can't create articles</li>
+                    <li id="threshold-10">⚖️ <b>10 Violations:</b> Can't comment</li>
+                    <li id="threshold-15">⚖️ <b>15 Violations:</b> Can't react</li>
+                    <li id="threshold-20">⚖️ <b>20 Violations:</b> Permanent Rule-Breaker</li>
+                </ul>
+            </div>
+            <div class="modal-actions" style="margin-top: 25px;">
+                <button id="btn-save-violations" class="btn-primary">Apply & Sync</button>
             </div>
         </div>
     </div>

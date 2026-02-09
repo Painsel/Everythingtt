@@ -7,6 +7,20 @@ if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Server-side check: Verify user still exists and is still an admin
+    try {
+        const verifiedUser = await GitHubAPI.syncUserProfile();
+        const DEVELOPER_ID = '845829137251567';
+        if (!verifiedUser || (verifiedUser.role !== 'admin' && String(verifiedUser.id) !== DEVELOPER_ID)) {
+            console.error('[Security] Admin verification failed server-side.');
+            if (!verifiedUser) localStorage.removeItem('current_user');
+            window.location.replace('../homepage/');
+            return;
+        }
+    } catch (e) {
+        console.warn('[Security] Could not verify admin status server-side.', e);
+    }
+
     // UI Elements
     document.getElementById('side-pfp').src = user.pfp;
     document.getElementById('side-username').innerText = user.username;
@@ -22,8 +36,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const unbanIpModal = document.getElementById('unban-ip-modal');
     const accountInfoModal = document.getElementById('account-info-modal');
     const accountActionsModal = document.getElementById('account-actions-modal');
+    const manageViolationsModal = document.getElementById('manage-violations-modal');
     const closeModals = document.querySelectorAll('.close-modal');
-    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal];
+    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal, manageViolationsModal];
     
     // Close modals when clicking outside
     window.onclick = (event) => {
@@ -206,6 +221,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert(`User: ${currentEditingUsername}\nIP Address: ${ip}`);
     };
 
+    document.getElementById('tile-manage-violations').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        openManageViolations(currentEditingUserId, currentEditingUsername);
+    };
+
     document.getElementById('tile-make-admin').onclick = async () => {
         accountActionsModal.classList.add('hidden');
         
@@ -332,6 +352,91 @@ document.addEventListener('DOMContentLoaded', async () => {
         banIpModal.classList.remove('hidden');
     };
 
+    let tempViolationCount = 0;
+    window.openManageViolations = (userId, username) => {
+        currentEditingUserId = userId;
+        document.getElementById('violations-target-user').innerText = username;
+        
+        const acc = allAccounts.find(a => a.id === userId);
+        tempViolationCount = acc.violations || 0;
+        
+        updateViolationModalUI();
+        manageViolationsModal.classList.remove('hidden');
+    };
+
+    function updateViolationModalUI() {
+        document.getElementById('current-violation-count').innerText = tempViolationCount;
+        
+        // Highlight active thresholds
+        const thresholds = [3, 5, 10, 15, 20];
+        thresholds.forEach(t => {
+            const el = document.getElementById(`threshold-${t}`);
+            if (tempViolationCount >= t) {
+                el.style.color = '#ff4d4d';
+                el.style.fontWeight = 'bold';
+                el.style.opacity = '1';
+            } else {
+                el.style.color = 'inherit';
+                el.style.fontWeight = 'normal';
+                el.style.opacity = '0.5';
+            }
+        });
+    }
+
+    document.getElementById('btn-dec-violations').onclick = () => {
+        if (tempViolationCount > 0) {
+            tempViolationCount--;
+            updateViolationModalUI();
+        }
+    };
+
+    document.getElementById('btn-inc-violations').onclick = () => {
+        if (tempViolationCount < 100) {
+            tempViolationCount++;
+            updateViolationModalUI();
+        }
+    };
+
+    document.getElementById('btn-save-violations').onclick = async () => {
+        const btn = document.getElementById('btn-save-violations');
+        try {
+            btn.disabled = true;
+            btn.innerText = 'Syncing...';
+            
+            const acc = allAccounts.find(a => a.id === currentEditingUserId);
+            const oldViolations = acc.violations || 0;
+            
+            // If they reached 20 violations, they become a permanent Rule-Breaker
+            const isRuleBreaker = tempViolationCount >= 20;
+            
+            const updateData = { 
+                violations: tempViolationCount,
+                ruleBreaker: isRuleBreaker || acc.ruleBreaker // Don't unset if already rulebreaker unless manually cleared?
+            };
+
+            // 3 violations: Lose admin role
+            if (tempViolationCount >= 3 && acc.role === 'admin') {
+                updateData.role = 'user';
+                alert(`${currentEditingUsername} has reached 3 violations and lost their admin role.`);
+            }
+
+            await GitHubAPI.safeUpdateFile(
+                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                updateData,
+                `Admin: Updated violations for ${currentEditingUsername} (${oldViolations} -> ${tempViolationCount})`
+            );
+            
+            alert('Violations updated successfully.');
+            manageViolationsModal.classList.add('hidden');
+            loadAccounts();
+        } catch (e) {
+            alert('Failed to update violations: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Apply & Sync';
+        }
+    };
+
     window.openAccountInfo = async (userId) => {
         const loading = document.getElementById('info-loading');
         const content = document.getElementById('info-content');
@@ -350,6 +455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('info-password').innerText = acc.password;
             document.getElementById('info-id').innerText = acc.id;
             document.getElementById('info-join-date').innerText = acc.joinDate ? new Date(acc.joinDate).toLocaleString() : 'N/A';
+            document.getElementById('info-violations').innerText = acc.violations || 0;
             
             // Privacy Consent Info
             const consentSpan = document.getElementById('info-privacy');

@@ -5,6 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Threshold check: Article Creation (5 violations)
+    const DEVELOPER_ID = '845829137251567';
+    if (user.violations >= 5 && String(user.id) !== DEVELOPER_ID) {
+        alert("You have been restricted from creating articles due to multiple rule violations. You can appeal this restriction on the Support page.");
+        window.location.href = '../homepage/';
+        return;
+    }
+
     document.getElementById('side-pfp').src = user.pfp;
     document.getElementById('side-username').innerText = user.username;
     
@@ -76,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function pollUserProfile() {
         if (!user || user.isGuest) return;
-        await GitHubAPI.syncUserProfile((remoteUser) => {
+        const verifiedUser = await GitHubAPI.syncUserProfile((remoteUser) => {
             // Update local user reference properties
             Object.assign(user, remoteUser);
             
@@ -91,6 +99,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log('Profile updated from remote');
         });
+
+        if (!verifiedUser) {
+            console.error('[Security] Account no longer exists. Redirecting to login.');
+            localStorage.removeItem('current_user');
+            window.location.href = '../index.html?error=account_deleted';
+        }
     }
 
     pollUserProfile(); // Initial check

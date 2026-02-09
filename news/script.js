@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const authContainer = document.getElementById('auth-container');
     const dashboardContainer = document.getElementById('dashboard-container');
     const btnLogin = document.getElementById('btn-login');
@@ -12,14 +12,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedUser = localStorage.getItem('current_user');
     if (savedUser) {
         const user = JSON.parse(savedUser);
-        console.log('Auto-login detected, redirecting to dashboard...');
         
-        // We can't show notification here easily before redirecting, 
-        // but we could set a flag in localStorage to show it on the next page.
-        localStorage.setItem('show_welcome_toast', 'true');
+        if (user.isGuest) {
+            console.log('Guest session detected, redirecting...');
+            window.location.href = 'homepage/';
+            return;
+        }
+
+        console.log('Auto-login detected, verifying account integrity...');
         
-        window.location.href = 'homepage/';
-        return;
+        // Server-side check: Verify user still exists in storage
+        try {
+            const verifiedUser = await GitHubAPI.syncUserProfile();
+            if (verifiedUser) {
+                console.log('Account verified, redirecting to dashboard...');
+                localStorage.setItem('show_welcome_toast', 'true');
+                window.location.href = 'homepage/';
+                return;
+            } else {
+                console.warn('Account no longer exists or was deleted. Session cleared.');
+                localStorage.removeItem('current_user');
+            }
+        } catch (e) {
+            console.error('Account verification failed:', e);
+            // Fallback: stay on login page if verification fails critically
+        }
     }
 
     const loginForm = document.getElementById('login-form');

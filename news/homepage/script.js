@@ -1,8 +1,24 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = JSON.parse(localStorage.getItem('current_user'));
+    let user = JSON.parse(localStorage.getItem('current_user'));
     if (!user) {
         window.location.href = '../index.html';
         return;
+    }
+
+    // Server-side check: Verify user still exists in storage
+    if (!user.isGuest) {
+        try {
+            const verifiedUser = await GitHubAPI.syncUserProfile();
+            if (!verifiedUser) {
+                console.error('[Security] Account verification failed on load. Redirecting to login.');
+                localStorage.removeItem('current_user');
+                window.location.href = '../index.html?error=account_deleted';
+                return;
+            }
+            user = verifiedUser; // Use the fresh data
+        } catch (e) {
+            console.warn('[Security] Could not verify account server-side. Continuing with cached data.', e);
+        }
     }
 
     // Update sidebar and header
@@ -314,7 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function pollUserProfile() {
         if (!user || user.isGuest) return;
-        await GitHubAPI.syncUserProfile((remoteUser) => {
+        const verifiedUser = await GitHubAPI.syncUserProfile((remoteUser) => {
             // Update local user reference
             Object.assign(user, remoteUser);
 
@@ -325,6 +341,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             console.log('Account data synced from remote');
         });
+
+        if (!verifiedUser) {
+            console.error('[Security] Account no longer exists. Redirecting to login.');
+            localStorage.removeItem('current_user');
+            window.location.href = '../index.html?error=account_deleted';
+        }
     }
 
     async function pollNotifications() {
