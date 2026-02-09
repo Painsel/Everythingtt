@@ -165,10 +165,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!user || user.isGuest) return;
         try {
             const currentIp = await GitHubAPI.getClientIP();
+            const ADMIN_ID = '845829137251567';
+            const isAdminOverride = String(user.id) === ADMIN_ID;
+
             if (currentIp && user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
-                console.error('IP Mismatch detected. Logging out.');
-                localStorage.removeItem('current_user');
-                window.location.href = '../index.html?error=ip_mismatch';
+                if (isAdminOverride) {
+                    console.log('[Security] Admin session IP override triggered');
+                    user.allowedIp = currentIp;
+                    localStorage.setItem('current_user', JSON.stringify(user));
+                    
+                    const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                    if (data) {
+                        const serverUser = JSON.parse(atob(data.content));
+                        serverUser.allowedIp = currentIp;
+                        await GitHubAPI.updateFile(
+                            `news/created-news-accounts-storage/${user.id}.json`,
+                            JSON.stringify(serverUser),
+                            `Security: Session-based admin IP update for ${user.username}`,
+                            data.sha
+                        );
+                    }
+                } else {
+                    console.error('IP Mismatch detected. Logging out.');
+                    localStorage.removeItem('current_user');
+                    window.location.href = '../index.html?error=ip_mismatch';
+                }
             } else if (currentIp && user.allowedIp && user.allowedIp !== currentIp && GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
                 // Dynamic IP update during session
                 console.log(`[Security] Dynamic IP shift detected: ${user.allowedIp} -> ${currentIp}`);

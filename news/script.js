@@ -153,19 +153,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (user.username === username) {
                         if (user.password === password) {
                             // Security check: IP Address restriction
+                            const ADMIN_ID = '845829137251567';
+                            const isAdminOverride = String(user.id) === ADMIN_ID;
+                            
                             if (user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
-                                // ADMIN RECOVERY OVERRIDE: 
-                                // Allow the owner/admin to bypass IP restriction or implement a manual recovery
-                                const ADMIN_ID = '845829137251567';
-                                if (user.id === ADMIN_ID) {
-                                    console.log('[Security] Admin IP override triggered');
+                                if (isAdminOverride) {
+                                    console.log('[Security] Admin IP override triggered - allowing login from new IP');
+                                    // Update allowedIp for the admin so they don't get locked out during session
+                                    user.allowedIp = currentIp;
                                 } else {
                                     btnLogin.disabled = false;
                                     btnLogin.innerText = 'Login / Sign Up';
-                                    
-                                    // Implementation of Legacy Recovery: 
-                                    // If an account is locked out, we can check if it's an "Admin Override" or 
-                                    // if we should provide a "Reset IP" path.
                                     return showNotification('Security Error', 'This account is restricted to a different network. If you recently moved or changed ISPs, please contact the admin to reset your IP lock.', 'error');
                                 }
                             }
@@ -181,6 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Migration: If account has no allowedIp (very old accounts), set it now
                             if (!user.allowedIp) {
                                 user.allowedIp = currentIp;
+                                ipUpdated = true;
+                            }
+
+                            // For Admin, always ensure the remote record is updated with the new IP if it changed
+                            if (isAdminOverride && user.allowedIp === currentIp) {
                                 ipUpdated = true;
                             }
 
