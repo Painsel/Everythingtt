@@ -810,6 +810,10 @@ window.GitHubAPI = {
         }
     },
 
+    async getFolderContents(path) {
+        return this.listFiles(path);
+    },
+
     async getDirectory(path) {
         return this.listFiles(path);
     },
