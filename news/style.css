@@ -101,16 +101,20 @@ body {
 .logo-wrapper {
     width: clamp(50px, 10vh, 72px);
     height: clamp(50px, 10vh, 72px);
-    background: var(--primary);
+    background: transparent;
     border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto clamp(0.75rem, 2vh, 1.5rem);
-    font-size: clamp(1.5rem, 4vh, 2.5rem);
-    box-shadow: 0 10px 20px rgba(88, 101, 242, 0.3);
-    transform: rotate(-5deg);
     transition: var(--transition);
+}
+
+.logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 16px;
 }
 
 .auth-card:hover .logo-wrapper {

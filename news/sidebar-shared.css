@@ -41,8 +41,29 @@ body.sidebar-layout .dashboard-container {
     margin-right: -260px;
 }
 
+.sidebar-brand {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #2f3136;
+}
+
+.sidebar-brand-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.sidebar-brand-text {
+    color: white;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.5px;
+}
+
 .sidebar-header {
-    padding: 2rem 1.5rem;
+    padding: 1.5rem;
     border-bottom: 1px solid #2f3136;
 }
 
