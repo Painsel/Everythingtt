@@ -213,6 +213,8 @@ window.GitHubAPI = {
         
         try {
             const localUser = JSON.parse(localUserStr);
+            if (localUser.isGuest) return localUser; // Don't sync guest profile
+            
             const data = await this.getFile(`news/created-news-accounts-storage/${localUser.id}.json`);
             
             if (data) {

@@ -13,8 +13,8 @@
         (function() {
             try {
                 const user = JSON.parse(localStorage.getItem('current_user'));
-                if (!user) {
-                    window.location.replace('../articles/');
+                if (!user || user.isGuest) {
+                    window.location.replace('../homepage/');
                 }
             } catch (e) {
                 window.location.replace('../articles/');

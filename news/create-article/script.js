@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const user = JSON.parse(localStorage.getItem('current_user'));
-    if (!user) {
-        window.location.href = '../';
+    if (!user || user.isGuest) {
+        window.location.href = '../homepage/';
         return;
     }
 
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function pollUserProfile() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         await GitHubAPI.syncUserProfile((remoteUser) => {
             // Update local user reference properties
             Object.assign(user, remoteUser);

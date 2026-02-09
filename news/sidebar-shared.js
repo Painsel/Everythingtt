@@ -8,6 +8,29 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply BETA tester class if applicable
         try {
             const user = JSON.parse(localStorage.getItem('current_user'));
+            if (user && user.isGuest) {
+                body.classList.add('is-guest');
+                
+                // Centralized Guest UI Restrictions
+                const restrictedLinks = [
+                    'my-articles',
+                    'create-article',
+                    'profile-editor',
+                    'admin-panel'
+                ];
+
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    const href = item.getAttribute('href') || '';
+                    if (restrictedLinks.some(link => href.includes(link))) {
+                        item.classList.add('restricted-feature');
+                        item.style.opacity = '0.5';
+                        item.style.pointerEvents = 'none';
+                        item.title = 'Login to access this feature';
+                    }
+                });
+            }
+
             if (window.GitHubAPI && GitHubAPI.isBetaTester(user)) {
                 body.classList.add('is-beta-tester');
             }

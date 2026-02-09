@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Update sidebar and header
     const updateUIWithStatus = (u) => {
-        const statusIconName = (u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png'));
+        const isGuest = u.isGuest === true;
+        const statusIconName = isGuest ? 'Offline.png' : ((u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png')));
         const iconPath = GitHubAPI.getStatusIconPath(statusIconName);
 
         document.getElementById('side-pfp').src = u.pfp;
@@ -24,11 +25,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             sideBadgeContainer.style.verticalAlign = 'middle';
             sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
         }
-        sideBadgeContainer.innerHTML = `
-            ${GitHubAPI.renderRoleBadge(u.role)}
-            ${GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge')}
-            ${GitHubAPI.renderThemeBadge('user-badge side-badge')}
-        `;
+
+        let badges = '';
+        if (isGuest) {
+            badges = `<span class="user-badge guest-badge" title="Guest User">GUEST</span>`;
+        } else {
+            badges = `
+                ${GitHubAPI.renderRoleBadge(u.role)}
+                ${GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge')}
+                ${GitHubAPI.renderThemeBadge('user-badge side-badge')}
+            `;
+        }
+        sideBadgeContainer.innerHTML = badges;
 
         document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
         
@@ -54,13 +62,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             badgeContainer.style.verticalAlign = 'middle';
             headerUsername.parentNode.insertBefore(badgeContainer, headerUsername.nextSibling);
         }
-        badgeContainer.innerHTML = `
-            ${GitHubAPI.renderRoleBadge(u.role)}
-            ${GitHubAPI.renderNewUserBadge(u.joinDate)}
-            ${GitHubAPI.renderThemeBadge()}
-        `;
 
-        document.getElementById('header-id').innerText = `@${u.id || u.username.toLowerCase().replace(/\s+/g, '')}`;
+        let headerBadges = '';
+        if (isGuest) {
+            headerBadges = `<span class="user-badge guest-badge" title="Guest User">GUEST</span>`;
+        } else {
+            headerBadges = `
+                ${GitHubAPI.renderRoleBadge(u.role)}
+                ${GitHubAPI.renderNewUserBadge(u.joinDate)}
+                ${GitHubAPI.renderThemeBadge()}
+            `;
+        }
+        badgeContainer.innerHTML = headerBadges;
+
+        document.getElementById('header-id').innerText = isGuest ? '@guest' : `@${u.id || u.username.toLowerCase().replace(/\s+/g, '')}`;
         document.getElementById('header-status-icon').style.backgroundImage = `url('${iconPath}')`;
 
         const headerBubble = document.getElementById('header-status-bubble');
@@ -70,10 +85,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             headerBubble.style.display = 'none';
         }
+
+        // Apply Guest restrictions
+        if (isGuest) {
+            const notifBtn = document.getElementById('btn-notifications');
+            
+            if (notifBtn) {
+                notifBtn.style.opacity = '0.5';
+                notifBtn.style.pointerEvents = 'none';
+                notifBtn.title = 'Login to see notifications';
+            }
+
+            // Hide the "Publish News" button in the main content if it exists
+            const mainPublishBtn = document.getElementById('btn-create-article');
+            if (mainPublishBtn) {
+                mainPublishBtn.style.display = 'none';
+            }
+        }
     };
 
     // Initial render from local storage
     const updateStats = (u) => {
+        if (u.isGuest) {
+            document.getElementById('home-contributions').innerText = '0';
+            document.getElementById('home-join-date').innerText = 'Guest Session';
+            return;
+        }
         const contributions = u.contributions || 0;
         const joinDate = u.joinDate || u.createdAt;
         const formattedDate = joinDate ? new Date(joinDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Early Member';
@@ -84,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Security check: IP Address restriction
     async function checkIP() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         try {
             const currentIp = await GitHubAPI.getClientIP();
             if (currentIp && user.allowedIp && currentIp !== user.allowedIp) {
@@ -125,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Scan for Alt accounts with same IP
     async function scanAlts() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         const currentIp = await GitHubAPI.getClientIP();
         if (!currentIp) return;
 
@@ -225,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let notificationsSHA = null;
 
     async function pollUserProfile() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         await GitHubAPI.syncUserProfile((remoteUser) => {
             // Update local user reference
             Object.assign(user, remoteUser);
@@ -240,7 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function pollNotifications() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         try {
             // Use getFileRaw for high-speed polling (check for changes without SHA)
             const content = await GitHubAPI.getFileRaw(`news/notifications-storage/${user.id}.json`);

@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const user = JSON.parse(localStorage.getItem('current_user'));
+    const DEVELOPER_ID = '845829137251567';
+
+    // Top-level Security Check
+    if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {
+        window.location.replace('../../homepage/');
+        return;
+    }
     
     // UI Elements
     document.getElementById('side-pfp').src = user.pfp;

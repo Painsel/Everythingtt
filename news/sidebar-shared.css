@@ -82,6 +82,23 @@ body.sidebar-layout .dashboard-container {
     text-align: center;
 }
 
+.user-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.guest-badge {
+    background: #4f545c;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .sidebar-footer {
     padding: 1.5rem;
     border-top: 1px solid #2f3136;

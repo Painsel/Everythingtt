@@ -99,7 +99,47 @@ body {
     text-decoration: underline;
 }
 
-#auth-container .hint {
+#auth-container .auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: #72767d;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #40444b;
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+}
+
+.guest-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 2px solid #4f545c;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+
+.guest-btn:hover {
+    background: rgba(79, 84, 92, 0.1);
+    border-color: #72767d;
+}
+
+.hint {
     margin-top: 2rem;
     font-size: 0.85rem;
     color: #b9bbbe;
@@ -340,6 +380,25 @@ body {
     scrollbar-color: #202225 #2e3338;
 }
 
+/* Guest Mode UI Tweaks */
+body.is-guest .restricted-feature {
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+
+.guest-badge {
+    background: #4f545c !important;
+    color: #fff !important;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+/* Sidebar Navigation */
 .sidebar {
     width: 280px;
     min-width: 240px;
@@ -734,29 +793,61 @@ body {
 
 #btn-login {
     width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #5865f2 0%, #4752c4 100%);
-    color: #fff;
+    padding: 1rem;
+    background-color: #5865f2;
+    color: white;
     border: none;
     border-radius: 8px;
-    cursor: pointer;
-    font-weight: 800;
     font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: all 0.3s ease;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
     margin-top: 0.5rem;
 }
 
 #btn-login:hover {
+    background-color: #4752c4;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
-    background: linear-gradient(135deg, #4752c4 0%, #3a44a1 100%);
+    box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
 }
 
 #btn-login:active {
     transform: translateY(0);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: #72767d;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #3f4147;
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+}
+
+.guest-btn {
+    background-color: transparent !important;
+    border: 1px solid #4f545c !important;
+    color: #dbdee1 !important;
+    margin-bottom: 1rem;
+}
+
+.guest-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: #72767d !important;
+    box-shadow: none !important;
 }
 
 .logout-btn {

@@ -4,19 +4,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('Raw current_user from localStorage:', rawUser);
     
     let currentUser = JSON.parse(rawUser);
-    if (!currentUser) {
-        console.warn('No user found in localStorage, redirecting to login in 2 seconds...');
-        // Show an error on screen instead of just redirecting
-        document.body.innerHTML = `
-            <div style="background: #36393f; color: white; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
-                <h2>Session Expired</h2>
-                <p>We couldn't find your login session. Redirecting to login...</p>
-                <button onclick="window.location.href='../index.html'" style="background: #5865f2; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Go to Login</button>
-            </div>
-        `;
-        setTimeout(() => {
-            window.location.href = '../index.html';
-        }, 2000);
+    if (!currentUser || currentUser.isGuest) {
+        console.warn('No valid user session found, redirecting to homepage...');
+        window.location.href = '../homepage/';
         return;
     }
 
@@ -24,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Security check: IP Address restriction
     async function checkIP() {
-        if (!currentUser) return;
+        if (!currentUser || currentUser.isGuest) return;
         try {
             const currentIp = await GitHubAPI.getClientIP();
             if (currentIp && currentUser.allowedIp && currentIp !== currentUser.allowedIp) {
@@ -128,7 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Background profile sync
     async function pollUserProfile() {
         // Skip polling if page is hidden or user is typing/editing
-        if (document.hidden) return;
+        if (document.hidden || (currentUser && currentUser.isGuest)) return;
         
         const activeElement = document.activeElement;
         const isEditing = activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA');

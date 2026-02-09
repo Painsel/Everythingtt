@@ -57,23 +57,61 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Show logged in user in sidebar if exists
     const updateSideProfileWithStatus = (u) => {
+        const isGuest = u.isGuest === true;
         const statusInfo = {
-            status: u.status || 'offline',
-            statusType: u.statusType || 'auto',
-            statusMsg: u.statusMsg || ''
+            status: isGuest ? 'offline' : (u.status || 'offline'),
+            statusType: isGuest ? 'auto' : (u.statusType || 'auto'),
+            statusMsg: isGuest ? 'Browsing as Guest' : (u.statusMsg || '')
         };
         const iconPath = getStatusIcon(statusInfo);
 
         document.getElementById('side-pfp').src = u.pfp;
         document.getElementById('side-username').innerText = u.username;
+
+        // Add guest badge if applicable
+        const sideUsername = document.getElementById('side-username');
+        let sideBadgeContainer = sideUsername.nextElementSibling;
+        if (!sideBadgeContainer || !sideBadgeContainer.classList.contains('badge-container')) {
+            sideBadgeContainer = document.createElement('div');
+            sideBadgeContainer.className = 'badge-container';
+            sideBadgeContainer.style.display = 'inline-flex';
+            sideBadgeContainer.style.marginLeft = '4px';
+            sideBadgeContainer.style.verticalAlign = 'middle';
+            sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
+        }
+
+        if (isGuest) {
+            sideBadgeContainer.innerHTML = `<span class="user-badge guest-badge" title="Guest User">GUEST</span>`;
+        } else {
+            // Check for existing badges or clear
+            sideBadgeContainer.innerHTML = '';
+        }
+
         document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
         
         const sideBubble = document.getElementById('side-status-bubble');
-        if (u.statusMsg) {
-            sideBubble.innerText = u.statusMsg;
+        const displayStatus = isGuest ? 'Browsing as Guest' : u.statusMsg;
+        if (displayStatus) {
+            sideBubble.innerText = displayStatus;
             sideBubble.style.display = 'block';
         } else {
             sideBubble.style.display = 'none';
+        }
+
+        // Disable restricted navigation items for guests
+        if (isGuest) {
+            const publishBtn = document.querySelector('a[href="../create-article/"]');
+            const settingsBtn = document.querySelector('a[href="../profile-editor/index.html"]');
+            if (publishBtn) {
+                publishBtn.style.opacity = '0.5';
+                publishBtn.style.pointerEvents = 'none';
+                publishBtn.title = 'Login to publish news';
+            }
+            if (settingsBtn) {
+                settingsBtn.style.opacity = '0.5';
+                settingsBtn.style.pointerEvents = 'none';
+                settingsBtn.title = 'Login to customize profile';
+            }
         }
     };
 
@@ -332,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function pollNotifications() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         try {
             const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
             if (data && data.sha !== notificationsSHA) {
@@ -463,7 +501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function pollUserProfile() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         await GitHubAPI.syncUserProfile((remoteUser) => {
             // Update local user reference properties
             Object.assign(user, remoteUser);
@@ -721,10 +759,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function openArticleSettings(articleId) {
-        if (!settingsModal) return;
+        if (!settingsModal || !user || user.isGuest) return;
         currentEditingArticleId = articleId;
         const article = articleData[articleId];
-        if (!article || !user || String(article.authorId) !== String(user.id)) return;
+        if (!article || String(article.authorId) !== String(user.id)) return;
 
         // Reset to first tab
         if (sidebarTabs && sidebarTabs[0]) sidebarTabs[0].click();
@@ -1519,6 +1557,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function handleReaction(articleId, emoji) {
         if (!user) return alert('You must be logged in to react');
+        if (user.isGuest) return alert('Guests cannot react to articles. Please log in to join the conversation.');
         
         // --- OPTIMISTIC UI UPDATE ---
         const container = document.querySelector(`#article-${articleId} .reactions-container`);
@@ -2061,6 +2100,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.setupReply = function(commentId, authorName) {
+        if (!user) return alert('You must be logged in to reply');
+        if (user.isGuest) return alert('Guests cannot reply to comments. Please log in to join the conversation.');
         currentReplyToId = commentId;
         
         // Show visual indicator
@@ -2084,7 +2125,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.handleDeleteComment = async function(commentId) {
-         if (!user || !currentArticleIdForComments) return;
+         if (!user || user.isGuest || !currentArticleIdForComments) return;
          if (!confirm('Are you sure you want to delete this comment?')) return;
 
          // --- OPTIMISTIC UPDATE ---
@@ -2226,6 +2267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentEditingCommentId = null;
 
     window.setupEditComment = function(commentId) {
+        if (!user || user.isGuest) return;
         const commentEl = document.getElementById(`comment-${commentId}`);
         if (!commentEl) return;
 
@@ -2359,6 +2401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.handleCommentVote = async function(commentId, type) {
         if (!user) return alert('You must be logged in to vote');
+        if (user.isGuest) return alert('Guests cannot vote on comments. Please log in to join the conversation.');
         
         // --- OPTIMISTIC UPDATE ---
         const cachedCommentsStr = localStorage.getItem(`comments_${currentArticleIdForComments}`);
@@ -2460,6 +2503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const text = commentInput.value.trim();
             if (!text && !currentAttachmentBase64) return;
             if (!user) return alert('You must be logged in to comment');
+            if (user.isGuest) return alert('Guests cannot post comments. Please log in to join the conversation.');
 
             // Check if user is muted on this article
             const article = articleData[currentArticleIdForComments];

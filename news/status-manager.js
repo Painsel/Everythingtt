@@ -10,6 +10,9 @@ const StatusManager = {
         if (!savedUser) return;
         this.user = JSON.parse(savedUser);
 
+        // Block guest status updates
+        if (this.user.isGuest) return;
+
         // App exit - Moved up to ensure it's always registered
         window.addEventListener('beforeunload', () => {
             this.setStatusSync('offline');

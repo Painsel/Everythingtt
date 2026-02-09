@@ -21,6 +21,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const loginForm = document.getElementById('login-form');
+    const btnGuest = document.getElementById('btn-guest');
+
+    btnGuest.addEventListener('click', () => {
+        const guestUser = {
+            username: 'Guest',
+            id: 'guest_' + Math.random().toString(36).substr(2, 9),
+            isGuest: true,
+            pfp: 'https://painsel.github.io/Everythingtt/news/default-pfp.png', // Assuming there's a default PFP
+            status: 'Browsing as Guest',
+            bio: 'Guests have read-only access to the platform.'
+        };
+        localStorage.setItem('current_user', JSON.stringify(guestUser));
+        window.location.href = 'homepage/';
+    });
 
     // Handle security errors from redirect
     const urlParams = new URLSearchParams(window.location.search);
