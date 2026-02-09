@@ -192,10 +192,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     document.getElementById('btn-refresh-mail').onclick = loadMail;
-    document.getElementById('btn-mail-logout').onclick = () => {
-        sessionStorage.removeItem('current_mail_acc');
-        window.location.href = '../index.html';
-    };
 
     loadMail();
 });

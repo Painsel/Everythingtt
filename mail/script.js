@@ -1,58 +1,56 @@
 import { GitHubAPI } from '../news/utils.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('mail-login-form');
-    const signupForm = document.getElementById('mail-signup-form');
-    const tabLogin = document.getElementById('tab-login');
-    const tabSignup = document.getElementById('tab-signup');
-    const authDesc = document.getElementById('auth-desc');
+document.addEventListener('DOMContentLoaded', async () => {
+    const accessForm = document.getElementById('mail-access-form');
+    const signupFields = document.getElementById('signup-fields');
+    const accessFields = document.getElementById('access-fields');
+    const emailDisplay = document.getElementById('existing-email-display');
+    const btnEnterInbox = document.getElementById('btn-enter-inbox');
 
-    // Tab Switching
-    tabLogin.onclick = () => {
-        tabLogin.classList.add('active');
-        tabSignup.classList.remove('active');
-        loginForm.classList.remove('hidden');
-        signupForm.classList.add('hidden');
-        authDesc.innerText = 'Enter your mail credentials to continue';
-    };
+    const user = JSON.parse(localStorage.getItem('current_user'));
+    if (!user) {
+        alert('You must be logged into EverythingTT News to access Mail.');
+        window.location.href = '../news/index.html';
+        return;
+    }
 
-    tabSignup.onclick = () => {
-        tabSignup.classList.add('active');
-        tabLogin.classList.remove('active');
-        signupForm.classList.remove('hidden');
-        loginForm.classList.add('hidden');
-        authDesc.innerText = 'Create your official @ett.mail address';
-    };
+    let currentMailAcc = null;
+
+    // Check if account already exists
+    try {
+        const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${user.id}.json`);
+        if (accData) {
+            currentMailAcc = JSON.parse(atob(accData.content));
+            
+            // Show access fields
+            signupFields.classList.add('hidden');
+            accessFields.classList.remove('hidden');
+            emailDisplay.innerText = currentMailAcc.email;
+        }
+    } catch (e) {
+        // No account yet, keep signup fields visible
+        console.log('No mail account found for user, showing signup.');
+    }
 
     // Handle Registration (Sign Up)
-    signupForm.onsubmit = async (e) => {
+    accessForm.onsubmit = async (e) => {
         e.preventDefault();
         const prefix = document.getElementById('new-mail-prefix').value.trim().toLowerCase();
-        const password = document.getElementById('new-mail-password').value;
         const fullEmail = `${prefix}@ett.mail`;
 
-        const user = JSON.parse(localStorage.getItem('current_user'));
-        if (!user) {
-            alert('You must be logged into EverythingTT News to create a mail account.');
-            return;
-        }
-
         try {
-            // Check if email already exists
-            const existingAccounts = await GitHubAPI.getFolderContents('news/mail-accounts-storage/email-map');
-            const emailExists = existingAccounts.some(f => f.name === `${prefix}.json`);
+            // Check if email already exists in the map
+            const existingMaps = await GitHubAPI.getFolderContents('news/mail-accounts-storage/email-map');
+            const emailExists = existingMaps.some(f => f.name === `${prefix}.json`);
             if (emailExists) {
                 alert('This email address is already taken.');
                 return;
             }
 
-            // Generate unique mailbox ID
             const mailboxId = 'ettm_' + Math.random().toString(36).substr(2, 9);
-
             const mailAccountData = {
                 userId: user.id,
                 email: fullEmail,
-                password: password,
                 mailboxId: mailboxId,
                 createdAt: new Date().toISOString()
             };
@@ -71,39 +69,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 `Mail: Email mapping for ${fullEmail}`
             );
 
-            alert('EverythingTT Mail created successfully! You can now login.');
-            tabLogin.click(); // Switch to login tab
+            sessionStorage.setItem('current_mail_acc', JSON.stringify(mailAccountData));
+            window.location.href = 'main/index.html';
         } catch (error) {
-            alert('Failed to create mail: ' + error.message);
+            alert('Failed to create mailbox: ' + error.message);
         }
     };
 
-    // Handle Login
-    loginForm.onsubmit = async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('mail-email').value.trim().toLowerCase();
-        const password = document.getElementById('mail-password').value;
-        const prefix = email.split('@')[0];
-
-        try {
-            const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
-            if (!mapData) {
-                alert('Mail account not found.');
-                return;
-            }
-            const map = JSON.parse(atob(mapData.content));
-
-            const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${map.userId}.json`);
-            const acc = JSON.parse(atob(accData.content));
-
-            if (acc.password === password) {
-                sessionStorage.setItem('current_mail_acc', JSON.stringify(acc));
-                window.location.href = 'main/index.html';
-            } else {
-                alert('Incorrect password.');
-            }
-        } catch (error) {
-            alert('Login failed: ' + error.message);
+    // Handle Enter Inbox
+    btnEnterInbox.onclick = () => {
+        if (currentMailAcc) {
+            sessionStorage.setItem('current_mail_acc', JSON.stringify(currentMailAcc));
+            window.location.href = 'main/index.html';
         }
     };
 });
