@@ -1,6 +1,5 @@
-import { GitHubAPI } from '../news/utils.js';
-
 document.addEventListener('DOMContentLoaded', async () => {
+    const GitHubAPI = window.GitHubAPI;
     const accessForm = document.getElementById('mail-access-form');
     const signupFields = document.getElementById('signup-fields');
     const accessFields = document.getElementById('access-fields');
@@ -20,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${user.id}.json`);
         if (accData) {
-            currentMailAcc = JSON.parse(atob(accData.content));
+            currentMailAcc = JSON.parse(accData.content);
             
             // Show access fields
             signupFields.classList.add('hidden');

@@ -1,6 +1,5 @@
-import { GitHubAPI } from '../utils.js';
-
 document.addEventListener('DOMContentLoaded', async () => {
+    const GitHubAPI = window.GitHubAPI;
     let user = JSON.parse(localStorage.getItem('current_user'));
     if (!user) {
         window.location.href = '../index.html';

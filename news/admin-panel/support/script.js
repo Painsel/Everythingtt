@@ -1,6 +1,5 @@
-import { GitHubAPI } from '../../utils.js';
-
 document.addEventListener('DOMContentLoaded', async () => {
+    const GitHubAPI = window.GitHubAPI;
     let user = JSON.parse(localStorage.getItem('current_user'));
     if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
         window.location.href = '../../homepage/index.html';
@@ -192,14 +191,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (userMailAcc) {
                     const mailAccData = await GitHubAPI.getFile(userMailAcc.path);
-                    const mailAcc = JSON.parse(atob(mailAccData.content));
-                    const mailBoxId = mailAcc.mailBoxId;
+                    if (mailAccData) {
+                        const mailAcc = JSON.parse(mailAccData.content);
+                        const mailboxId = mailAcc.mailboxId;
 
-                    await GitHubAPI.safeUpdateFile(
-                        `news/mail-storage/${mailBoxId}/${mailData.id}.json`,
-                        mailData,
-                        `Support: Email sent to ${currentViewingForm.username} regarding appeal ${currentViewingForm.id}`
-                    );
+                        await GitHubAPI.safeUpdateFile(
+                            `news/mail-storage/${mailboxId}/${mailData.id}.json`,
+                            mailData,
+                            `Support: Email sent to ${currentViewingForm.username} regarding appeal ${currentViewingForm.id}`
+                        );
+                    }
                 }
             } catch (mailError) {
                 console.error('Failed to send support email:', mailError);

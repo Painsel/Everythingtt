@@ -1,6 +1,5 @@
-import { GitHubAPI } from '../../news/utils.js';
-
 document.addEventListener('DOMContentLoaded', async () => {
+    const GitHubAPI = window.GitHubAPI;
     const mailAcc = JSON.parse(sessionStorage.getItem('current_mail_acc'));
     if (!mailAcc) {
         window.location.href = '../index.html';
@@ -52,7 +51,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const jsonFiles = files.filter(f => f.name.endsWith('.json'));
             const promises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
-            allMessages = await Promise.all(promises);
+            const results = await Promise.all(promises);
+            allMessages = results.map(r => JSON.parse(r.content));
             
             // Sort by date newest first
             allMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -87,6 +87,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     async function openMail(msg) {
+        if (msg.type === 'draft') {
+            document.getElementById('compose-to').value = msg.recipientId || '';
+            document.getElementById('compose-subject').value = msg.subject === '(No Subject)' ? '' : msg.subject;
+            document.getElementById('compose-body').value = msg.content || '';
+            composeModal.classList.remove('hidden');
+            return;
+        }
+
         const content = document.getElementById('mail-view-content');
         content.innerHTML = `
             <div class="mail-view-header">
@@ -113,7 +121,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Compose Logic
-    btnCompose.onclick = () => composeModal.classList.remove('hidden');
+    btnCompose.onclick = () => {
+        composeForm.reset();
+        composeModal.classList.remove('hidden');
+    };
+    
+    document.getElementById('btn-save-draft').onclick = async () => {
+        const to = document.getElementById('compose-to').value.trim();
+        const subject = document.getElementById('compose-subject').value.trim();
+        const body = document.getElementById('compose-body').value.trim();
+
+        if (!subject && !body) {
+            alert('Please enter at least a subject or body to save a draft.');
+            return;
+        }
+
+        try {
+            const mailId = `draft_${Date.now()}`;
+            const mailData = {
+                id: mailId,
+                sender: mailAcc.email,
+                senderId: mailAcc.userId,
+                recipientId: to,
+                subject: subject || '(No Subject)',
+                content: body,
+                timestamp: new Date().toISOString(),
+                type: 'draft',
+                isRead: true
+            };
+
+            await GitHubAPI.safeUpdateFile(
+                `news/mail-storage/${mailAcc.mailboxId}/${mailId}.json`,
+                mailData,
+                `Mail: Saved draft ${mailId}`
+            );
+
+            alert('Draft saved successfully!');
+            composeModal.classList.add('hidden');
+            composeForm.reset();
+            loadMail();
+        } catch (error) {
+            alert('Failed to save draft: ' + error.message);
+        }
+    };
     
     composeForm.onsubmit = async (e) => {
         e.preventDefault();
@@ -130,14 +180,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const prefix = to.split('@')[0];
                 const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
                 if (mapData) {
-                    const map = JSON.parse(atob(mapData.content));
+                    const map = JSON.parse(mapData.content);
                     recipientMailboxId = map.mailboxId;
                 }
             } else {
                 // Assume User ID
                 const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${to}.json`);
                 if (accData) {
-                    const acc = JSON.parse(atob(accData.content));
+                    const acc = JSON.parse(accData.content);
                     recipientMailboxId = acc.mailboxId;
                     recipientEmail = acc.email;
                 }
