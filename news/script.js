@@ -117,16 +117,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
                 
                 if (banRecord) {
-                    btnLogin.disabled = false;
-                    btnLogin.innerText = 'Login / Sign Up';
+                    // Check if the user trying to log in is the admin/developer
+                    // Since we haven't searched for the user yet, we need to find them first 
+                    // or allow the check to proceed to user search.
+                    // However, the ban check happens BEFORE user search.
+                    // Let's modify the flow to allow the admin to bypass even if their IP is banned.
                     
-                    if (typeof banRecord === 'object') {
-                        const reason = banRecord.reason || 'No reason provided';
-                        const admin = banRecord.bannedBy || 'System';
-                        return showNotification('Access Denied', `Your IP address has been banned.\n\nReason: ${reason}\nBanned by: ${admin}`, 'error');
-                    } else {
-                        return showNotification('Security Error', 'Your IP address has been banned from this service.', 'error');
-                    }
+                    // We'll search for the user FIRST if an IP ban is hit, to see if it's the admin.
+                    console.warn(`[Security] Banned IP detected (${currentIp}), checking if user is admin...`);
                 }
             }
 
@@ -155,6 +153,24 @@ document.addEventListener('DOMContentLoaded', () => {
                             // Security check: IP Address restriction
                             const ADMIN_ID = '845829137251567';
                             const isAdminOverride = String(user.id) === ADMIN_ID;
+
+                            // If we hit an IP ban earlier, and this is NOT the admin, block them now
+                            const banListData = await GitHubAPI.getFile('news/banned-ips.json');
+                            if (banListData && !isAdminOverride) {
+                                const bannedIps = JSON.parse(banListData.content);
+                                const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
+                                if (banRecord) {
+                                    btnLogin.disabled = false;
+                                    btnLogin.innerText = 'Login / Sign Up';
+                                    if (typeof banRecord === 'object') {
+                                        const reason = banRecord.reason || 'No reason provided';
+                                        const admin = banRecord.bannedBy || 'System';
+                                        return showNotification('Access Denied', `Your IP address has been banned.\n\nReason: ${reason}\nBanned by: ${admin}`, 'error');
+                                    } else {
+                                        return showNotification('Security Error', 'Your IP address has been banned from this service.', 'error');
+                                    }
+                                }
+                            }
                             
                             if (user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
                                 if (isAdminOverride) {

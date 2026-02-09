@@ -223,7 +223,10 @@ window.GitHubAPI = {
                 remoteUser.sha = data.sha; // Preserve SHA
 
                 // Force Logout Check
-                if (remoteUser.forceLogout === true) {
+                const ADMIN_ID = '845829137251567';
+                const isAdmin = String(remoteUser.id) === ADMIN_ID;
+
+                if (remoteUser.forceLogout === true && !isAdmin) {
                     console.warn(`[GitHubAPI] Force logout signal detected for ${remoteUser.username}`);
                     localStorage.removeItem('current_user');
                     // Find the relative path to the news root
