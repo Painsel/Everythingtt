@@ -138,6 +138,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateStats(user);
     document.getElementById('welcome-title').innerText = `Welcome back, ${user.username}!`;
 
+    // Show welcome toast if flagged
+    if (localStorage.getItem('show_welcome_toast') === 'true') {
+        localStorage.removeItem('show_welcome_toast');
+        setTimeout(() => {
+            if (window.showNotification) {
+                showNotification('Welcome back!', `Logged in as ${user.username}. Glad to see you again!`, 'success');
+            }
+        }, 800);
+    }
+
     // Listen for live updates from StatusManager
     if (window.StatusManager) {
         window.StatusManager.onUserUpdate = (updatedUser) => {

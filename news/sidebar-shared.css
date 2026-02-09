@@ -355,3 +355,69 @@ body.is-beta-tester div.beta-only:not(.modal) {
         top: 20px;
     }
 }
+
+/* Notification Toast */
+.notification-container {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    pointer-events: none;
+}
+
+.notification {
+    background: rgba(43, 45, 49, 0.95);
+    backdrop-filter: blur(10px);
+    color: #ffffff;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 450px;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: auto;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.error {
+    border-left: 4px solid #f23f42;
+}
+
+.notification.success {
+    border-left: 4px solid #23a559;
+}
+
+.notification.info {
+    border-left: 4px solid #5865f2;
+}
+
+.notification-icon {
+    font-size: 1.25rem;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.notification-message {
+    font-size: 0.85rem;
+    color: #b5bac1;
+    line-height: 1.4;
+}

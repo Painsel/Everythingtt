@@ -1,4 +1,47 @@
 /* Global Sidebar Shared Logic */
+
+// Global Notification Function
+window.showNotification = function(title, message, type = 'info') {
+    let container = document.getElementById('notification-container');
+    
+    // Create container if it doesn't exist (e.g. on pages other than login)
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.className = 'notification-container';
+        document.body.appendChild(container);
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    
+    const icons = {
+        info: 'ℹ️',
+        success: '✅',
+        error: '❌',
+        warning: '⚠️'
+    };
+
+    notification.innerHTML = `
+        <div class="notification-icon">${icons[type] || '🔔'}</div>
+        <div class="notification-content">
+            <div class="notification-title">${title}</div>
+            <div class="notification-message">${message}</div>
+        </div>
+    `;
+
+    container.appendChild(notification);
+    
+    // Force reflow for animation
+    notification.offsetHeight;
+    notification.classList.add('show');
+
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 400);
+    }, 5000);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const sidebar = document.querySelector('.sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');

@@ -11,17 +11,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load session if exists
     const savedUser = localStorage.getItem('current_user');
     if (savedUser) {
-        // Auto-login: Sync metadata before redirecting or during redirect
-        // We'll redirect immediately for speed, but the target page will handle the sync
-        // However, the user asked for sync during Auto-Login specifically.
-        // Let's do a quick sync if possible, but don't block too long.
+        const user = JSON.parse(savedUser);
         console.log('Auto-login detected, redirecting to dashboard...');
+        
+        // We can't show notification here easily before redirecting, 
+        // but we could set a flag in localStorage to show it on the next page.
+        localStorage.setItem('show_welcome_toast', 'true');
+        
         window.location.href = 'homepage/';
         return;
     }
 
     const loginForm = document.getElementById('login-form');
     const btnGuest = document.getElementById('btn-guest');
+    const togglePassword = document.getElementById('toggle-password');
+    const loginPassword = document.getElementById('login-password');
+
+    if (togglePassword) {
+        togglePassword.addEventListener('click', () => {
+            const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            loginPassword.setAttribute('type', type);
+            togglePassword.querySelector('.eye-icon').innerText = type === 'password' ? '👁️' : '👁️‍🗨️';
+        });
+    }
 
     btnGuest.addEventListener('click', () => {
         const guestUser = {
@@ -39,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle security errors from redirect
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('error') === 'ip_mismatch') {
-        alert('Security Alert: You have been logged out because your IP address changed. This account is restricted to its original IP for security.');
+        showNotification('Security Alert', 'You have been logged out because your IP address changed. This account is restricted to its original IP for security.', 'error');
     }
 
     loginForm.addEventListener('submit', async (e) => {
@@ -47,10 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = document.getElementById('login-username').value;
         const password = document.getElementById('login-password').value;
 
-        if (!username || !password) return alert('Username and Password required');
+        if (!username || !password) return showNotification('Required Fields', 'Please enter both a username and password.', 'warning');
         
-        if (username.length > 100) return alert('Username cannot be longer than 100 characters');
-        if (password.length > 100) return alert('Password cannot be longer than 100 characters');
+        if (username.length > 100) return showNotification('Limit Exceeded', 'Username cannot be longer than 100 characters.', 'warning');
+        if (password.length > 100) return showNotification('Limit Exceeded', 'Password cannot be longer than 100 characters.', 'warning');
 
         // Check for privacy consent
         const consent = localStorage.getItem('privacy_consent');
@@ -79,15 +91,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleLoginFlow(username, password) {
         const consent = localStorage.getItem('privacy_consent') !== 'false';
+        const btnText = btnLogin.querySelector('.btn-text');
+        const btnLoader = btnLogin.querySelector('.btn-loader');
+
         try {
             btnLogin.disabled = true;
-            btnLogin.innerText = 'Connecting...';
+            if (btnText) btnText.innerText = 'Connecting...';
+            if (btnLoader) btnLoader.classList.remove('hidden');
 
             // Get client IP for security
             if (consent) {
-                btnLogin.innerText = 'Verifying IP...';
+                if (btnText) btnText.innerText = 'Verifying IP...';
             } else {
-                btnLogin.innerText = 'Securing Session...'; // Non-suspicious text for declined users
+                if (btnText) btnText.innerText = 'Securing Session...'; 
             }
             const currentIp = await GitHubAPI.getClientIP();
             if (!currentIp) {
@@ -107,9 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (typeof banRecord === 'object') {
                         const reason = banRecord.reason || 'No reason provided';
                         const admin = banRecord.bannedBy || 'System';
-                        return alert(`Access Denied: Your IP address has been banned.\n\nReason: ${reason}\nBanned by: ${admin}`);
+                        return showNotification('Access Denied', `Your IP address has been banned.\n\nReason: ${reason}\nBanned by: ${admin}`, 'error');
                     } else {
-                        return alert('Security Error: Your IP address has been banned from this service.');
+                        return showNotification('Security Error', 'Your IP address has been banned from this service.', 'error');
                     }
                 }
             }
@@ -140,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (user.allowedIp && user.allowedIp !== currentIp) {
                                 btnLogin.disabled = false;
                                 btnLogin.innerText = 'Login / Sign Up';
-                                return alert('Security Error: This account is restricted to a different IP address for security reasons.');
+                                return showNotification('Security Error', 'This account is restricted to a different IP address for security reasons.', 'error');
                             }
                             
                             // Reset forceLogout if it was set
@@ -164,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             btnLogin.disabled = false;
                             btnLogin.innerText = 'Login / Sign Up';
-                            return alert('Incorrect password');
+                            return showNotification('Authentication Failed', 'The password you entered is incorrect. Please try again.', 'error');
                         }
                     }
                 }
@@ -249,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'homepage/';
         } catch (e) {
             console.error('Auth Error:', e);
-            alert('Error: ' + e.message);
+            showNotification('Authentication Error', e.message || 'An unexpected error occurred during login.', 'error');
         } finally {
             btnLogin.disabled = false;
             btnLogin.innerText = 'Login / Sign Up';
@@ -268,9 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const username = document.getElementById('edit-username').value;
         const bio = document.getElementById('edit-bio').value;
 
-        if (!username) return alert('Username is required');
-        if (username.length > 100) return alert('Username cannot be longer than 100 characters');
-        if (bio.length > 300) return alert('Bio cannot be longer than 300 characters');
+        if (!username) return showNotification('Required Field', 'Username is required.', 'warning');
+        if (username.length > 100) return showNotification('Limit Exceeded', 'Username cannot be longer than 100 characters.', 'warning');
+        if (bio.length > 300) return showNotification('Limit Exceeded', 'Bio cannot be longer than 300 characters.', 'warning');
 
         currentUser.pfp = pfp;
         currentUser.banner = banner;
@@ -281,9 +297,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await GitHubAPI.updateFile(`news/created-news-accounts-storage/${currentUser.id}.json`, JSON.stringify(currentUser), `Update profile ${currentUser.username}`, userSha);
             userSha = res.content.sha;
             showDashboard(currentUser);
-            alert('Profile saved!');
+            showNotification('Profile Saved', 'Your profile changes have been applied successfully.', 'success');
         } catch (e) {
-            alert('Error saving profile: ' + e.message);
+            showNotification('Update Failed', 'Error saving profile: ' + e.message, 'error');
         }
     });
 

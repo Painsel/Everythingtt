@@ -14,21 +14,53 @@
     <link rel="stylesheet" href="sidebar-shared.css">
 </head>
 <body>
-    <div id="auth-container" class="container">
-        <h1>News Dashboard Login</h1>
-        <div class="rules-notice">
-            <p>Please read our <a href="rules/index.html">Community Rules</a> before logging in or signing up.</p>
+    <!-- Abstract Background Elements -->
+    <div class="auth-bg-decor">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div id="auth-container" class="auth-card">
+        <div class="auth-header">
+            <div class="logo-wrapper">
+                <span class="logo-icon">📰</span>
+            </div>
+            <h1>EverythingTT News</h1>
+            <p class="auth-subtitle">Stay connected, stay informed.</p>
         </div>
-        <form id="login-form" class="form-group">
-            <input type="text" id="login-username" placeholder="Username" autocomplete="username" maxlength="100">
-            <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" maxlength="100">
-            <button type="submit" id="btn-login">Login / Sign Up</button>
+
+        <div class="rules-notice-compact">
+            By logging in, you agree to our <a href="rules/index.html">Community Rules</a>.
+        </div>
+
+        <form id="login-form" class="auth-form">
+            <div class="input-group">
+                <span class="input-icon">👤</span>
+                <input type="text" id="login-username" placeholder="Username" autocomplete="username" maxlength="100">
+            </div>
+            <div class="input-group">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" maxlength="100">
+            </div>
+            <button type="submit" id="btn-login" class="btn-primary">
+                <span class="btn-text">Login / Sign Up</span>
+                <span class="btn-loader hidden"></span>
+            </button>
         </form>
+
         <div class="auth-divider">
-            <span>OR</span>
+            <span>OR BROWSE</span>
         </div>
-        <button id="btn-guest" class="guest-btn">Continue as Guest</button>
-        <p class="hint">Don't have an account? Entering a new username will create one.</p>
+
+        <button id="btn-guest" class="btn-secondary">
+            <span class="icon">👀</span>
+            Continue as Guest
+        </button>
+        
+        <div class="auth-footer">
+            <p>New here? Just enter a username and password to create an account instantly.</p>
+        </div>
     </div>
 
     <div id="dashboard-container" class="dashboard-container hidden">
@@ -173,5 +205,6 @@
             </div>
         </div>
     </div>
+    <div id="notification-container" class="notification-container"></div>
 </body>
 </html>
