@@ -200,6 +200,64 @@ body {
     transform: translateY(-1px);
 }
 
+.input-feedback {
+    position: absolute;
+    bottom: -18px;
+    left: 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: var(--transition);
+    opacity: 0;
+    transform: translateY(-5px);
+    pointer-events: none;
+}
+
+.input-feedback.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.input-feedback.error {
+    color: #ed4245;
+}
+
+.input-feedback.success {
+    color: #23a559;
+}
+
+.input-group.error input {
+    border-color: #ed4245;
+}
+
+.input-group.error .input-icon {
+    color: #ed4245;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 1.25rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: var(--transition);
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+.password-toggle:active {
+    transform: scale(0.9);
+}
+
 .btn-primary {
     background: linear-gradient(135deg, var(--primary) 0%, #4752c4 100%);
     color: var(--white);

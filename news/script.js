@@ -25,13 +25,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const btnGuest = document.getElementById('btn-guest');
     const togglePassword = document.getElementById('toggle-password');
+    const loginUsername = document.getElementById('login-username');
     const loginPassword = document.getElementById('login-password');
 
+    // Password Visibility Toggle
     if (togglePassword) {
         togglePassword.addEventListener('click', () => {
             const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
             loginPassword.setAttribute('type', type);
-            togglePassword.querySelector('.eye-icon').innerText = type === 'password' ? '👁️' : '👁️‍🗨️';
+            const eyeIcon = togglePassword.querySelector('.eye-icon');
+            if (eyeIcon) {
+                eyeIcon.innerText = type === 'password' ? '👁️' : '👁️‍🗨️';
+            }
+        });
+    }
+
+    // Real-time Validation
+    const validateInput = (input, feedback, minLength, message) => {
+        const group = input.closest('.input-group');
+        if (input.value.length === 0) {
+            group.classList.remove('error', 'success');
+            feedback.classList.remove('visible');
+            return false;
+        }
+        if (input.value.length < minLength) {
+            group.classList.add('error');
+            group.classList.remove('success');
+            feedback.innerText = message;
+            feedback.classList.add('visible', 'error');
+            feedback.classList.remove('success');
+            return false;
+        } else {
+            group.classList.add('success');
+            group.classList.remove('error');
+            feedback.innerText = 'Looks good!';
+            feedback.classList.add('visible', 'success');
+            feedback.classList.remove('error');
+            return true;
+        }
+    };
+
+    if (loginUsername && loginPassword) {
+        const userFeedback = loginUsername.nextElementSibling;
+        const passFeedback = loginPassword.nextElementSibling.nextElementSibling; // After toggle button
+
+        loginUsername.addEventListener('input', () => {
+            validateInput(loginUsername, userFeedback, 3, 'Username must be at least 3 characters.');
+        });
+
+        loginPassword.addEventListener('input', () => {
+            validateInput(loginPassword, passFeedback, 6, 'Password must be at least 6 characters.');
         });
     }
 
@@ -56,13 +99,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
+        const username = loginUsername.value.trim();
+        const password = loginPassword.value;
 
-        if (!username || !password) return showNotification('Required Fields', 'Please enter both a username and password.', 'warning');
+        // Final validation check
+        const userFeedback = loginUsername.nextElementSibling;
+        const passFeedback = loginPassword.nextElementSibling.nextElementSibling;
+
+        const isUserValid = validateInput(loginUsername, userFeedback, 3, 'Username must be at least 3 characters.');
+        const isPassValid = validateInput(loginPassword, passFeedback, 6, 'Password must be at least 6 characters.');
+
+        if (!isUserValid || !isPassValid) {
+            return showNotification('Invalid Input', 'Please correct the errors in the form before submitting.', 'warning');
+        }
         
-        if (username.length > 100) return showNotification('Limit Exceeded', 'Username cannot be longer than 100 characters.', 'warning');
-        if (password.length > 100) return showNotification('Limit Exceeded', 'Password cannot be longer than 100 characters.', 'warning');
+        if (username.length > 100 || password.length > 100) {
+            return showNotification('Limit Exceeded', 'Credentials are too long.', 'warning');
+        }
 
         // Check for privacy consent
         const consent = localStorage.getItem('privacy_consent');
