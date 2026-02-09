@@ -153,21 +153,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (user.username === username) {
                         if (user.password === password) {
                             // Security check: IP Address restriction
-                            if (user.allowedIp && user.allowedIp !== currentIp) {
+                            if (user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
                                 btnLogin.disabled = false;
                                 btnLogin.innerText = 'Login / Sign Up';
-                                return showNotification('Security Error', 'This account is restricted to a different IP address for security reasons.', 'error');
+                                return showNotification('Security Error', 'This account is restricted to a different network. If you recently moved or changed ISPs, please contact support.', 'error');
                             }
                             
-                            // Reset forceLogout if it was set
-                            if (user.forceLogout) {
+                            // If subnet matches but IP is slightly different, update it to follow the dynamic IP
+                            let ipUpdated = false;
+                            if (user.allowedIp && user.allowedIp !== currentIp && GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
+                                console.log(`[Security] Updating dynamic IP for ${user.username}: ${user.allowedIp} -> ${currentIp}`);
+                                user.allowedIp = currentIp;
+                                ipUpdated = true;
+                            }
+
+                            // Reset forceLogout if it was set or if IP was updated
+                            if (user.forceLogout || ipUpdated) {
                                 user.forceLogout = false;
                                 // We need the SHA to update
                                 const data = await GitHubAPI.getFile(file.path);
                                 await GitHubAPI.updateFile(
                                     file.path,
                                     JSON.stringify(user),
-                                    `User login: Reseting forceLogout for ${user.username}`,
+                                    ipUpdated ? `Security: Updated dynamic IP for ${user.username}` : `User login: Reseting forceLogout for ${user.username}`,
                                     data.sha
                                 );
                             }

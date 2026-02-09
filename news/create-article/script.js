@@ -22,13 +22,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Security check: IP Address restriction
     async function checkIP() {
-        if (!user) return;
+        if (!user || user.isGuest) return;
         try {
             const currentIp = await GitHubAPI.getClientIP();
-            if (currentIp && user.allowedIp && currentIp !== user.allowedIp) {
+            if (currentIp && user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
                 console.error('IP Mismatch detected. Logging out.');
                 localStorage.removeItem('current_user');
                 window.location.href = '../index.html?error=ip_mismatch';
+            } else if (currentIp && user.allowedIp && user.allowedIp !== currentIp && GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
+                // Dynamic IP update during session
+                console.log(`[Security] Dynamic IP shift detected: ${user.allowedIp} -> ${currentIp}`);
+                user.allowedIp = currentIp;
+                localStorage.setItem('current_user', JSON.stringify(user));
+                
+                // Update on server
+                const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                if (data) {
+                    const serverUser = JSON.parse(atob(data.content));
+                    serverUser.allowedIp = currentIp;
+                    await GitHubAPI.updateFile(
+                        `news/created-news-accounts-storage/${user.id}.json`,
+                        JSON.stringify(serverUser),
+                        `Security: Session-based dynamic IP update for ${user.username}`,
+                        data.sha
+                    );
+                }
             }
         } catch (e) {
             console.error('Failed to verify IP during session:', e);

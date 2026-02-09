@@ -264,6 +264,31 @@ window.GitHubAPI = {
         }
     },
 
+    /**
+     * Compare two IP addresses to see if they are in the same subnet.
+     * This handles dynamic IP changes (common in home networks).
+     */
+    compareIPs(ip1, ip2) {
+        if (!ip1 || !ip2) return false;
+        if (ip1 === ip2) return true;
+
+        // IPv4 Subnet Check (first 3 octets /24)
+        const v4_1 = ip1.split('.');
+        const v4_2 = ip2.split('.');
+        if (v4_1.length === 4 && v4_2.length === 4) {
+            return v4_1[0] === v4_2[0] && v4_1[1] === v4_2[1] && v4_1[2] === v4_2[2];
+        }
+
+        // IPv6 Subnet Check (first 4 segments /64)
+        const v6_1 = ip1.split(':');
+        const v6_2 = ip2.split(':');
+        if (v6_1.length >= 4 && v6_2.length >= 4) {
+            return v6_1[0] === v6_2[0] && v6_1[1] === v6_2[1] && v6_1[2] === v6_2[2] && v6_1[3] === v6_2[3];
+        }
+
+        return false;
+    },
+
     getStatusIconPath(iconName) {
         const baseUrl = window.location.origin + window.location.pathname.split('/news/')[0];
         return `${baseUrl}/User Status Icons/${iconName}`;
