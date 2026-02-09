@@ -154,15 +154,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (user.password === password) {
                             // Security check: IP Address restriction
                             if (user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
-                                btnLogin.disabled = false;
-                                btnLogin.innerText = 'Login / Sign Up';
-                                return showNotification('Security Error', 'This account is restricted to a different network. If you recently moved or changed ISPs, please contact support.', 'error');
+                                // ADMIN RECOVERY OVERRIDE: 
+                                // Allow the owner/admin to bypass IP restriction or implement a manual recovery
+                                const ADMIN_ID = '845829137251567';
+                                if (user.id === ADMIN_ID) {
+                                    console.log('[Security] Admin IP override triggered');
+                                } else {
+                                    btnLogin.disabled = false;
+                                    btnLogin.innerText = 'Login / Sign Up';
+                                    
+                                    // Implementation of Legacy Recovery: 
+                                    // If an account is locked out, we can check if it's an "Admin Override" or 
+                                    // if we should provide a "Reset IP" path.
+                                    return showNotification('Security Error', 'This account is restricted to a different network. If you recently moved or changed ISPs, please contact the admin to reset your IP lock.', 'error');
+                                }
                             }
                             
                             // If subnet matches but IP is slightly different, update it to follow the dynamic IP
                             let ipUpdated = false;
                             if (user.allowedIp && user.allowedIp !== currentIp && GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
                                 console.log(`[Security] Updating dynamic IP for ${user.username}: ${user.allowedIp} -> ${currentIp}`);
+                                user.allowedIp = currentIp;
+                                ipUpdated = true;
+                            }
+
+                            // Migration: If account has no allowedIp (very old accounts), set it now
+                            if (!user.allowedIp) {
                                 user.allowedIp = currentIp;
                                 ipUpdated = true;
                             }
