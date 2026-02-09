@@ -31,12 +31,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Password Visibility Toggle
     if (togglePassword) {
         togglePassword.addEventListener('click', () => {
-            const type = loginPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            const isPassword = loginPassword.getAttribute('type') === 'password';
+            const type = isPassword ? 'text' : 'password';
             loginPassword.setAttribute('type', type);
+            
+            // Update eye icon and aria-label for accessibility
             const eyeIcon = togglePassword.querySelector('.eye-icon');
             if (eyeIcon) {
-                eyeIcon.innerText = type === 'password' ? '👁️' : '👁️‍🗨️';
+                eyeIcon.innerText = isPassword ? '👁️‍🗨️' : '👁️';
             }
+            togglePassword.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
         });
     }
 

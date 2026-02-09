@@ -34,19 +34,22 @@
             By logging in, you agree to our <a href="rules/index.html">Community Rules</a>.
         </div>
 
-        <form id="login-form" class="auth-form">
+        <form id="login-form" class="auth-form" aria-labelledby="auth-title">
+            <h1 id="auth-title" class="sr-only">Login or Sign Up</h1>
             <div class="input-group">
-                <span class="input-icon">👤</span>
-                <input type="text" id="login-username" placeholder="Username" autocomplete="username" maxlength="100" required>
-                <div class="input-feedback"></div>
+                <span class="input-icon" aria-hidden="true">👤</span>
+                <label for="login-username" class="sr-only">Username</label>
+                <input type="text" id="login-username" placeholder="Username" autocomplete="username" maxlength="100" required aria-describedby="username-feedback">
+                <div id="username-feedback" class="input-feedback" aria-live="polite"></div>
             </div>
             <div class="input-group">
-                <span class="input-icon">🔒</span>
-                <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" maxlength="100" required>
-                <button type="button" id="toggle-password" class="password-toggle" aria-label="Toggle password visibility">
-                    <span class="eye-icon">👁️</span>
+                <span class="input-icon" aria-hidden="true">🔒</span>
+                <label for="login-password" class="sr-only">Password</label>
+                <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" maxlength="100" required aria-describedby="password-feedback">
+                <button type="button" id="toggle-password" class="password-toggle" aria-label="Show password">
+                    <span class="eye-icon" aria-hidden="true">👁️</span>
                 </button>
-                <div class="input-feedback"></div>
+                <div id="password-feedback" class="input-feedback" aria-live="polite"></div>
             </div>
             <button type="submit" id="btn-login" class="btn-primary">
                 <span class="btn-text">Login / Sign Up</span>
