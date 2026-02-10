@@ -247,8 +247,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             : { width: 1200, height: 400 };
 
         const croppedCanvas = cropper.getCroppedCanvas(canvasOptions);
-        const quality = currentCroppingType === 'pfp' ? 0.7 : 0.6;
-        const base64 = croppedCanvas.toDataURL('image/jpeg', quality);
+        
+        // Use PNG for PFP to support transparency, JPEG for Banner
+        const format = currentCroppingType === 'pfp' ? 'image/png' : 'image/jpeg';
+        const quality = currentCroppingType === 'pfp' ? 1.0 : 0.6;
+        const base64 = croppedCanvas.toDataURL(format, quality);
 
         if (currentCroppingType === 'pfp') {
             pendingPfpBase64 = base64;
@@ -298,8 +301,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Export as JPEG with variable quality
-                    resolve(canvas.toDataURL('image/jpeg', quality));
+                    // Use PNG for PFP to support transparency, JPEG for others
+                    const format = (maxWidth === 256 && maxHeight === 256) ? 'image/png' : 'image/jpeg';
+                    const finalQuality = (format === 'image/png') ? 1.0 : quality;
+                    resolve(canvas.toDataURL(format, finalQuality));
                 };
                 img.onerror = reject;
                 img.src = e.target.result;
@@ -410,17 +415,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // BETA Feature: Cropping Tool
-            if (GitHubAPI.isBetaTester(currentUser)) {
-                openCropper(file, 'pfp');
-            } else {
-                try {
-                    pendingPfpBase64 = await optimizeImage(file, 256, 256, 0.7);
-                    document.getElementById('profile-pfp').src = pendingPfpBase64;
-                } catch (err) {
-                    console.error('PFP preview failed:', err);
-                }
-            }
+            // Feature: Cropping Tool
+            openCropper(file, 'pfp');
         }
     });
 
@@ -439,18 +435,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // BETA Feature: Cropping Tool
-            if (GitHubAPI.isBetaTester(currentUser)) {
-                openCropper(file, 'banner');
-            } else {
-                try {
-                    pendingBannerBase64 = await optimizeImage(file, 1200, 400, 0.6);
-                    document.getElementById('profile-banner').style.background = `url(${pendingBannerBase64})`;
-                    document.getElementById('profile-banner').style.backgroundSize = 'cover';
-                } catch (err) {
-                    console.error('Banner preview failed:', err);
-                }
-            }
+            // Feature: Cropping Tool
+            openCropper(file, 'banner');
         }
     });
 

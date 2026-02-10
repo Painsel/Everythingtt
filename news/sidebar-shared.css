@@ -114,6 +114,10 @@ body.sidebar-layout .dashboard-container {
     justify-content: center;
 }
 
+.side-pfp-wrapper img, .header-pfp-wrapper img {
+    background-color: #36393f; /* Background for transparent PFPs in sidebar/header */
+}
+
 .guest-badge {
     background: #4f545c;
     color: #ffffff;

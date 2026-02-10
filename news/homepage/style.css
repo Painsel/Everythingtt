@@ -74,6 +74,7 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
+    background-color: #36393f; /* Background for transparent PFPs */
 }
 
 .mini-profile-info {

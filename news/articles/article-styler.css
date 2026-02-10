@@ -1707,7 +1707,7 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
-    background-color: #2f3136;
+    background-color: #2f3136; /* Background for transparent PFPs */
 }
 
 .profile-card-body {
