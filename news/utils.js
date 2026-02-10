@@ -201,7 +201,39 @@ window.GitHubAPI = {
 
         for (const content of contentToCheck) {
             const result = await this.checkContentForRules(content);
-            if (!result.isClean) return true;
+            if (!result.isClean) {
+                // Track violation count if possible
+                try {
+                    if (user && !user.isGuest) {
+                        user.violations = (user.violations || 0) + 1;
+                        localStorage.setItem('current_user', JSON.stringify(user));
+                        
+                        // Async update on server
+                        this.getFile(`created-news-accounts-storage/${user.id}.json`).then(data => {
+                            if (data) {
+                                const serverUser = JSON.parse(data.content);
+                                serverUser.violations = (serverUser.violations || 0) + 1;
+                                
+                                // Automatic Ban if violations reach threshold (e.g., 10)
+                                if (serverUser.violations >= 10 && !serverUser.isBanned) {
+                                    serverUser.isBanned = true;
+                                    serverUser.banReason = 'System: Repeated rule violations (Threshold reached)';
+                                    serverUser.forceLogout = true;
+                                }
+
+                                this.updateFile(
+                                    `created-news-accounts-storage/${user.id}.json`,
+                                    JSON.stringify(serverUser),
+                                    serverUser.isBanned ? `Security: AUTO-BAN - Repeated violations for ${user.username}` : `Security: Rule violation detected for ${user.username} (Total: ${serverUser.violations})`,
+                                    data.sha
+                                );
+                            }
+                        }).catch(e => console.error('[GitHubAPI] Failed to update server violations:', e));
+                    }
+                } catch (e) { console.error('[GitHubAPI] Failed to track violation:', e); }
+
+                return true;
+            }
         }
 
         return false;

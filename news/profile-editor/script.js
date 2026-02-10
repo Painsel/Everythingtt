@@ -335,6 +335,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ruleCheck = await GitHubAPI.checkContentForRules(contentToCheck);
         
         if (!ruleCheck.isClean) {
+            // Track violation count on the server
+            try {
+                const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
+                if (data) {
+                    const serverUser = JSON.parse(data.content);
+                    serverUser.violations = (serverUser.violations || 0) + 1;
+                    
+                    // Update server record
+                    await GitHubAPI.updateFile(
+                        `created-news-accounts-storage/${currentUser.id}.json`,
+                        JSON.stringify(serverUser),
+                        `Security: Rule violation detected during profile edit for ${currentUser.username} (Total: ${serverUser.violations})`,
+                        data.sha
+                    );
+                    
+                    // Update local user object
+                    currentUser.violations = serverUser.violations;
+                    localStorage.setItem('current_user', JSON.stringify(currentUser));
+                }
+            } catch (e) {
+                console.error('Failed to track violation:', e);
+            }
+
             GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
             return;
         }
