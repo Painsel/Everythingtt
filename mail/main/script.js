@@ -100,6 +100,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const content = document.getElementById('mail-view-content');
+        const displayContent = msg.htmlContent || msg.content.replace(/\n/g, '<br>');
+        
         content.innerHTML = `
             <div class="mail-view-header">
                 <h2>${msg.subject}</h2>
@@ -108,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div><strong>Date:</strong> ${new Date(msg.timestamp).toLocaleString()}</div>
                 </div>
             </div>
-            <div class="mail-view-body">${msg.content}</div>
+            <div class="mail-view-body">${displayContent}</div>
         `;
 
         if (!msg.isRead && msg.type === 'incoming') {

@@ -133,8 +133,19 @@
 
 .mail-view-body {
     line-height: 1.6;
-    white-space: pre-wrap;
-    padding: 20px 0;
+    white-space: normal;
+    word-break: break-word;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.mail-view-body img {
+    max-width: 100%;
+    height: auto;
+}
+
+.mail-view-body a {
+    color: var(--primary);
+    text-decoration: underline;
 }
 
 .loading-state, .empty-state {
