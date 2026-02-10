@@ -63,7 +63,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const jsonFiles = files.filter(f => f.name.endsWith('.json'));
             
             const promises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
-            allForms = await Promise.all(promises);
+            const results = await Promise.all(promises);
+            allForms = results.filter(r => r !== null).map(r => {
+                try {
+                    const data = JSON.parse(r.content);
+                    data.sha = r.sha;
+                    return data;
+                } catch (e) {
+                    console.warn('Failed to parse form:', e);
+                    return null;
+                }
+            }).filter(f => f !== null);
             
             // Sort by timestamp (newest first)
             allForms.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
