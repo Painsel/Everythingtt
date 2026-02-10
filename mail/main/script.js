@@ -75,12 +75,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         filtered.forEach(msg => {
             const isExternal = msg.sender && !msg.sender.includes('@ett.mail') && !msg.sender.includes('EverythingTT');
+            const isOfficialDiscord = msg.sender && (msg.sender.endsWith('@discord.com') || msg.sender.endsWith('@m.discord.com'));
+            const isVerification = msg.subject && (msg.subject.toLowerCase().includes('verify') || msg.subject.toLowerCase().includes('verification') || msg.subject.toLowerCase().includes('code'));
+            
             const item = document.createElement('div');
             item.className = `mail-item ${!msg.isRead && msg.type === 'incoming' ? 'unread' : ''}`;
+            
+            let badges = '';
+            if (isOfficialDiscord) badges += '<span class="official-tag discord">Discord Official</span>';
+            else if (isExternal) badges += '<span class="external-tag">External</span>';
+            if (isVerification) badges += '<span class="verify-tag">Verification</span>';
+
             item.innerHTML = `
                 <div class="mail-sender">
-                    ${msg.sender}
-                    ${isExternal ? '<span class="external-tag">External</span>' : ''}
+                    <span class="sender-name">${msg.sender}</span>
+                    <div class="mail-badges">${badges}</div>
                 </div>
                 <div class="mail-subject-preview">${msg.subject}</div>
                 <div class="mail-date">${new Date(msg.timestamp).toLocaleDateString()}</div>
@@ -100,8 +109,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const content = document.getElementById('mail-view-content');
-        const displayContent = msg.htmlContent || msg.content.replace(/\n/g, '<br>');
+        let displayContent = msg.htmlContent || msg.content.replace(/\n/g, '<br>');
         
+        // Auto-highlight 6-digit verification codes
+        const codeMatch = msg.content.match(/\b\d{6}\b/);
+        if (codeMatch) {
+            const code = codeMatch[0];
+            displayContent = `<div class="verification-code-highlight">
+                <span class="label">Detected Verification Code:</span>
+                <span class="code">${code}</span>
+            </div>` + displayContent;
+        }
+
         content.innerHTML = `
             <div class="mail-view-header">
                 <h2>${msg.subject}</h2>

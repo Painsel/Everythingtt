@@ -76,17 +76,53 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.sender-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.mail-badges {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.official-tag {
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 800;
+}
+
+.official-tag.discord {
+    background: #5865F2;
+    color: white;
+}
+
+.verify-tag {
+    background: #f1c40f;
+    color: #000;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 800;
 }
 
 .external-tag {
     font-size: 0.6rem;
     background: rgba(255, 255, 255, 0.1);
-    padding: 2px 4px;
-    border-radius: 3px;
+    padding: 2px 6px;
+    border-radius: 4px;
     opacity: 0.6;
     text-transform: uppercase;
+    font-weight: 800;
 }
 
 .mail-subject-preview {
@@ -136,6 +172,34 @@
     white-space: normal;
     word-break: break-word;
     color: rgba(255, 255, 255, 0.9);
+}
+
+.verification-code-highlight {
+    background: rgba(241, 196, 15, 0.1);
+    border: 1px solid #f1c40f;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.verification-code-highlight .label {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.verification-code-highlight .code {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #f1c40f;
+    letter-spacing: 4px;
+    font-family: monospace;
 }
 
 .mail-view-body img {
