@@ -48,19 +48,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         mailList.innerHTML = '<div class="loading-state">Syncing with critical storage...</div>';
         try {
-            // Check if folder exists by listing contents
-            let files = [];
-            try {
-                files = await GitHubAPI.getFolderContents(`mail-storage/${mailAcc.mailboxId}`);
-            } catch (e) {
-                // Folder might not exist yet if no mail sent
-                files = [];
+            // 1. Collect all mailbox IDs to sync (Unified Inbox)
+            const mailboxIds = [mailAcc.mailboxId];
+            if (mailAcc.linkedEmails && Array.isArray(mailAcc.linkedEmails)) {
+                mailAcc.linkedEmails.forEach(link => {
+                    if (link.mailboxId && !mailboxIds.includes(link.mailboxId)) {
+                        mailboxIds.push(link.mailboxId);
+                    }
+                });
             }
+
+            // 2. Sync each mailbox
+            let allFiles = [];
+            const folderPromises = mailboxIds.map(id => 
+                GitHubAPI.getFolderContents(`mail-storage/${id}`).catch(() => [])
+            );
+            const folderResults = await Promise.all(folderPromises);
             
-            const jsonFiles = files.filter(f => f.name.endsWith('.json'));
-            const promises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
-            const results = await Promise.all(promises);
-            allMessages = results.map(r => JSON.parse(r.content));
+            folderResults.forEach(files => {
+                allFiles = allFiles.concat(files);
+            });
+            
+            const jsonFiles = allFiles.filter(f => f.name.endsWith('.json'));
+            const filePromises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
+            const results = await Promise.all(filePromises);
+            
+            allMessages = results.map(r => {
+                try {
+                    return JSON.parse(r.content);
+                } catch (e) {
+                    return null;
+                }
+            }).filter(m => m !== null);
             
             // Sort by date newest first
             allMessages.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -85,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isExternal = msg.sender && !msg.sender.includes('@ett.mail') && !msg.sender.includes('EverythingTT');
             const isOfficialDiscord = msg.sender && (msg.sender.endsWith('@discord.com') || msg.sender.endsWith('@m.discord.com'));
             const isVerification = msg.subject && (msg.subject.toLowerCase().includes('verify') || msg.subject.toLowerCase().includes('verification') || msg.subject.toLowerCase().includes('code'));
+            const isToLinked = msg.recipientId && msg.recipientId !== mailAcc.email;
             
             const item = document.createElement('div');
             item.className = `mail-item ${!msg.isRead && msg.type === 'incoming' ? 'unread' : ''}`;
@@ -100,6 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="mail-badges">${badges}</div>
                 </div>
                 <div class="mail-subject-preview">${msg.subject}</div>
+                ${isToLinked ? `<div class="recipient-tag">to ${msg.recipientId}</div>` : ''}
                 <div class="mail-date">${new Date(msg.timestamp).toLocaleDateString()}</div>
             `;
             item.onclick = () => openMail(msg);

@@ -126,10 +126,22 @@
 }
 
 .mail-subject-preview {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.recipient-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    color: var(--accent);
+    background: rgba(0, 191, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
 }
 
 .mail-date {
