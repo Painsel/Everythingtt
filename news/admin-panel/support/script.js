@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const GitHubAPI = window.GitHubAPI;
     let user = JSON.parse(localStorage.getItem('current_user'));
-    if (!user || (user.role !== 'admin' && user.role !== 'owner')) {
+    
+    const isDeveloper = user && String(user.id) === String(GitHubAPI.DEVELOPER_ID);
+    if (!user || (user.role !== 'admin' && user.role !== 'owner' && !isDeveloper)) {
         window.location.href = '../../homepage/index.html';
         return;
     }

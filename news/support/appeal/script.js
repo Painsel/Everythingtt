@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             sideBubble.style.display = 'none';
         }
 
-        if (u.role === 'admin' || u.role === 'owner') {
+        const isDeveloper = u && String(u.id) === String(GitHubAPI.DEVELOPER_ID);
+        if (u.role === 'admin' || u.role === 'owner' || isDeveloper) {
             document.getElementById('admin-nav-item').classList.remove('hidden');
         }
     };

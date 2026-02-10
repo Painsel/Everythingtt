@@ -43,8 +43,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             sideBubble.style.display = 'none';
         }
 
-        // Show Admin link if user is admin
-        if (u.role === 'admin' || u.role === 'owner') {
+        // Show Admin link if user is admin or developer
+        const isDeveloper = u && String(u.id) === String(GitHubAPI.DEVELOPER_ID);
+        if (u.role === 'admin' || u.role === 'owner' || isDeveloper) {
             document.getElementById('admin-nav-item').classList.remove('hidden');
         }
     };
