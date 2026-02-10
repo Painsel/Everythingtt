@@ -57,11 +57,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (credits < 300 && credits > 0) {
                 calcWarning.classList.remove('hidden');
-                goldOutput.textContent = '0';
+                goldOutput.textContent = '0.00';
             } else {
                 calcWarning.classList.add('hidden');
-                const gold = Math.floor(credits / 15);
-                goldOutput.textContent = gold.toLocaleString();
+                const gold = credits / 15;
+                goldOutput.textContent = gold.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
         });
     }
