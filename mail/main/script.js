@@ -286,4 +286,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-refresh-mail').onclick = loadMail;
 
     loadMail();
+
+    // Auto-refresh every 15 seconds to catch new emails (e.g. Discord verifications)
+    setInterval(loadMail, 15000);
 });

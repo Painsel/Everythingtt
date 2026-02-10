@@ -3,34 +3,40 @@
  * EverythingTT Global Mail Inbound Processor
  * 
  * This script acts as a webhook receiver for incoming external emails (SMTP relay).
- * It routes emails to the correct user's mailbox in the EverythingTT storage.
+ * It routes emails to the correct user's mailbox in the EverythingTT storage (GitHub).
  */
 
 header('Content-Type: application/json');
 
-// 1. Configuration & Security
+// 1. Configuration
 $config = [
-    'storage_base' => '../../news/mail-storage/',
-    'email_map_base' => '../../news/mail-accounts-storage/email-map/',
-    'allowed_relay_ips' => ['*'], // In production, restrict to your SMTP provider IPs
+    'github_pat' => getenv('GITHUB_PAT') ?: '', // Set via environment variable on the server
+    'owner' => 'Painsel',
+    'repo' => 'EverythingTT-Critical-Data',
+    'middleware_url' => 'https://everything-tt-api.vercel.app/'
 ];
 
-// 2. Capture Inbound Data (Expected from SMTP relay service like SendGrid, Mailgun, or custom postfix)
+// 2. Capture Inbound Data
 $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, true);
 
 if (!$data) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid payload']);
-    exit;
+    // If not JSON, check if it's form-encoded (some relays use this)
+    if (!empty($_POST)) {
+        $data = $_POST;
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid payload']);
+        exit;
+    }
 }
 
 // 3. Extract Core Fields
-$to_email = $data['to'] ?? '';
-$from_email = $data['from'] ?? '';
+$to_email = $data['to'] ?? $data['recipient'] ?? '';
+$from_email = $data['from'] ?? $data['sender'] ?? '';
 $subject = $data['subject'] ?? '(No Subject)';
-$content = $data['content'] ?? $data['text'] ?? '';
-$html_content = $data['html'] ?? '';
+$content = $data['content'] ?? $data['text'] ?? $data['body-plain'] ?? '';
+$html_content = $data['html'] ?? $data['body-html'] ?? '';
 
 if (!$to_email || !$from_email) {
     http_response_code(422);
@@ -38,27 +44,63 @@ if (!$to_email || !$from_email) {
     exit;
 }
 
-// 4. Resolve Internal Mailbox
-// Example: user@ett.mail
-$prefix = strtolower(explode('@', $to_email)[0]);
-$map_file = $config['email_map_base'] . $prefix . '.json';
+// 4. Helper: GitHub API Request
+function github_request($path, $method = 'GET', $body = null) {
+    global $config;
+    
+    // Use middleware for critical data repo if possible, otherwise direct
+    $url = "https://api.github.com/repos/{$config['owner']}/{$config['repo']}/contents/" . ltrim($path, '/');
+    
+    $ch = curl_init($url);
+    $headers = [
+        'Authorization: token ' . $config['github_pat'],
+        'User-Agent: EverythingTT-Mail-Relay',
+        'Accept: application/vnd.github.v3+json',
+        'Content-Type: application/json'
+    ];
+    
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    
+    if ($body) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+    }
+    
+    $response = curl_exec($ch);
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    return [
+        'status' => $status,
+        'data' => json_decode($response, true),
+        'raw' => $response
+    ];
+}
 
-if (!file_exists($map_file)) {
+// 5. Resolve Internal Mailbox
+$prefix = strtolower(explode('@', $to_email)[0]);
+$map_path = "mail-accounts-storage/email-map/{$prefix}.json";
+
+$map_res = github_request($map_path);
+if ($map_res['status'] !== 200) {
     http_response_code(404);
-    echo json_encode(['error' => 'Recipient mailbox not found']);
+    echo json_encode(['error' => 'Recipient mailbox not found on EverythingTT', 'path' => $map_path]);
     exit;
 }
 
-$map_data = json_decode(file_get_contents($map_file), true);
+$map_content_raw = $map_res['data']['content'];
+$map_json_str = decode_github_content($map_content_raw);
+$map_data = json_decode($map_json_str, true);
 $mailbox_id = $map_data['mailboxId'] ?? null;
 
 if (!$mailbox_id) {
     http_response_code(500);
-    echo json_encode(['error' => 'Internal routing error']);
+    echo json_encode(['error' => 'Internal routing error: No mailbox ID']);
     exit;
 }
 
-// 5. Create Mail Object
+// 6. Create Mail Object
 $mail_id = 'ext_' . time() . '_' . bin2hex(random_bytes(4));
 $mail_data = [
     'id' => $mail_id,
@@ -73,18 +115,35 @@ $mail_data = [
     'source' => 'external'
 ];
 
-// 6. Save to Storage
-// Note: In this architecture, the PHP script writes directly to the shared storage folder.
-// For GitHub-hosted sites, this would typically trigger a background push to the repo.
-$target_dir = $config['storage_base'] . $mailbox_id . '/';
-if (!is_dir($target_dir)) {
-    mkdir($target_dir, 0777, true);
-}
+// 7. Encode for EverythingTT Storage (ett_enc_v1)
+$mail_json = json_encode($mail_data, JSON_PRETTY_PRINT);
+$encoded_content = 'ett_enc_v1:' . base64_encode($mail_json);
 
-$save_path = $target_dir . $mail_id . '.json';
-if (file_put_contents($save_path, json_encode($mail_data, JSON_PRETTY_PRINT))) {
+// 8. Save to GitHub
+$save_path = "mail-storage/{$mailbox_id}/{$mail_id}.json";
+$save_res = github_request($save_path, 'PUT', [
+    'message' => "Mail: Received external email from {$from_email} to {$to_email}",
+    'content' => base64_encode($encoded_content)
+]);
+
+if ($save_res['status'] === 201 || $save_res['status'] === 200) {
     echo json_encode(['success' => true, 'mailId' => $mail_id]);
 } else {
     http_response_code(500);
-    echo json_encode(['error' => 'Failed to save email to storage']);
+    echo json_encode([
+        'error' => 'Failed to save email to GitHub storage',
+        'github_status' => $save_res['status'],
+        'github_response' => $save_res['data']
+    ]);
+}
+
+/**
+ * Decode GitHub content (Base64) and handle EverythingTT custom encoding if present
+ */
+function decode_github_content($base64_content) {
+    $content = base64_decode(str_replace(["\n", "\r", " "], '', $base64_content));
+    if (strpos($content, 'ett_enc_v1:') === 0) {
+        return base64_decode(substr($content, strlen('ett_enc_v1:')));
+    }
+    return $content;
 }
