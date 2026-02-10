@@ -335,6 +335,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.openChangePw = (userId, username) => {
         currentEditingUserId = userId;
         document.getElementById('pw-target-user').innerText = username;
+        document.getElementById('pw-username-hidden').value = username;
         document.getElementById('new-pw').value = '';
         changePwModal.classList.remove('hidden');
     };

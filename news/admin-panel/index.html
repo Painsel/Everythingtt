@@ -138,6 +138,8 @@
             <h3>Change Password</h3>
             <p>Target User: <span id="pw-target-user" style="font-weight: bold;"></span></p>
             <form id="form-change-pw">
+                <!-- Hidden username field for accessibility -->
+                <input type="text" id="pw-username-hidden" style="display:none;" autocomplete="username">
                 <div class="input-group">
                     <label for="new-pw">New Password:</label>
                     <input type="password" id="new-pw" placeholder="Enter new password" autocomplete="new-password">
@@ -255,7 +257,39 @@
     </div>
 
     <div id="account-info-modal" class="modal hidden">
-        <!-- ... existing modal ... -->
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal">&times;</span>
+            <h3 style="margin-bottom: 20px;">Detailed Account Information</h3>
+            
+            <div id="info-loading" class="status-msg">
+                <p>Fetching account details and IP info...</p>
+            </div>
+
+            <div id="info-content" class="hidden">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="info-section" style="margin-top: 0;">
+                        <h4>Core Profile</h4>
+                        <p><b>Username:</b> <span id="info-username"></span></p>
+                        <p><b>Password:</b> <span id="info-password"></span></p>
+                        <p><b>User ID:</b> <span id="info-id"></span></p>
+                        <p><b>Joined:</b> <span id="info-join-date"></span></p>
+                        <p><b>Violations:</b> <span id="info-violations"></span></p>
+                        <p><b>Privacy:</b> <span id="info-privacy"></span></p>
+                    </div>
+
+                    <div class="info-section" style="margin-top: 0;">
+                        <h4>Network & Location</h4>
+                        <p><b>Allowed IP:</b> <span id="info-ip"></span></p>
+                        <p><b>Country:</b> <span id="info-country">Fetching...</span></p>
+                        <p><b>Region:</b> <span id="info-region">Fetching...</span></p>
+                        <p><b>City:</b> <span id="info-city">Fetching...</span></p>
+                        <p><b>ISP:</b> <span id="info-isp">Fetching...</span></p>
+                        <p><b>Timezone:</b> <span id="info-timezone">Fetching...</span></p>
+                        <p style="display: none;"><b>Org:</b> <span id="info-org">Fetching...</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="manage-violations-modal" class="modal hidden">
