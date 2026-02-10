@@ -880,13 +880,18 @@ window.GitHubAPI = {
      * Renders a role badge (e.g., Admin, BETA Tester) with enhanced tooltips.
      */
     renderRoleBadge(role, className = 'admin-badge') {
-        if (role === 'admin') {
+        if (role === 'owner' || role === 'admin') {
+            const label = role === 'owner' ? 'Owner' : 'Admin';
+            const title = role === 'owner' ? 'Project Owner' : 'Administrator';
+            const desc = role === 'owner' ? 'The creator and owner of the EverythingTT ecosystem.' : 'Has full access to manage the EverythingTT ecosystem.';
+            const color = role === 'owner' ? '#ff4757' : '#9b59b6';
+
             return `
                 <div class="badge-wrapper" onclick="event.stopPropagation(); this.querySelector('.badge-tooltip').classList.toggle('active')">
-                    <span class="${className}">Admin</span>
+                    <span class="${className}" style="background: ${color};">${label}</span>
                     <div class="badge-tooltip">
-                        <div class="tooltip-title">Administrator</div>
-                        <div class="tooltip-desc">Has full access to manage the EverythingTT ecosystem.</div>
+                        <div class="tooltip-title">${title}</div>
+                        <div class="tooltip-desc">${desc}</div>
                     </div>
                 </div>
             `;

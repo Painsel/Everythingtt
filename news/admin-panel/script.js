@@ -2,7 +2,7 @@ const user = JSON.parse(localStorage.getItem('current_user'));
 const DEVELOPER_ID = '845829137251567';
 
 // Top-level Security Check (Backup to inline check)
-if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {
+if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.id !== DEVELOPER_ID)) {
     window.location.replace('../homepage/');
 }
 
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const verifiedUser = await GitHubAPI.syncUserProfile();
         const DEVELOPER_ID = '845829137251567';
-        if (!verifiedUser || (verifiedUser.role !== 'admin' && String(verifiedUser.id) !== DEVELOPER_ID)) {
+        if (!verifiedUser || (verifiedUser.role !== 'admin' && verifiedUser.role !== 'owner' && String(verifiedUser.id) !== DEVELOPER_ID)) {
             console.error('[Security] Admin verification failed server-side.');
             if (!verifiedUser) localStorage.removeItem('current_user');
             window.location.replace('../homepage/');
@@ -88,13 +88,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        accountsList.innerHTML = accounts.map(acc => `
+        accountsList.innerHTML = accounts.map(acc => {
+            let roleBadge = '';
+            if (acc.role === 'owner') {
+                roleBadge = '<span class="admin-badge" style="background: #ff4757;">OWNER</span>';
+            } else if (acc.role === 'admin') {
+                roleBadge = '<span class="admin-badge">ADMIN</span>';
+            }
+
+            return `
             <div class="account-card ${acc.isRuleBreaker ? 'rule-breaker' : ''}" data-id="${acc.id}">
                 <div class="account-info-main">
                     <img src="${acc.pfp}" class="account-pfp">
                     <div class="account-details">
                         <h4>${acc.username} 
-                            ${acc.role === 'admin' ? '<span class="admin-badge">ADMIN</span>' : ''}
+                            ${roleBadge}
                             ${acc.isRuleBreaker ? '<span class="rule-breaker-badge">Rule-Breaker</span>' : ''}
                         </h4>
                         <p>ID: ${acc.id} | IP: ${acc.allowedIp || 'None'}</p>
@@ -104,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button class="btn-options" onclick="openAccountActions('${acc.id}', '${acc.username}', '${acc.allowedIp || ''}')">Options</button>
                 </div>
             </div>
-        `).join('');
+        `;}).join('');
     }
 
     // Search functionality
@@ -139,10 +147,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Update Make Admin tile
             const labelAdmin = document.getElementById('label-make-admin');
-            if (acc && acc.role === 'admin') {
-                labelAdmin.innerText = 'Remove Admin';
-            } else {
-                labelAdmin.innerText = 'Make Admin';
+            if (acc) {
+                if (acc.role === 'owner') {
+                    labelAdmin.innerText = 'Reset Role';
+                } else if (acc.role === 'admin') {
+                    labelAdmin.innerText = 'Promote Owner';
+                } else {
+                    labelAdmin.innerText = 'Make Admin';
+                }
             }
 
             // Update Make BETA tile
@@ -229,21 +241,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('tile-make-admin').onclick = async () => {
         accountActionsModal.classList.add('hidden');
         
-        // Final security check: Only the developer can manage admin roles
+        // Final security check: Only the developer can manage admin/owner roles
         if (user.id !== DEVELOPER_ID) {
-            alert('Unauthorized: Only the Developer can manage admin roles.');
+            alert('Unauthorized: Only the Developer can manage roles.');
             return;
         }
 
         const acc = allAccounts.find(a => a.id === currentEditingUserId);
         if (!acc) return;
 
-        const isCurrentlyAdmin = acc.role === 'admin';
-        const confirmMsg = isCurrentlyAdmin 
-            ? `Are you sure you want to remove admin rights from ${currentEditingUsername}?`
-            : `Are you sure you want to make ${currentEditingUsername} an admin?`;
+        // Sequence: user -> admin -> owner -> user
+        let nextRole = 'user';
+        let actionLabel = 'remove admin rights from';
+        
+        if (acc.role === 'admin') {
+            nextRole = 'owner';
+            actionLabel = 'promote to owner:';
+        } else if (acc.role === 'owner') {
+            nextRole = 'user';
+            actionLabel = 'reset to standard user:';
+        } else {
+            nextRole = 'admin';
+            actionLabel = 'make admin:';
+        }
 
-        if (!confirm(confirmMsg)) return;
+        if (!confirm(`Are you sure you want to ${actionLabel} ${currentEditingUsername}?`)) return;
 
         try {
             const btn = document.getElementById('tile-make-admin');
@@ -251,14 +273,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             await GitHubAPI.safeUpdateFile(
                 `news/created-news-accounts-storage/${currentEditingUserId}.json`,
-                { role: isCurrentlyAdmin ? 'user' : 'admin' },
-                `Admin: ${isCurrentlyAdmin ? 'Removed' : 'Granted'} admin rights for ${currentEditingUsername}`
+                { role: nextRole },
+                `Admin: Updated role to ${nextRole} for ${currentEditingUsername}`
             );
 
-            alert(`Admin rights ${isCurrentlyAdmin ? 'removed' : 'granted'} successfully.`);
+            alert(`Role updated to ${nextRole} successfully.`);
             loadAccounts();
         } catch (e) {
-            alert('Failed to update admin rights: ' + e.message);
+            alert('Failed to update role: ' + e.message);
         } finally {
             document.getElementById('tile-make-admin').disabled = false;
         }
