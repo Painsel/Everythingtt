@@ -74,10 +74,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         filtered.forEach(msg => {
+            const isExternal = msg.sender && !msg.sender.includes('@ett.mail') && !msg.sender.includes('EverythingTT');
             const item = document.createElement('div');
             item.className = `mail-item ${!msg.isRead && msg.type === 'incoming' ? 'unread' : ''}`;
             item.innerHTML = `
-                <div class="mail-sender">${msg.sender}</div>
+                <div class="mail-sender">
+                    ${msg.sender}
+                    ${isExternal ? '<span class="external-tag">External</span>' : ''}
+                </div>
                 <div class="mail-subject-preview">${msg.subject}</div>
                 <div class="mail-date">${new Date(msg.timestamp).toLocaleDateString()}</div>
             `;
@@ -175,13 +179,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Find recipient's mailbox ID
             let recipientMailboxId = null;
             let recipientEmail = to;
+            let isExternal = false;
 
-            if (to.includes('@ett.mail')) {
-                const prefix = to.split('@')[0];
-                const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
-                if (mapData) {
-                    const map = JSON.parse(mapData.content);
-                    recipientMailboxId = map.mailboxId;
+            if (to.includes('@')) {
+                if (to.includes('@ett.mail')) {
+                    const prefix = to.split('@')[0];
+                    const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
+                    if (mapData) {
+                        const map = JSON.parse(mapData.content);
+                        recipientMailboxId = map.mailboxId;
+                    }
+                } else {
+                    // External Email Address
+                    isExternal = true;
+                    recipientEmail = to;
                 }
             } else {
                 // Assume User ID
@@ -193,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            if (!recipientMailboxId) {
+            if (!recipientMailboxId && !isExternal) {
                 alert('Recipient not found. Please check the Email or User ID.');
                 return;
             }
@@ -217,14 +228,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `Mail: Sent message ${mailId}`
             );
 
-            // 2. Save to recipient's Incoming
-            await GitHubAPI.safeUpdateFile(
-                `news/mail-storage/${recipientMailboxId}/${mailId}.json`,
-                { ...mailData, type: 'incoming' },
-                `Mail: Received message ${mailId}`
-            );
+            // 2. Handle delivery
+            if (isExternal) {
+                // Save to global relay queue for the backend to pick up and send to the internet
+                await GitHubAPI.safeUpdateFile(
+                    `news/mail-relay/queue/${mailId}.json`,
+                    { ...mailData, status: 'queued' },
+                    `Mail: Queued external relay to ${to}`
+                );
+            } else {
+                // Save to internal recipient's Incoming
+                await GitHubAPI.safeUpdateFile(
+                    `news/mail-storage/${recipientMailboxId}/${mailId}.json`,
+                    { ...mailData, type: 'incoming' },
+                    `Mail: Received message ${mailId}`
+                );
+            }
 
-            alert('Mail sent successfully!');
+            alert(isExternal ? 'Mail queued for global delivery!' : 'Mail sent successfully!');
             composeModal.classList.add('hidden');
             composeForm.reset();
             loadMail();

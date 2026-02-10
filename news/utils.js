@@ -34,7 +34,8 @@ window.GitHubAPI = {
             'notifications-storage',
             'support-forms-storage',
             'mail-storage',
-            'mail-accounts-storage'
+            'mail-accounts-storage',
+            'mail-relay'
         ];
 
         try {
