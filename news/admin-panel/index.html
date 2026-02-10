@@ -252,6 +252,14 @@
                     <span class="tile-icon">⚖️</span>
                     <span class="tile-label">Violations</span>
                 </button>
+                <button class="action-tile reset-mail" id="tile-reset-mail">
+                    <span class="tile-icon">📧</span>
+                    <span class="tile-label">Reset Mail</span>
+                </button>
+                <button class="action-tile link-mail" id="tile-link-mail">
+                    <span class="tile-icon">🔗</span>
+                    <span class="tile-label">Link Mail</span>
+                </button>
             </div>
         </div>
     </div>
@@ -314,6 +322,26 @@
             </div>
             <div class="modal-actions" style="margin-top: 25px;">
                 <button id="btn-save-violations" class="btn-primary">Apply & Sync</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="link-mail-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Link Additional Email</h3>
+            <p>Target User: <span id="link-mail-target-user" style="font-weight: bold;"></span></p>
+            <div class="input-group" style="margin-top: 15px;">
+                <label for="new-mail-prefix-admin">Email Prefix:</label>
+                <div style="display: flex; align-items: center;">
+                    <input type="text" id="new-mail-prefix-admin" placeholder="e.g. john.doe" style="flex: 1; background: #2f3136; border: 1px solid #40444b; color: #dcddde; border-radius: 4px 0 0 4px; padding: 8px;">
+                    <span style="background: #40444b; padding: 8px; border-radius: 0 4px 4px 0; color: #b9bbbe; font-size: 0.9em;">@ett.mail</span>
+                </div>
+                <p style="font-size: 0.8em; color: #b9bbbe; margin-top: 5px;">This will create a new mailbox and link it to this user account.</p>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="btn-confirm-link-mail" class="btn-primary">Link Email</button>
+                <button id="btn-cancel-link-mail" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>

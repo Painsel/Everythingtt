@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const accessFields = document.getElementById('access-fields');
     const emailDisplay = document.getElementById('existing-email-display');
     const btnEnterInbox = document.getElementById('btn-enter-inbox');
+    const linkedContainer = document.getElementById('linked-emails-container');
+    const linkedList = document.getElementById('linked-emails-list');
 
     const user = JSON.parse(localStorage.getItem('current_user'));
     if (!user) {
@@ -25,10 +27,56 @@ document.addEventListener('DOMContentLoaded', async () => {
             signupFields.classList.add('hidden');
             accessFields.classList.remove('hidden');
             emailDisplay.innerText = currentMailAcc.email;
+
+            // Handle multiple linked emails
+            if (currentMailAcc.linkedEmails && currentMailAcc.linkedEmails.length > 0) {
+                linkedContainer.classList.remove('hidden');
+                renderLinkedEmails();
+            }
         }
     } catch (e) {
         // No account yet, keep signup fields visible
         console.log('No mail account found for user, showing signup.');
+    }
+
+    function renderLinkedEmails() {
+        if (!currentMailAcc || !currentMailAcc.linkedEmails) return;
+        
+        linkedList.innerHTML = '';
+        
+        // Add the primary email if not in linked list
+        const allEmails = [...currentMailAcc.linkedEmails];
+        const primaryInLinked = allEmails.some(e => e.email === currentMailAcc.email);
+        if (!primaryInLinked) {
+            allEmails.unshift({
+                email: currentMailAcc.email,
+                mailboxId: currentMailAcc.mailboxId
+            });
+        }
+
+        allEmails.forEach(acc => {
+            const div = document.createElement('div');
+            div.className = `linked-email-item ${acc.email === currentMailAcc.email ? 'active' : ''}`;
+            div.innerText = acc.email;
+            div.onclick = () => {
+                // Switch primary email
+                currentMailAcc.email = acc.email;
+                currentMailAcc.mailboxId = acc.mailboxId;
+                emailDisplay.innerText = acc.email;
+                renderLinkedEmails();
+                
+                // Update session storage for immediate entry
+                sessionStorage.setItem('current_mail_acc', JSON.stringify(currentMailAcc));
+                
+                // Save the switch if we want it to persist as primary
+                GitHubAPI.safeUpdateFile(
+                    `mail-accounts-storage/${user.id}.json`,
+                    currentMailAcc,
+                    `Mail: User switched primary email to ${acc.email}`
+                );
+            };
+            linkedList.appendChild(div);
+        });
     }
 
     // Handle Registration (Sign Up)
@@ -51,7 +99,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userId: user.id,
                 email: fullEmail,
                 mailboxId: mailboxId,
-                createdAt: new Date().toISOString()
+                createdAt: new Date().toISOString(),
+                linkedEmails: []
             };
 
             // Save account info

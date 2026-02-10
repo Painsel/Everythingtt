@@ -37,8 +37,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const accountInfoModal = document.getElementById('account-info-modal');
     const accountActionsModal = document.getElementById('account-actions-modal');
     const manageViolationsModal = document.getElementById('manage-violations-modal');
+    const linkMailModal = document.getElementById('link-mail-modal');
     const closeModals = document.querySelectorAll('.close-modal');
-    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal, manageViolationsModal];
+    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal, manageViolationsModal, linkMailModal];
     
     // Close modals when clicking outside
     window.onclick = (event) => {
@@ -236,6 +237,133 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('tile-manage-violations').onclick = () => {
         accountActionsModal.classList.add('hidden');
         openManageViolations(currentEditingUserId, currentEditingUsername);
+    };
+
+    document.getElementById('tile-reset-mail').onclick = async () => {
+        accountActionsModal.classList.add('hidden');
+        if (!confirm(`Are you sure you want to RESET the mail account for ${currentEditingUsername}? This will disconnect their current mailbox.`)) return;
+        
+        try {
+            const btn = document.getElementById('tile-reset-mail');
+            btn.disabled = true;
+            
+            // Delete the account mapping
+            await GitHubAPI.safeDeleteFile(`mail-accounts-storage/${currentEditingUserId}.json`, `Admin: Reset mail account for ${currentEditingUsername}`);
+            
+            alert('Mail account reset successfully.');
+        } catch (e) {
+            alert('Failed to reset mail account: ' + e.message);
+        } finally {
+            document.getElementById('tile-reset-mail').disabled = false;
+        }
+    };
+
+    document.getElementById('tile-link-mail').onclick = () => {
+        accountActionsModal.classList.add('hidden');
+        document.getElementById('link-mail-target-user').innerText = currentEditingUsername;
+        document.getElementById('new-mail-prefix-admin').value = '';
+        linkMailModal.classList.remove('hidden');
+    };
+
+    document.getElementById('btn-confirm-link-mail').onclick = async () => {
+        const prefix = document.getElementById('new-mail-prefix-admin').value.trim().toLowerCase();
+        if (!prefix) {
+            alert('Please enter an email prefix.');
+            return;
+        }
+        const fullEmail = `${prefix}@ett.mail`;
+        const btn = document.getElementById('btn-confirm-link-mail');
+
+        try {
+            btn.disabled = true;
+            btn.innerText = 'Linking...';
+
+            // 1. Check if email already exists in mapping
+            let existingMaps = [];
+            try {
+                existingMaps = await GitHubAPI.getFolderContents('mail-accounts-storage/email-map');
+            } catch (e) {
+                // Folder might not exist yet
+            }
+            
+            const emailExists = existingMaps.some(f => f.name === `${prefix}.json`);
+            if (emailExists) {
+                alert('This email address is already taken.');
+                return;
+            }
+
+            // 2. Load current account info or create new one
+            let mailAccountData = {
+                userId: currentEditingUserId,
+                email: fullEmail,
+                mailboxId: 'ettm_' + Math.random().toString(36).substr(2, 9),
+                createdAt: new Date().toISOString(),
+                linkedEmails: []
+            };
+
+            try {
+                const existingData = await GitHubAPI.getFile(`mail-accounts-storage/${currentEditingUserId}.json`);
+                if (existingData) {
+                    const existing = JSON.parse(existingData.content);
+                    // Move current to linkedEmails if not already there
+                    if (!existing.linkedEmails) existing.linkedEmails = [];
+                    
+                    // Add existing email to linked list if it's different
+                    if (existing.email && existing.email !== fullEmail) {
+                        const alreadyLinked = existing.linkedEmails.some(e => e.email === existing.email);
+                        if (!alreadyLinked) {
+                            existing.linkedEmails.push({
+                                email: existing.email,
+                                mailboxId: existing.mailboxId,
+                                createdAt: existing.createdAt || new Date().toISOString()
+                            });
+                        }
+                    }
+                    
+                    // Add new email to linked list
+                    existing.linkedEmails.push({
+                        email: fullEmail,
+                        mailboxId: mailAccountData.mailboxId,
+                        createdAt: mailAccountData.createdAt
+                    });
+                    
+                    // Update primary to the new one? Or just keep current primary?
+                    // Let's keep the new one as the primary for now as it's the one being linked.
+                    existing.email = fullEmail;
+                    existing.mailboxId = mailAccountData.mailboxId;
+                    
+                    mailAccountData = existing;
+                }
+            } catch (e) {
+                // No existing account, use the new one created above
+            }
+
+            // 3. Save account info
+            await GitHubAPI.safeUpdateFile(
+                `mail-accounts-storage/${currentEditingUserId}.json`,
+                mailAccountData,
+                `Admin: Linked additional email ${fullEmail} to ${currentEditingUsername}`
+            );
+
+            // 4. Save email mapping
+            await GitHubAPI.safeUpdateFile(
+                `mail-accounts-storage/email-map/${prefix}.json`,
+                { mailboxId: mailAccountData.mailboxId, userId: currentEditingUserId },
+                `Admin: Email mapping for ${fullEmail}`
+            );
+
+            alert(`Email ${fullEmail} linked successfully!`);
+            linkMailModal.classList.add('hidden');
+        } catch (error) {
+            alert('Failed to link email: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'Link Email';
+        }
+    };
+
+    document.getElementById('btn-cancel-link-mail').onclick = () => {
+        linkMailModal.classList.add('hidden');
     };
 
     document.getElementById('tile-make-admin').onclick = async () => {

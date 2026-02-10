@@ -21,6 +21,34 @@
     font-size: 1.1rem;
 }
 
+.linked-emails-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.linked-email-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.linked-email-item:hover {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: var(--primary);
+}
+
+.linked-email-item.active {
+    background: rgba(88, 101, 242, 0.3);
+    border-color: var(--primary);
+    font-weight: bold;
+}
+
 .form-notice {
     margin-top: 15px;
     font-size: 0.75rem;

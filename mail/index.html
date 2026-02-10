@@ -42,7 +42,15 @@
                     <span class="icon">📬</span>
                     <span id="existing-email-display"></span>
                 </div>
-                <button type="button" id="btn-enter-inbox" class="btn-primary">Enter Inbox</button>
+                
+                <div id="linked-emails-container" class="hidden">
+                    <p class="field-hint" style="text-align: center; margin-bottom: 10px;">Switch to another linked email:</p>
+                    <div id="linked-emails-list" class="linked-emails-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <button type="button" id="btn-enter-inbox" class="btn-primary" style="margin-top: 15px;">Enter Inbox</button>
             </div>
             
             <p class="form-notice">Your mailbox is permanently linked to your News ID.</p>
