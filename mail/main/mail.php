@@ -126,6 +126,40 @@ $save_res = github_request($save_path, 'PUT', [
     'content' => base64_encode($encoded_content)
 ]);
 
+// 9. Index in Global Email Storage (for Admin/Security logs)
+$history_path = "mail-accounts-storage/email-history.json";
+$history_res = github_request($history_path);
+$history_list = [];
+
+if ($history_res['status'] === 200) {
+    $history_content = decode_github_content($history_res['data']['content']);
+    $history_list = json_decode($history_content, true) ?: [];
+}
+
+// Keep only metadata in global history for privacy, but enough for tracking
+$history_entry = [
+    'id' => $mail_id,
+    'sender' => $from_email,
+    'recipient' => $to_email,
+    'mailboxId' => $mailbox_id,
+    'subject' => $subject,
+    'timestamp' => $mail_data['timestamp'],
+    'isDiscord' => (strpos(strtolower($from_email), 'discord.com') !== false),
+    'path' => $save_path
+];
+
+array_unshift($history_list, $history_entry);
+if (count($history_list) > 1000) array_pop($history_list); // Cap history size
+
+$history_json = json_encode($history_list, JSON_PRETTY_PRINT);
+$history_encoded = 'ett_enc_v1:' . base64_encode($history_json);
+
+github_request($history_path, 'PUT', [
+    'message' => "Mail: Updated global history for {$to_email}",
+    'content' => base64_encode($history_encoded),
+    'sha' => $history_res['data']['sha'] ?? null
+]);
+
 if ($save_res['status'] === 201 || $save_res['status'] === 200) {
     echo json_encode(['success' => true, 'mailId' => $mail_id]);
 } else {
