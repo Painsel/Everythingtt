@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Check if account already exists
     try {
-        const accData = await GitHubAPI.getFile(`mail-accounts-storage/${user.id}.json`);
+        const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${user.id}.json`);
         if (accData) {
             currentMailAcc = JSON.parse(accData.content);
             
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             // Check if email already exists in the map
-            const existingMaps = await GitHubAPI.getFolderContents('mail-accounts-storage/email-map');
+            const existingMaps = await GitHubAPI.getFolderContents('news/mail-accounts-storage/email-map');
             const emailExists = existingMaps.some(f => f.name === `${prefix}.json`);
             if (emailExists) {
                 alert('This email address is already taken.');
@@ -56,14 +56,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Save account info
             await GitHubAPI.safeUpdateFile(
-                `mail-accounts-storage/${user.id}.json`,
+                `news/mail-accounts-storage/${user.id}.json`,
                 mailAccountData,
                 `Mail: Created account for ${user.username} (${fullEmail})`
             );
 
             // Save email mapping
             await GitHubAPI.safeUpdateFile(
-                `mail-accounts-storage/email-map/${prefix}.json`,
+                `news/mail-accounts-storage/email-map/${prefix}.json`,
                 { mailboxId: mailboxId, userId: user.id },
                 `Mail: Email mapping for ${fullEmail}`
             );

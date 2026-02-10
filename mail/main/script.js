@@ -38,12 +38,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load Mail
     async function loadMail() {
+        if (!GitHubAPI.middlewareURL) {
+            console.warn('[Mail] Middleware URL not configured. Critical storage access may fail.');
+        }
         mailList.innerHTML = '<div class="loading-state">Syncing with critical storage...</div>';
         try {
             // Check if folder exists by listing contents
             let files = [];
             try {
-                files = await GitHubAPI.getFolderContents(`mail-storage/${mailAcc.mailboxId}`);
+                files = await GitHubAPI.getFolderContents(`news/mail-storage/${mailAcc.mailboxId}`);
             } catch (e) {
                 // Folder might not exist yet if no mail sent
                 files = [];
@@ -135,7 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!msg.isRead && msg.type === 'incoming') {
             msg.isRead = true;
             await GitHubAPI.safeUpdateFile(
-                `mail-storage/${mailAcc.mailboxId}/${msg.id}.json`,
+                `news/mail-storage/${mailAcc.mailboxId}/${msg.id}.json`,
                 msg,
                 `Mail: Mark as read ${msg.id}`
             );
@@ -176,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             await GitHubAPI.safeUpdateFile(
-                `mail-storage/${mailAcc.mailboxId}/${mailId}.json`,
+                `news/mail-storage/${mailAcc.mailboxId}/${mailId}.json`,
                 mailData,
                 `Mail: Saved draft ${mailId}`
             );
@@ -197,6 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const body = document.getElementById('compose-body').value.trim();
 
         try {
+            console.log('[Mail] Attempting to send to:', to);
             // Find recipient's mailbox ID
             let recipientMailboxId = null;
             let recipientEmail = to;
@@ -205,8 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (to.includes('@')) {
                 if (to.includes('@ett.mail')) {
                     const prefix = to.split('@')[0];
-                    // [FIX] Ensure we check the correct storage path
-                    const mapData = await GitHubAPI.getFile(`mail-accounts-storage/email-map/${prefix}.json`);
+                    const mapData = await GitHubAPI.getFile(`news/mail-accounts-storage/email-map/${prefix}.json`);
                     if (mapData) {
                         const map = JSON.parse(mapData.content);
                         recipientMailboxId = map.mailboxId;
@@ -218,8 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } else {
                 // Assume User ID
-                // [FIX] Ensure we check the correct storage path
-                const accData = await GitHubAPI.getFile(`mail-accounts-storage/${to}.json`);
+                const accData = await GitHubAPI.getFile(`news/mail-accounts-storage/${to}.json`);
                 if (accData) {
                     const acc = JSON.parse(accData.content);
                     recipientMailboxId = acc.mailboxId;
@@ -228,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (!recipientMailboxId && !isExternal) {
+                console.error('[Mail] Recipient resolution failed for:', to);
                 alert('Recipient not found. Please check the Email or User ID.');
                 return;
             }
@@ -246,7 +249,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // 1. Save to sender's Outgoing
             await GitHubAPI.safeUpdateFile(
-                `mail-storage/${mailAcc.mailboxId}/${mailId}.json`,
+                `news/mail-storage/${mailAcc.mailboxId}/${mailId}.json`,
                 { ...mailData, type: 'outgoing' },
                 `Mail: Sent message ${mailId}`
             );
@@ -255,14 +258,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (isExternal) {
                 // Save to global relay queue for the backend to pick up and send to the internet
                 await GitHubAPI.safeUpdateFile(
-                    `mail-relay/queue/${mailId}.json`,
+                    `news/mail-relay/queue/${mailId}.json`,
                     { ...mailData, status: 'queued' },
                     `Mail: Queued external relay to ${to}`
                 );
             } else {
                 // Save to internal recipient's Incoming
                 await GitHubAPI.safeUpdateFile(
-                    `mail-storage/${recipientMailboxId}/${mailId}.json`,
+                    `news/mail-storage/${recipientMailboxId}/${mailId}.json`,
                     { ...mailData, type: 'incoming' },
                     `Mail: Received message ${mailId}`
                 );

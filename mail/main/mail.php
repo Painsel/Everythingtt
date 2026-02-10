@@ -16,10 +16,6 @@ $config = [
     'middleware_url' => 'https://everything-tt-api.vercel.app/'
 ];
 
-// Logging for debugging (optional, remove in production)
-file_put_contents('mail_debug.log', date('Y-m-d H:i:s') . " - Received request\n", FILE_APPEND);
-file_put_contents('mail_debug.log', "PAT Length: " . strlen($config['github_pat']) . "\n", FILE_APPEND);
-
 // 2. Capture Inbound Data
 $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, true);
@@ -84,13 +80,7 @@ function github_request($path, $method = 'GET', $body = null) {
     
     $response = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
     curl_close($ch);
-    
-    if ($error) {
-        file_put_contents('mail_debug.log', "CURL Error: " . $error . "\n", FILE_APPEND);
-    }
-    file_put_contents('mail_debug.log', "GitHub Response ($status): " . substr($response, 0, 200) . "...\n", FILE_APPEND);
     
     return [
         'status' => $status,
