@@ -16,6 +16,10 @@ $config = [
     'middleware_url' => 'https://everything-tt-api.vercel.app/'
 ];
 
+// Logging for debugging (optional, remove in production)
+file_put_contents('mail_debug.log', date('Y-m-d H:i:s') . " - Received request\n", FILE_APPEND);
+file_put_contents('mail_debug.log', "PAT Length: " . strlen($config['github_pat']) . "\n", FILE_APPEND);
+
 // 2. Capture Inbound Data
 $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, true);
@@ -49,7 +53,18 @@ function github_request($path, $method = 'GET', $body = null) {
     global $config;
     
     // Use middleware for critical data repo if possible, otherwise direct
-    $url = "https://api.github.com/repos/{$config['owner']}/{$config['repo']}/contents/" . ltrim($path, '/');
+    // [FIX] Correctly route to the storage folders in the root of the repo
+    $clean_path = ltrim($path, '/');
+    if (strpos($clean_path, 'news/') === 0) {
+        $clean_path = substr($clean_path, 5);
+    }
+    
+    // [FIX] Ensure mail-relay paths are also cleaned if they have news/ prefix
+    if (strpos($clean_path, 'mail-relay/') === 0) {
+        // Already root
+    }
+
+    $url = "https://api.github.com/repos/{$config['owner']}/{$config['repo']}/contents/" . $clean_path;
     
     $ch = curl_init($url);
     $headers = [
@@ -69,7 +84,13 @@ function github_request($path, $method = 'GET', $body = null) {
     
     $response = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
     curl_close($ch);
+    
+    if ($error) {
+        file_put_contents('mail_debug.log', "CURL Error: " . $error . "\n", FILE_APPEND);
+    }
+    file_put_contents('mail_debug.log', "GitHub Response ($status): " . substr($response, 0, 200) . "...\n", FILE_APPEND);
     
     return [
         'status' => $status,
