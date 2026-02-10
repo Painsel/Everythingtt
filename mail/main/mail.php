@@ -20,6 +20,11 @@ $config = [
 $raw_data = file_get_contents('php://input');
 $data = json_decode($raw_data, true);
 
+// [DEBUG] Log incoming request for troubleshooting
+$log_entry = "[" . date('Y-m-d H:i:s') . "] Incoming from " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown') . "\n";
+$log_entry .= "Payload: " . ($raw_data ?: 'empty') . "\n";
+file_put_contents('mail_debug.log', $log_entry, FILE_APPEND);
+
 if (!$data) {
     // If not JSON, check if it's form-encoded (some relays use this)
     if (!empty($_POST)) {
@@ -81,6 +86,13 @@ function github_request($path, $method = 'GET', $body = null) {
     $response = curl_exec($ch);
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
+    
+    // [DEBUG] Log GitHub API response
+    $log_entry = "[" . date('Y-m-d H:i:s') . "] GitHub API {$method} {$path} - Status: {$status}\n";
+    if ($status >= 400) {
+        $log_entry .= "Response: " . $response . "\n";
+    }
+    file_put_contents('mail_debug.log', $log_entry, FILE_APPEND);
     
     return [
         'status' => $status,
