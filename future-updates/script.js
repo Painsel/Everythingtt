@@ -1,5 +1,6 @@
 // Roadmap Page Interactivity
-document.addEventListener('DOMContentLoaded', () => {
+const initRoadmap = () => {
+    console.log('Roadmap script initialized');
     const cards = document.querySelectorAll('.roadmap-card');
     
     // Add staggered entry animation for cards
@@ -19,15 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (classifiedBox) {
         classifiedBox.addEventListener('mouseenter', () => {
             const icon = classifiedBox.querySelector('i');
-            icon.classList.remove('fa-user-secret');
-            icon.classList.add('fa-eye');
+            if (icon) {
+                icon.classList.remove('fa-user-secret');
+                icon.classList.add('fa-eye');
+            }
             classifiedBox.style.borderColor = 'rgba(237, 66, 69, 0.5)';
         });
 
         classifiedBox.addEventListener('mouseleave', () => {
             const icon = classifiedBox.querySelector('i');
-            icon.classList.remove('fa-eye');
-            icon.classList.add('fa-user-secret');
+            if (icon) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-user-secret');
+            }
             classifiedBox.style.borderColor = 'rgba(255, 255, 255, 0.1)';
         });
     }
@@ -52,8 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const calcWarning = document.getElementById('calc-warning');
 
     if (creditsInput && goldOutput) {
+        console.log('Calculator elements found');
         const calculateGold = () => {
             const credits = parseFloat(creditsInput.value) || 0;
+            console.log('Calculating gold for credits:', credits);
             
             // Show warning if below 300, but calculate anyway for feedback
             if (credits < 300 && credits > 0) {
@@ -72,5 +79,17 @@ document.addEventListener('DOMContentLoaded', () => {
         creditsInput.addEventListener('input', calculateGold);
         creditsInput.addEventListener('change', calculateGold);
         creditsInput.addEventListener('keyup', calculateGold);
+        
+        // Initial calculation
+        calculateGold();
+    } else {
+        console.error('Calculator elements NOT found:', { creditsInput, goldOutput, calcWarning });
     }
-});
+};
+
+// Initialize on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRoadmap);
+} else {
+    initRoadmap();
+}
