@@ -52,17 +52,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const calcWarning = document.getElementById('calc-warning');
 
     if (creditsInput && goldOutput) {
-        creditsInput.addEventListener('input', (e) => {
-            const credits = parseInt(e.target.value) || 0;
+        const calculateGold = () => {
+            const credits = parseFloat(creditsInput.value) || 0;
             
+            // Show warning if below 300, but calculate anyway for feedback
             if (credits < 300 && credits > 0) {
                 calcWarning.classList.remove('hidden');
-                goldOutput.textContent = '0.00';
             } else {
                 calcWarning.classList.add('hidden');
-                const gold = credits / 15;
-                goldOutput.textContent = gold.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             }
-        });
+
+            const gold = credits / 15;
+            goldOutput.textContent = gold.toLocaleString(undefined, { 
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2 
+            });
+        };
+
+        creditsInput.addEventListener('input', calculateGold);
+        creditsInput.addEventListener('change', calculateGold);
+        creditsInput.addEventListener('keyup', calculateGold);
     }
 });

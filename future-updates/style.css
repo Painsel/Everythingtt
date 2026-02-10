@@ -182,6 +182,7 @@ body {
     position: relative;
     display: flex;
     align-items: center;
+    z-index: 10;
 }
 
 .calc-input input {
@@ -193,6 +194,8 @@ body {
     color: var(--white);
     font-size: 0.9rem;
     outline: none;
+    position: relative;
+    z-index: 11;
 }
 
 .calc-input i {
