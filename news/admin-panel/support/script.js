@@ -3,6 +3,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     let user = JSON.parse(localStorage.getItem('current_user'));
     
     const isDeveloper = user && String(user.id) === String(GitHubAPI.DEVELOPER_ID);
+    
+    // Debug log to help identify why access might be denied
+    console.log('[Security Check]', { 
+        userId: user ? user.id : 'none', 
+        userRole: user ? user.role : 'none', 
+        devId: GitHubAPI.DEVELOPER_ID,
+        isDev: isDeveloper 
+    });
+
     if (!user || (user.role !== 'admin' && user.role !== 'owner' && !isDeveloper)) {
         window.location.href = '../../homepage/index.html';
         return;
