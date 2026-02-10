@@ -45,4 +45,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         item.style.transition = 'all 0.2s ease';
     });
+
+    // Credits to Gold Calculator Logic
+    const creditsInput = document.getElementById('credits-input');
+    const goldOutput = document.getElementById('gold-output');
+    const calcWarning = document.getElementById('calc-warning');
+
+    if (creditsInput && goldOutput) {
+        creditsInput.addEventListener('input', (e) => {
+            const credits = parseInt(e.target.value) || 0;
+            
+            if (credits < 300 && credits > 0) {
+                calcWarning.classList.remove('hidden');
+                goldOutput.textContent = '0';
+            } else {
+                calcWarning.classList.add('hidden');
+                const gold = Math.floor(credits / 15);
+                goldOutput.textContent = gold.toLocaleString();
+            }
+        });
+    }
 });

@@ -168,6 +168,66 @@ body {
     font-size: 1.2rem;
 }
 
+/* Calculator Styles */
+.calculator-mini {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.calc-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.calc-input input {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0.6rem 2.5rem 0.6rem 0.8rem;
+    color: var(--white);
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.calc-input i {
+    position: absolute;
+    right: 10px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.calc-result {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.5rem;
+    border-radius: 8px;
+}
+
+.gold-icon {
+    color: var(--gold);
+    margin-left: 4px;
+}
+
+.calc-warning {
+    font-size: 0.75rem;
+    color: #ed4245;
+    text-align: center;
+    font-weight: 600;
+}
+
+.hidden {
+    display: none;
+}
+
 /* Footer */
 .roadmap-footer {
     text-align: center;
