@@ -151,12 +151,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     localStorage.setItem('current_user', JSON.stringify(user));
                     
                     // Update on server
-                    const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                    const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
                         const serverUser = JSON.parse(atob(data.content));
                         serverUser.allowedIp = currentIp;
                         await GitHubAPI.updateFile(
-                            `news/created-news-accounts-storage/${user.id}.json`,
+                            `created-news-accounts-storage/${user.id}.json`,
                             JSON.stringify(serverUser),
                             `Security: Session-based admin IP update for ${user.username}`,
                             data.sha
@@ -174,12 +174,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 localStorage.setItem('current_user', JSON.stringify(user));
                 
                 // Update on server
-                const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
                     const serverUser = JSON.parse(atob(data.content));
                     serverUser.allowedIp = currentIp;
                     await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${user.id}.json`,
+                        `created-news-accounts-storage/${user.id}.json`,
                         JSON.stringify(serverUser),
                         `Security: Session-based dynamic IP update for ${user.username}`,
                         data.sha
@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentIp) return;
 
         try {
-            const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+            const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== `${user.id}.json`);
             
             let alts = [];
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 for (const extra of toDelete) {
                     console.log(`[Security] Deleting extra alt account: ${extra.username} (${extra.id})`);
                     await GitHubAPI.safeDeleteFile(
-                        `news/created-news-accounts-storage/${extra.id}.json`,
+                        `created-news-accounts-storage/${extra.id}.json`,
                         `Security: Automatically removed extra alt account for IP enforcement (${extra.username})`
                     );
                 }
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.switchAccount = async (targetId) => {
         try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${targetId}.json`);
+            const data = await GitHubAPI.getFile(`created-news-accounts-storage/${targetId}.json`);
             if (data) {
                 const targetUser = JSON.parse(data.content);
                 targetUser.sha = data.sha;
@@ -353,14 +353,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!user || user.isGuest) return;
         try {
             // Use getFileRaw for high-speed polling (check for changes without SHA)
-            const content = await GitHubAPI.getFileRaw(`news/notifications-storage/${user.id}.json`);
+            const content = await GitHubAPI.getFileRaw(`notifications-storage/${user.id}.json`);
             if (content) {
                 const freshNotifications = JSON.parse(content);
                 // We only need to hit the API if the data actually changed
                 // (Comparing length or stringified content is a cheap way to check)
                 if (JSON.stringify(freshNotifications) !== JSON.stringify(notifications)) {
                     // Fetch with API to get the latest SHA for marking as read later
-                    const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
+                    const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`);
                     if (data) {
                         notificationsSHA = data.sha;
                         notifications = JSON.parse(data.content);
@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             await GitHubAPI.updateFile(
-                `news/notifications-storage/${user.id}.json`,
+                `notifications-storage/${user.id}.json`,
                 JSON.stringify(notifications),
                 `Mark notification ${notificationId} as read`,
                 notificationsSHA
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load recent articles
     try {
-        const files = await GitHubAPI.listFiles('news/created-articles-storage');
+        const files = await GitHubAPI.listFiles('created-articles-storage');
         if (!files || files.length === 0) {
             recentList.innerHTML = '<p class="empty">No news yet. Be the first to publish!</p>';
             return;

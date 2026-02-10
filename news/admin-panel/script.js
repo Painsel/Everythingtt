@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadAccounts() {
         try {
             accountsList.innerHTML = '<p class="status-msg">Fetching all accounts from storage...</p>';
-            const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+            const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep');
             
@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.disabled = true;
 
             await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 { role: nextRole },
                 `Admin: Updated role to ${nextRole} for ${currentEditingUsername}`
             );
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.disabled = true;
 
             await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 { role: isCurrentlyBeta ? 'user' : 'beta' },
                 `Admin: ${isCurrentlyBeta ? 'Removed' : 'Granted'} BETA Tester rights for ${currentEditingUsername}`
             );
@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.disabled = true;
             
             await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 { forceLogout: true },
                 `Admin: Forced logout for user ${currentEditingUserId}`
             );
@@ -444,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 updateData,
                 `Admin: Updated violations for ${currentEditingUsername} (${oldViolations} -> ${tempViolationCount})`
             );
@@ -563,7 +563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerText = 'Deleting...';
             
             await GitHubAPI.safeDeleteFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 `Admin: Deleted account for user ${currentEditingUserId}`
             );
             
@@ -588,7 +588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerText = 'Updating...';
             
             await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 { allowedIp: newIp || null },
                 `Admin: Reset IP for user ${currentEditingUserId}`
             );
@@ -616,7 +616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerText = 'Updating...';
             
             await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentEditingUserId}.json`,
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
                 { password: newPw },
                 `Admin: Change password for user ${currentEditingUserId}`
             );
@@ -651,7 +651,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             await GitHubAPI.safeUpdateFile(
-                'news/banned-ips.json',
+                'banned-ips.json',
                 { _action: 'append', data: banData },
                 `Admin: Banned IP ${ip} - Reason: ${reason} (By: ${user.username})`
             );
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.innerText = 'Unbanning...';
 
             await GitHubAPI.safeUpdateFile(
-                'news/banned-ips.json',
+                'banned-ips.json',
                 { _action: 'remove_by_key', key: 'ip', value: ip },
                 `Admin: Unbanned IP ${ip} (By: ${user.username})`
             );

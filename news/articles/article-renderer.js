@@ -174,12 +174,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     user.allowedIp = currentIp;
                     localStorage.setItem('current_user', JSON.stringify(user));
                     
-                    const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                    const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
                         const serverUser = JSON.parse(atob(data.content));
                         serverUser.allowedIp = currentIp;
                         await GitHubAPI.updateFile(
-                            `news/created-news-accounts-storage/${user.id}.json`,
+                            `created-news-accounts-storage/${user.id}.json`,
                             JSON.stringify(serverUser),
                             `Security: Session-based admin IP update for ${user.username}`,
                             data.sha
@@ -197,12 +197,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 localStorage.setItem('current_user', JSON.stringify(user));
                 
                 // Update on server
-                const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
                     const serverUser = JSON.parse(atob(data.content));
                     serverUser.allowedIp = currentIp;
                     await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${user.id}.json`,
+                        `created-news-accounts-storage/${user.id}.json`,
                         JSON.stringify(serverUser),
                         `Security: Session-based dynamic IP update for ${user.username}`,
                         data.sha
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             await GitHubAPI.safeUpdateFile(
-                `news/notifications-storage/${targetUserId}.json`,
+                `notifications-storage/${targetUserId}.json`,
                 (content) => {
                     let remoteNotifications = [];
                     try {
@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (userStatusCache[userId]) return userStatusCache[userId];
         
         try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${userId}.json`);
+            const data = await GitHubAPI.getFile(`created-news-accounts-storage/${userId}.json`);
             if (data) {
                 const userData = JSON.parse(data.content);
                 userStatusCache[userId] = {
@@ -411,7 +411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function pollNotifications() {
         if (!user || user.isGuest) return;
         try {
-            const data = await GitHubAPI.getFile(`news/notifications-storage/${user.id}.json`);
+            const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`);
             if (data && data.sha !== notificationsSHA) {
                 notificationsSHA = data.sha;
                 notifications = JSON.parse(data.content);
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         try {
             await GitHubAPI.safeUpdateFile(
-                `news/notifications-storage/${user.id}.json`,
+                `notifications-storage/${user.id}.json`,
                 (content) => {
                     if (!content) return JSON.stringify(notifications);
                     const remoteNotifs = JSON.parse(content);
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (singleArticleHeader) singleArticleHeader.classList.remove('hidden');
                 if (exploreTitle) exploreTitle.classList.add('hidden');
                 
-                const data = await GitHubAPI.getFile(`news/created-articles-storage/${singleArticleId}.json`);
+                const data = await GitHubAPI.getFile(`created-articles-storage/${singleArticleId}.json`);
                 if (!data) {
                     articlesList.innerHTML = '<p class="status-msg">Article not found.</p>';
                     return;
@@ -615,7 +615,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (singleArticleHeader) singleArticleHeader.classList.add('hidden');
                 if (exploreTitle) exploreTitle.classList.remove('hidden');
                 
-                const files = await GitHubAPI.listFiles('news/created-articles-storage');
+                const files = await GitHubAPI.listFiles('created-articles-storage');
                 console.log(`Raw files from listFiles:`, files);
                 
                 if (!files || files.length === 0) {
@@ -715,7 +715,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (article.commentCount === undefined) {
                     (async () => {
                         try {
-                            const data = await GitHubAPI.getFile(`news/article-comments-storage/${article.id}.json`);
+                            const data = await GitHubAPI.getFile(`article-comments-storage/${article.id}.json`);
                             const count = data ? JSON.parse(data.content).length : 0;
                             console.log(`Migrating article ${article.id}: setting count to ${count}`);
                             await syncCommentCount(article.id, count);
@@ -898,7 +898,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 await GitHubAPI.safeUpdateFile(
-                    `news/created-articles-storage/${currentEditingArticleId}.json`,
+                    `created-articles-storage/${currentEditingArticleId}.json`,
                     (content) => {
                         const data = JSON.parse(content);
                         if (!data.mutes) data.mutes = {};
@@ -928,7 +928,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const res = await GitHubAPI.safeUpdateFile(
-                    `news/created-articles-storage/${currentEditingArticleId}.json`,
+                    `created-articles-storage/${currentEditingArticleId}.json`,
                     (content) => {
                         let article = JSON.parse(content);
                         if (!article.mutes) article.mutes = {};
@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const finalBanner = editSlideshowImages.length > 1 ? editSlideshowImages : (editSlideshowImages[0] || null);
 
                 const res = await GitHubAPI.safeUpdateFile(
-                    `news/created-articles-storage/${currentEditingArticleId}.json`,
+                    `created-articles-storage/${currentEditingArticleId}.json`,
                     {
                         title: editTitle ? editTitle.value.trim() : localArticle.title,
                         content: editContent ? editContent.value.trim() : localArticle.content,
@@ -1141,22 +1141,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 // 1. Fetch latest SHA to ensure we can delete without conflict
-                const latest = await GitHubAPI.getFile(`news/created-articles-storage/${currentEditingArticleId}.json`);
+                const latest = await GitHubAPI.getFile(`created-articles-storage/${currentEditingArticleId}.json`);
                 if (!latest) throw new Error('Could not find article to delete.');
                 
                 const currentSha = latest.sha;
 
                 // 2. Delete article file
-                await GitHubAPI.request(`/contents/news/created-articles-storage/${currentEditingArticleId}.json`, 'DELETE', {
+                await GitHubAPI.request(`/contents/created-articles-storage/${currentEditingArticleId}.json`, 'DELETE', {
                     message: `Delete article: ${currentEditingArticleId}`,
                     sha: currentSha
                 });
 
                 // 3. Optionally delete comments file
                 try {
-                    const commentsRes = await GitHubAPI.getFile(`news/article-comments-storage/${currentEditingArticleId}.json`);
+                    const commentsRes = await GitHubAPI.getFile(`article-comments-storage/${currentEditingArticleId}.json`);
                     if (commentsRes) {
-                        await GitHubAPI.request(`/contents/news/article-comments-storage/${currentEditingArticleId}.json`, 'DELETE', {
+                        await GitHubAPI.request(`/contents/article-comments-storage/${currentEditingArticleId}.json`, 'DELETE', {
                             message: `Delete comments for article: ${currentEditingArticleId}`,
                             sha: commentsRes.sha
                         });
@@ -1167,12 +1167,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // 4. Update user contributions count
                 try {
-                    const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                    const userData = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (userData) {
                         const profile = JSON.parse(userData.content);
                         profile.contributions = Math.max(0, (profile.contributions || 1) - 1);
                         await GitHubAPI.updateFile(
-                            `news/created-news-accounts-storage/${user.id}.json`,
+                            `created-news-accounts-storage/${user.id}.json`,
                             JSON.stringify(profile),
                             `Decrement contributions for ${user.username}`,
                             userData.sha
@@ -1636,7 +1636,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const res = await GitHubAPI.safeUpdateFile(
-                `news/created-articles-storage/${articleId}.json`,
+                `created-articles-storage/${articleId}.json`,
                 (content) => {
                     const latestArticle = JSON.parse(content);
                     if (!latestArticle.reactions) latestArticle.reactions = {};
@@ -1674,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function pollReactions() {
         try {
-            const files = await GitHubAPI.listFiles('news/created-articles-storage');
+            const files = await GitHubAPI.listFiles('created-articles-storage');
             for (const file of files) {
                 // SKIP non-article files like .gitkeep
                 if (!file.name.endsWith('.json')) continue;
@@ -1703,7 +1703,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function syncCommentCount(articleId, count) {
         try {
             const res = await GitHubAPI.safeUpdateFile(
-                `news/created-articles-storage/${articleId}.json`,
+                `created-articles-storage/${articleId}.json`,
                 { commentCount: count },
                 `Update comment count for article ${articleId}`
             );
@@ -1775,14 +1775,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.showAuthorProfile = async function(authorId) {
         try {
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${authorId}.json`);
+            const data = await GitHubAPI.getFile(`created-news-accounts-storage/${authorId}.json`);
             if (!data) return alert('Author profile not found.');
             const author = JSON.parse(data.content);
 
             // Use recorded contributions if available, otherwise calculate
             let authorArticlesCount = author.contributions;
             if (authorArticlesCount === undefined) {
-                const allFiles = await GitHubAPI.listFiles('news/created-articles-storage');
+                const allFiles = await GitHubAPI.listFiles('created-articles-storage');
                 authorArticlesCount = 0;
                 for (const file of allFiles) {
                     if (file.name.endsWith('.json')) {
@@ -1936,7 +1936,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         commentsList.innerHTML = '<p class="status-msg">Loading comments...</p>';
         
         try {
-            const data = await GitHubAPI.getFile(`news/article-comments-storage/${articleId}.json`);
+            const data = await GitHubAPI.getFile(`article-comments-storage/${articleId}.json`);
             if (data) {
                 commentsSHA = data.sha;
                 const comments = JSON.parse(data.content);
@@ -1997,7 +1997,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.findAndShowUser = async function(username) {
         // This is a bit expensive, but we need to find the ID by username
         try {
-            const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+            const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             for (const file of files) {
                 if (!file.name.endsWith('.json')) continue;
                 // Use getFileRaw for speed since we don't need a SHA for searching
@@ -2203,7 +2203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const res = await GitHubAPI.safeUpdateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                `article-comments-storage/${currentArticleIdForComments}.json`,
                 (content) => {
                     if (!content) return "";
                     let comments = JSON.parse(content);
@@ -2274,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const res = await GitHubAPI.safeUpdateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                `article-comments-storage/${currentArticleIdForComments}.json`,
                 (content) => {
                     if (!content) return "";
                     let comments = JSON.parse(content);
@@ -2416,7 +2416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const res = await GitHubAPI.safeUpdateFile(
-                    `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                    `article-comments-storage/${currentArticleIdForComments}.json`,
                     (content) => {
                         if (!content) return "";
                         let comments = JSON.parse(content);
@@ -2500,7 +2500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const res = await GitHubAPI.safeUpdateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                `article-comments-storage/${currentArticleIdForComments}.json`,
                 (content) => {
                     if (!content) return "";
                     let comments = JSON.parse(content);
@@ -2610,7 +2610,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Use safeUpdateFile to handle persistence with atomicity and queuing
         try {
             const res = await GitHubAPI.safeUpdateFile(
-                `news/article-comments-storage/${currentArticleIdForComments}.json`,
+                `article-comments-storage/${currentArticleIdForComments}.json`,
                 (content) => {
                     let remoteComments = [];
                     try {
@@ -2667,7 +2667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         for (const username of uniqueMentions) {
                             (async () => {
                                 try {
-                                    const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+                                    const files = await GitHubAPI.listFiles('created-news-accounts-storage');
                                     for (const file of files) {
                                         if (!file.name.endsWith('.json')) continue;
                                         const accData = await GitHubAPI.getFile(file.path);

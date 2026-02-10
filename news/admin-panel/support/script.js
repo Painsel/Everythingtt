@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadForms() {
         formsList.innerHTML = '<div class="loading-state">Loading support forms...</div>';
         try {
-            const files = await GitHubAPI.getFolderContents('news/support-forms-storage');
+            const files = await GitHubAPI.getFolderContents('support-forms-storage');
             const jsonFiles = files.filter(f => f.name.endsWith('.json'));
             
             const promises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             await GitHubAPI.safeUpdateFile(
-                `news/support-forms-storage/${currentViewingForm.id}.json`,
+                `support-forms-storage/${currentViewingForm.id}.json`,
                 updatedForm,
                 `Support: ${status.toUpperCase()} appeal ${currentViewingForm.id} by ${user.username}`
             );
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 // Get user's mail ID
-                const mailAccounts = await GitHubAPI.getFolderContents('news/mail-accounts-storage');
+                const mailAccounts = await GitHubAPI.getFolderContents('mail-accounts-storage');
                 const userMailAcc = mailAccounts.find(f => f.name === `${currentViewingForm.submittedBy}.json`);
                 
                 if (userMailAcc) {
@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const mailboxId = mailAcc.mailboxId;
 
                         await GitHubAPI.safeUpdateFile(
-                            `news/mail-storage/${mailboxId}/${mailData.id}.json`,
+                            `mail-storage/${mailboxId}/${mailData.id}.json`,
                             mailData,
                             `Support: Email sent to ${currentViewingForm.username} regarding appeal ${currentViewingForm.id}`
                         );

@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             await GitHubAPI.safeUpdateFile(
-                `news/support-forms-storage/${formId}.json`,
+                `support-forms-storage/${formId}.json`,
                 formData,
                 `Support: New appeal from ${user.username} (${formId})`
             );

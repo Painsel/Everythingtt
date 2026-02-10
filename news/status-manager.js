@@ -59,7 +59,7 @@ const StatusManager = {
 
         try {
             // Fetch latest user data to get SHA
-            const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${this.user.id}.json`);
+            const data = await GitHubAPI.getFile(`created-news-accounts-storage/${this.user.id}.json`);
             if (!data) return;
 
             const userData = JSON.parse(data.content);
@@ -69,7 +69,7 @@ const StatusManager = {
             userData.lastActive = new Date().toISOString();
 
             await GitHubAPI.updateFile(
-                `news/created-news-accounts-storage/${this.user.id}.json`,
+                `created-news-accounts-storage/${this.user.id}.json`,
                 JSON.stringify(userData),
                 `Update status to ${status}`,
                 data.sha
@@ -100,7 +100,7 @@ const StatusManager = {
         // Since we can't fetch it during beforeunload, we use the last known SHA
         // that was stored in this.user when the session was active.
         
-        const path = `news/created-news-accounts-storage/${this.user.id}.json`;
+        const path = `created-news-accounts-storage/${this.user.id}.json`;
         const url = GitHubAPI.getAPIURL(`/contents/${path}`);
         
         const userData = {...this.user};

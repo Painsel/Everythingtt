@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // Check if IP is banned
-            const banListData = await GitHubAPI.getFile('news/banned-ips.json');
+            const banListData = await GitHubAPI.getFile('banned-ips.json');
             if (banListData) {
                 const bannedIps = JSON.parse(banListData.content);
                 const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // Check if user exists
-            const files = await GitHubAPI.listFiles('news/created-news-accounts-storage');
+            const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             let foundUser = null;
 
             if (files.length > 0) {
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const isAdminOverride = String(user.id) === ADMIN_ID;
 
                             // If we hit an IP ban earlier, and this is NOT the admin, block them now
-                            const banListData = await GitHubAPI.getFile('news/banned-ips.json');
+                            const banListData = await GitHubAPI.getFile('banned-ips.json');
                             if (banListData && !isAdminOverride) {
                                 const bannedIps = JSON.parse(banListData.content);
                                 const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
@@ -319,7 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     allowedIp: currentIp, // Lock account to this IP
                     privacyConsent: consent // Store their choice
                 };
-                const res = await GitHubAPI.updateFile(`news/created-news-accounts-storage/${newUser.id}.json`, JSON.stringify(newUser), `Create user ${username}`);
+                const res = await GitHubAPI.updateFile(`created-news-accounts-storage/${newUser.id}.json`, JSON.stringify(newUser), `Create user ${username}`);
                 userSha = res.content.sha; // Capture SHA for future updates
                 foundUser = newUser;
             } else {
@@ -346,7 +346,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 // Recalculate contributions
-                const articles = await GitHubAPI.listFiles('news/created-articles-storage');
+                const articles = await GitHubAPI.listFiles('created-articles-storage');
                 let count = 0;
                 for (const file of articles) {
                     if (file.name.endsWith('.json')) {
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (needsUpdate) {
                     const res = await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${foundUser.id}.json`,
+                        `created-news-accounts-storage/${foundUser.id}.json`,
                         JSON.stringify(foundUser),
                         `Update account metadata for ${foundUser.username}`,
                         userSha
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentUser.bio = bio;
 
         try {
-            const res = await GitHubAPI.updateFile(`news/created-news-accounts-storage/${currentUser.id}.json`, JSON.stringify(currentUser), `Update profile ${currentUser.username}`, userSha);
+            const res = await GitHubAPI.updateFile(`created-news-accounts-storage/${currentUser.id}.json`, JSON.stringify(currentUser), `Update profile ${currentUser.username}`, userSha);
             userSha = res.content.sha;
             showDashboard(currentUser);
             showNotification('Profile Saved', 'Your profile changes have been applied successfully.', 'success');

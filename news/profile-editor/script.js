@@ -26,12 +26,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     currentUser.allowedIp = currentIp;
                     localStorage.setItem('current_user', JSON.stringify(currentUser));
                     
-                    const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${currentUser.id}.json`);
+                    const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                     if (data) {
                         const serverUser = JSON.parse(atob(data.content));
                         serverUser.allowedIp = currentIp;
                         await GitHubAPI.updateFile(
-                            `news/created-news-accounts-storage/${currentUser.id}.json`,
+                            `created-news-accounts-storage/${currentUser.id}.json`,
                             JSON.stringify(serverUser),
                             `Security: Session-based admin IP update for ${currentUser.username}`,
                             data.sha
@@ -49,12 +49,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 localStorage.setItem('current_user', JSON.stringify(currentUser));
                 
                 // Update on server
-                const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${currentUser.id}.json`);
+                const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                 if (data) {
                     const serverUser = JSON.parse(atob(data.content));
                     serverUser.allowedIp = currentIp;
                     await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${currentUser.id}.json`,
+                        `created-news-accounts-storage/${currentUser.id}.json`,
                         JSON.stringify(serverUser),
                         `Security: Session-based dynamic IP update for ${currentUser.username}`,
                         data.sha
@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             const res = await GitHubAPI.safeUpdateFile(
-                `news/created-news-accounts-storage/${currentUser.id}.json`,
+                `created-news-accounts-storage/${currentUser.id}.json`,
                 updatedUser,
                 `Update profile: ${username}`
             );

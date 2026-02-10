@@ -42,12 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     user.allowedIp = currentIp;
                     localStorage.setItem('current_user', JSON.stringify(user));
                     
-                    const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                    const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
                         const serverUser = JSON.parse(atob(data.content));
                         serverUser.allowedIp = currentIp;
                         await GitHubAPI.updateFile(
-                            `news/created-news-accounts-storage/${user.id}.json`,
+                            `created-news-accounts-storage/${user.id}.json`,
                             JSON.stringify(serverUser),
                             `Security: Session-based admin IP update for ${user.username}`,
                             data.sha
@@ -65,12 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('current_user', JSON.stringify(user));
                 
                 // Update on server
-                const data = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
                     const serverUser = JSON.parse(atob(data.content));
                     serverUser.allowedIp = currentIp;
                     await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${user.id}.json`,
+                        `created-news-accounts-storage/${user.id}.json`,
                         JSON.stringify(serverUser),
                         `Security: Session-based dynamic IP update for ${user.username}`,
                         data.sha
@@ -334,19 +334,19 @@ document.addEventListener('DOMContentLoaded', () => {
             btnPublish.innerText = 'Publishing...';
             
             await GitHubAPI.updateFile(
-                `news/created-articles-storage/${article.id}.json`, 
+                `created-articles-storage/${article.id}.json`, 
                 JSON.stringify(article), 
                 `Publish article: ${title}`
             );
 
             // Update user contributions
             try {
-                const userData = await GitHubAPI.getFile(`news/created-news-accounts-storage/${user.id}.json`);
+                const userData = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (userData) {
                     const profile = JSON.parse(userData.content);
                     profile.contributions = (profile.contributions || 0) + 1;
                     await GitHubAPI.updateFile(
-                        `news/created-news-accounts-storage/${user.id}.json`,
+                        `created-news-accounts-storage/${user.id}.json`,
                         JSON.stringify(profile),
                         `Increment contributions for ${user.username}`,
                         userData.sha
