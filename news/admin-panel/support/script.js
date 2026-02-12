@@ -253,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-refresh-forms').onclick = loadForms;
     document.getElementById('btn-logout').onclick = () => {
         localStorage.removeItem('current_user');
+        GitHubAPI.hidePauseModal();
         window.location.href = '../../index.html';
     };
 

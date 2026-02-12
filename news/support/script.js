@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Logout logic
     document.getElementById('btn-logout').addEventListener('click', () => {
         localStorage.removeItem('current_user');
+        GitHubAPI.hidePauseModal();
         window.location.href = '../index.html';
     });
 });
