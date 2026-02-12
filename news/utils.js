@@ -359,8 +359,9 @@ window.GitHubAPI = {
         if (base.endsWith('/')) base = base.slice(0, -1);
         
         // Use the /audio endpoint on the middleware
-        // We add a placeholder path parameter because the middleware requires it
-        const uploadUrl = `${base}/audio?path=${encodeURIComponent('supabase/audio')}`; 
+        // We add a placeholder path parameter because the middleware requires it.
+        // IMPORTANT: We use a leading slash to avoid "ENOTFOUND api.github.comsupabase"
+        const uploadUrl = `${base}/audio?path=${encodeURIComponent('/supabase/audio')}`; 
 
         const res = await fetch(uploadUrl, {
             method: 'POST',
