@@ -359,8 +359,9 @@ window.GitHubAPI = {
         if (base.endsWith('/')) base = base.slice(0, -1);
         
         // Use the /audio endpoint on the middleware
-        // The path includes the bucket name "AudiosAndNotifs" and the folder "Voice Messages"
-        const uploadUrl = `${base}/audio?path=${encodeURIComponent('AudiosAndNotifs/Voice Messages')}`; 
+        // IMPORTANT: We use a leading slash (/AudiosAndNotifs) to prevent the middleware from
+        // concatenating the bucket name directly onto the domain (ENOTFOUND api.github.comaudiosandnotifs)
+        const uploadUrl = `${base}/audio?path=${encodeURIComponent('/AudiosAndNotifs/Voice Messages')}`; 
 
         const res = await fetch(uploadUrl, {
             method: 'POST',
