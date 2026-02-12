@@ -54,6 +54,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // Update settings page profile preview
+        const settingsPfp = document.getElementById('settings-profile-pfp');
+        const settingsUsername = document.getElementById('settings-profile-username');
+        const settingsId = document.getElementById('settings-profile-id');
+
+        if (settingsPfp) settingsPfp.src = u.pfp;
+        if (settingsUsername) settingsUsername.innerText = u.username;
+        if (settingsId) settingsId.innerText = u.isGuest ? '@guest' : `@${u.id || u.username.toLowerCase().replace(/\s+/g, '')}`;
+
         // Add badges to sidebar username row
         if (sideUsername) {
             let sideBadgeContainer = sideUsername.nextElementSibling;

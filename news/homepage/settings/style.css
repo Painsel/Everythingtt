@@ -181,6 +181,61 @@
     font-size: 2rem;
 }
 
+.profile-action-card {
+    background: #202225;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #40444b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.profile-preview-compact {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.preview-pfp {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #5865f2;
+}
+
+.preview-details h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.preview-details p {
+    margin: 4px 0 0 0;
+    color: #b9bbbe;
+    font-size: 0.9rem;
+}
+
+.btn-primary-settings {
+    background: #5865f2;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btn-primary-settings:hover {
+    background: #4752c4;
+}
+
 @media (max-width: 600px) {
     .settings-container {
         padding: 20px 10px;
