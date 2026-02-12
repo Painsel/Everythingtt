@@ -438,6 +438,64 @@ window.GitHubAPI = {
             console.error('[GitHubAPI] Failed to delete audio from Supabase:', e);
         }
     },
+    /**
+     * List all notification sounds from the Supabase Storage bucket.
+     * @returns {Promise<Array>} List of sound objects with name and url.
+     */
+    async listNotificationSounds() {
+        await this._waitForConfig();
+        
+        if (!this._supabaseConfig) {
+            const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
+            try {
+                const res = await fetch(MAIN_BIN, { headers: { 'X-Bin-Meta': 'false' } });
+                const data = await res.json();
+                const config = data.record || data;
+                this._supabaseConfig = {
+                    url: 'https://fdodsmjxbxknnqfnzdtr.supabase.co',
+                    key: config.supabase_anon_key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkb2RzbWp4Ynhrbm5xZm56ZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTU3MzgsImV4cCI6MjA4NjQ5MTczOH0.ATFjEwr8X07AcYMy0WjuANlCnFHLN05uZkIMyXaJasI'
+                };
+            } catch (e) {
+                console.error('[GitHubAPI] Failed to fetch Supabase config:', e);
+                return [];
+            }
+        }
+
+        const bucket = 'AudiosAndNotifs';
+        const folder = 'Notification Sounds';
+        const listUrl = `${this._supabaseConfig.url}/storage/v1/object/list/${bucket}`;
+
+        try {
+            const res = await fetch(listUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this._supabaseConfig.key}`,
+                    'apikey': this._supabaseConfig.key,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prefix: folder,
+                    limit: 100,
+                    offset: 0,
+                    sortBy: { column: 'name', order: 'asc' }
+                })
+            });
+
+            if (!res.ok) throw new Error(`Failed to list sounds (${res.status})`);
+
+            const files = await res.json();
+            return files
+                .filter(file => file.name !== '.emptyFolderPlaceholder')
+                .map(file => ({
+                    name: file.name,
+                    url: `${this._supabaseConfig.url}/storage/v1/object/public/${bucket}/${folder}/${file.name}`
+                }));
+        } catch (e) {
+            console.error('[GitHubAPI] Failed to list notification sounds:', e);
+            return [];
+        }
+    },
+
     _supabaseConfig: null,
 
     /**

@@ -362,12 +362,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // We only need to hit the API if the data actually changed
                 // (Comparing length or stringified content is a cheap way to check)
                 if (JSON.stringify(freshNotifications) !== JSON.stringify(notifications)) {
+                    const oldUnreadCount = notifications.filter(n => !n.read).length;
+                    const newUnreadCount = freshNotifications.filter(n => !n.read).length;
+
                     // Fetch with API to get the latest SHA for marking as read later
                     const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`);
                     if (data) {
                         notificationsSHA = data.sha;
                         notifications = JSON.parse(data.content);
                         updateNotificationUI();
+
+                        // Play sound if we have new unread notifications
+                        if (newUnreadCount > oldUnreadCount) {
+                            playNotificationSound();
+                        }
                     }
                 }
             }
@@ -418,6 +426,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
         }).join('');
+    }
+
+    function playNotificationSound() {
+        const savedSound = localStorage.getItem('notification_sound');
+        let soundUrl = 'https://fdodsmjxbxknnqfnzdtr.supabase.co/storage/v1/object/public/AudiosAndNotifs/Notification%20Sounds/Default.mp3'; // Fallback
+
+        if (savedSound) {
+            try {
+                const soundObj = JSON.parse(savedSound);
+                if (soundObj.url) {
+                    soundUrl = soundObj.url;
+                }
+            } catch (e) {
+                console.warn('Failed to parse saved notification sound:', e);
+            }
+        }
+
+        const audio = new Audio(soundUrl);
+        audio.play().catch(err => {
+            console.warn('Notification sound playback blocked or failed:', err);
+        });
     }
 
     window.handleNotificationClick = async function(notificationId) {

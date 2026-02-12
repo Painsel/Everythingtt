@@ -429,9 +429,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Using a try-catch and suppressErrors to avoid console noise for expected 404s
             const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`, true);
             if (data && data.sha !== notificationsSHA) {
+                const freshNotifications = JSON.parse(data.content);
+                const oldUnreadCount = notifications.filter(n => !n.read).length;
+                const newUnreadCount = freshNotifications.filter(n => !n.read).length;
+
                 notificationsSHA = data.sha;
-                notifications = JSON.parse(data.content);
+                notifications = freshNotifications;
                 updateNotificationUI();
+
+                // Play sound if we have new unread notifications
+                if (newUnreadCount > oldUnreadCount) {
+                    playNotificationSound();
+                }
             }
         } catch (e) {
             // Probably doesn't exist yet - expected for new users
@@ -440,6 +449,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateNotificationUI();
             }
         }
+    }
+
+    function playNotificationSound() {
+        const savedSound = localStorage.getItem('notification_sound');
+        let soundUrl = 'https://fdodsmjxbxknnqfnzdtr.supabase.co/storage/v1/object/public/AudiosAndNotifs/Notification%20Sounds/Default.mp3'; // Fallback
+
+        if (savedSound) {
+            try {
+                const soundObj = JSON.parse(savedSound);
+                if (soundObj.url) {
+                    soundUrl = soundObj.url;
+                }
+            } catch (e) {
+                console.warn('Failed to parse saved notification sound:', e);
+            }
+        }
+
+        const audio = new Audio(soundUrl);
+        audio.play().catch(err => {
+            console.warn('Notification sound playback blocked or failed:', err);
+        });
     }
 
     function updateNotificationUI() {

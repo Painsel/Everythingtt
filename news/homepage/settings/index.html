@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - EverythingTT</title>
+    <link rel="icon" href="../../../logo/EverythingTT.png">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../sidebar-shared.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="sidebar-layout">
+    <div class="dashboard-container">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle Sidebar">
+            <span class="toggle-icon">☰</span>
+        </button>
+
+        <!-- Sidebar -->
+        <aside class="sidebar collapsed">
+            <div class="sidebar-brand">
+                <img src="../../../logo/EverythingTT.png" class="sidebar-brand-img" alt="EverythingTT Logo">
+                <span class="sidebar-brand-text">EverythingTT</span>
+            </div>
+            <div class="sidebar-header">
+                <div id="logged-in-user" class="user-info">
+                    <div class="side-pfp-wrapper">
+                        <img id="side-pfp" src="" alt="PFP">
+                        <div id="side-status-icon" class="status-icon"></div>
+                    </div>
+                    <div class="side-user-details">
+                        <div class="side-username-row">
+                            <span id="side-username"></span>
+                            <div id="side-status-bubble" class="status-bubble" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-links">
+                    <a href="../" class="nav-item">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="../../articles/" class="nav-item">
+                        <span class="nav-icon">📰</span>
+                        <span class="nav-text">Explore Feed</span>
+                    </a>
+                    <a href="../../my-articles/" class="nav-item">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-text">My Articles</span>
+                    </a>
+                    <a href="../../create-article/" class="nav-item">
+                        <span class="nav-icon">✍️</span>
+                        <span class="nav-text">Publish News</span>
+                    </a>
+                    <a href="./index.html" class="nav-item active">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                    <a href="../../admin-panel/index.html" id="admin-nav-item" class="nav-item hidden">
+                        <span class="nav-icon">🛡️</span>
+                        <span class="nav-text">Admin</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-logout" class="logout-btn-compact">
+                    <span class="nav-icon">🚪</span>
+                    <span class="nav-text">Logout</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="content">
+            <div class="settings-container">
+                <header class="settings-header">
+                    <h1>User Account Settings</h1>
+                    <p>Manage your preferences and notification settings.</p>
+                </header>
+
+                <section class="settings-section">
+                    <div class="section-header">
+                        <i class="fas fa-bell"></i>
+                        <h2>Notification Sounds</h2>
+                    </div>
+                    <div class="section-content">
+                        <p class="section-description">Choose the sound that plays when you receive a new notification.</p>
+                        
+                        <div class="current-sound-info">
+                            <span>Current Sound: </span>
+                            <strong id="current-sound-name">Default</strong>
+                        </div>
+
+                        <div id="sounds-list-container" class="sounds-grid">
+                            <div class="loading-sounds">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Loading notification sounds...</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../../utils.js"></script>
+    <script src="../../sidebar-shared.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
