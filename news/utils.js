@@ -352,19 +352,19 @@ window.GitHubAPI = {
             throw new Error('Middleware URL not configured');
         }
 
+        const fileName = `voice_${Date.now()}.webm`;
         const formData = new FormData();
-        formData.append('audio', blob, `voice_${Date.now()}.webm`);
+        formData.append('audio', blob, fileName);
 
         let base = this.middlewareURL;
         if (base.endsWith('/')) base = base.slice(0, -1);
         
-        // Use the /audio endpoint on the middleware
-        // Per user instruction: Path parameter is actually "Voice Messages"
-        // and we include the bucket name as part of the path if required by middleware
-        const uploadUrl = `${base}/audio?path=${encodeURIComponent('Voice Messages')}`; 
+        // Per user instruction and Supabase requirements:
+        // The path must include the bucket name "AudiosAndNotifs" and the target filename.
+        const path = `AudiosAndNotifs/Voice Messages/${fileName}`;
+        const uploadUrl = `${base}/audio?path=${encodeURIComponent(path)}`; 
 
         const res = await fetch(uploadUrl, {
-
             method: 'POST',
             body: formData
         });
