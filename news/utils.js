@@ -342,6 +342,40 @@ window.GitHubAPI = {
     },
 
     /**
+     * Upload an audio blob to Supabase via the middleware.
+     * @param {Blob} blob The audio blob to upload.
+     * @returns {Promise<string>} The public URL of the uploaded audio.
+     */
+    async uploadAudio(blob) {
+        await this._waitForConfig();
+        if (!this.middlewareURL) {
+            throw new Error('Middleware URL not configured');
+        }
+
+        const formData = new FormData();
+        formData.append('audio', blob, `voice_${Date.now()}.webm`);
+
+        let base = this.middlewareURL;
+        if (base.endsWith('/')) base = base.slice(0, -1);
+        
+        // Use the /audio endpoint on the middleware
+        const uploadUrl = `${base}/audio`; 
+
+        const res = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!res.ok) {
+            const error = await res.json().catch(() => ({ error: 'Upload failed' }));
+            throw new Error(error.error || 'Failed to upload audio');
+        }
+
+        const data = await res.json();
+        return data.url; 
+    },
+
+    /**
      * Compare two IP addresses to see if they are in the same subnet.
      * This handles dynamic IP changes (common in home networks).
      */

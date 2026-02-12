@@ -15,6 +15,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const commentFileUpload = document.getElementById('comment-file-upload');
     const attachmentPreview = document.getElementById('attachment-preview');
     
+    // Voice Recording Elements
+    const btnRecordVoice = document.getElementById('btn-record-voice');
+    const voiceRecordUI = document.getElementById('voice-record-ui');
+    const voiceDuration = document.getElementById('voice-duration');
+    const btnCancelVoice = document.getElementById('btn-cancel-voice');
+    const btnStopVoice = document.getElementById('btn-stop-voice');
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingInterval = null;
+    let voiceDurationSeconds = 0;
+    let recordedAudioBlob = null;
+    
     // Banner Lightbox Elements
     const lightbox = document.getElementById('banner-lightbox');
     const lightboxImg = document.getElementById('lightbox-img');
@@ -1883,8 +1896,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         commentInput.value = '';
         currentReplyToId = null;
         currentAttachmentBase64 = null;
+        recordedAudioBlob = null;
         attachmentPreview.innerHTML = '';
         attachmentPreview.classList.add('hidden');
+        if (voiceRecordUI) voiceRecordUI.classList.add('hidden');
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        if (recordingInterval) clearInterval(recordingInterval);
         const replyInfo = document.querySelector('.replying-to-info');
         if (replyInfo) replyInfo.remove();
     }
@@ -1931,6 +1950,94 @@ document.addEventListener('DOMContentLoaded', async () => {
             reader.readAsDataURL(file);
             reader.onload = () => resolve(reader.result);
             reader.onerror = error => reject(error);
+        });
+    }
+
+    // Voice Recording Logic
+    if (btnRecordVoice) {
+        btnRecordVoice.addEventListener('click', async () => {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return alert('Voice recording is not supported in your browser.');
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                startRecording(stream);
+            } catch (err) {
+                console.error('Error accessing microphone:', err);
+                alert('Could not access microphone. Please ensure you have given permission.');
+            }
+        });
+    }
+
+    function startRecording(stream) {
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (event) => {
+            audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+            recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            stream.getTracks().forEach(track => track.stop());
+            
+            if (attachmentPreview) {
+                attachmentPreview.innerHTML = `
+                    <div class="preview-item">
+                        <span style="font-size: 1.5rem;">🎤</span>
+                        <span>Voice Message (${formatDuration(voiceDurationSeconds)})</span>
+                        <button class="remove-attachment">&times;</button>
+                    </div>
+                `;
+                attachmentPreview.classList.remove('hidden');
+                
+                const removeBtn = attachmentPreview.querySelector('.remove-attachment');
+                if (removeBtn) {
+                    removeBtn.onclick = () => {
+                        recordedAudioBlob = null;
+                        attachmentPreview.innerHTML = '';
+                        attachmentPreview.classList.add('hidden');
+                    };
+                }
+            }
+        };
+
+        mediaRecorder.start();
+        if (voiceRecordUI) voiceRecordUI.classList.remove('hidden');
+        voiceDurationSeconds = 0;
+        if (voiceDuration) voiceDuration.innerText = '0:00';
+        
+        recordingInterval = setInterval(() => {
+            voiceDurationSeconds++;
+            if (voiceDuration) voiceDuration.innerText = formatDuration(voiceDurationSeconds);
+        }, 1000);
+    }
+
+    function formatDuration(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    if (btnCancelVoice) {
+        btnCancelVoice.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                recordedAudioBlob = null;
+            }
+            if (voiceRecordUI) voiceRecordUI.classList.add('hidden');
+            if (recordingInterval) clearInterval(recordingInterval);
+        });
+    }
+
+    if (btnStopVoice) {
+        btnStopVoice.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            if (voiceRecordUI) voiceRecordUI.classList.add('hidden');
+            if (recordingInterval) clearInterval(recordingInterval);
         });
     }
 
@@ -2068,6 +2175,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="comment-body">
                             ${formatCommentText(c.text)}
                             ${c.edited ? `<span class="comment-edited-tag" title="Last edited: ${new Date(c.lastEdited).toLocaleString()}">(edited)</span>` : ''}
+                            ${c.audioUrl ? `
+                                <div class="voice-message-container">
+                                    <audio controls class="voice-message-player">
+                                        <source src="${c.audioUrl}" type="audio/webm">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                </div>
+                            ` : ''}
                             ${c.attachment ? `
                                 <div class="comment-attachment">
                                     <img src="${c.attachment}" alt="Attachment" onclick="window.open('${c.attachment}', '_blank')">
@@ -2386,7 +2501,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         saveBtn.onclick = async () => {
             const newText = textarea.value.trim();
-            if (!newText && !comment.attachment) return alert('Comment cannot be empty');
+            if (!newText && !comment.attachment && !comment.audioUrl) return alert('Comment cannot be empty');
             if (newText === originalText) {
                 currentEditingCommentId = null;
                 const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
@@ -2558,7 +2673,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnSubmitComment.addEventListener('click', async () => {
             if (!commentInput) return;
             const text = commentInput.value.trim();
-            if (!text && !currentAttachmentBase64) return;
+            if (!text && !currentAttachmentBase64 && !recordedAudioBlob) return;
             if (!user) return alert('You must be logged in to comment');
             if (user.isGuest) return alert('Guests cannot post comments. Please log in to join the conversation.');
 
@@ -2589,6 +2704,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // Handle audio upload if present
+            let audioUrl = null;
+            if (recordedAudioBlob) {
+                try {
+                    btnSubmitComment.disabled = true;
+                    btnSubmitComment.innerText = 'Uploading Audio...';
+                    audioUrl = await GitHubAPI.uploadAudio(recordedAudioBlob);
+                } catch (err) {
+                    console.error('Audio upload failed:', err);
+                    alert('Failed to upload voice message. Please try again.');
+                    btnSubmitComment.disabled = false;
+                    btnSubmitComment.innerText = 'Post';
+                    return;
+                }
+            }
+
             // --- OPTIMISTIC UI PREP ---
             const newComment = {
                 id: GitHubAPI.generateID().toString(),
@@ -2600,12 +2731,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 timestamp: new Date().toISOString(),
                 replyToId: currentReplyToId,
                 attachment: currentAttachmentBase64,
+                audioUrl: audioUrl,
                 pinned: false,
                 votes: { up: [], down: [] }
             };
 
             const savedText = text;
             const savedAttachment = currentAttachmentBase64;
+            const savedAudioBlob = recordedAudioBlob;
             const savedReplyToId = currentReplyToId;
 
             // Clear input immediately for snappiness
@@ -2721,6 +2854,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     attachmentPreview.innerHTML = '';
                     attachmentPreview.classList.add('hidden');
                     commentFileUpload.value = '';
+                };
+            } else if (savedAudioBlob) {
+                recordedAudioBlob = savedAudioBlob;
+                attachmentPreview.innerHTML = `
+                    <div class="preview-item">
+                        <span style="font-size: 1.5rem;">🎤</span>
+                        <span>Voice Message</span>
+                        <button class="remove-attachment">&times;</button>
+                    </div>
+                `;
+                attachmentPreview.classList.remove('hidden');
+                attachmentPreview.querySelector('.remove-attachment').onclick = () => {
+                    recordedAudioBlob = null;
+                    attachmentPreview.innerHTML = '';
+                    attachmentPreview.classList.add('hidden');
                 };
             }
         } finally {

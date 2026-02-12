@@ -2787,3 +2787,111 @@
 .temp-link-status.error {
     color: #ed4245;
 }
+
+/* Voice Message Styles */
+.comment-input-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+#btn-record-voice {
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.voice-record-ui {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #202225;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-top: 8px;
+    border: 1px solid #ed4245;
+}
+
+.voice-record-ui.hidden {
+    display: none;
+}
+
+.voice-record-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.recording-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #ed4245;
+    border-radius: 50%;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}
+
+.voice-record-controls {
+    display: flex;
+    gap: 12px;
+}
+
+.voice-ui-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.voice-ui-btn.cancel {
+    color: #ed4245;
+}
+
+.voice-ui-btn.stop {
+    color: #3ba55c;
+}
+
+.voice-ui-btn:hover {
+    background: #36393f;
+}
+
+/* Audio Player in Comments */
+.voice-message-container {
+    margin-top: 8px;
+    background: #2f3136;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #40444b;
+    max-width: 300px;
+}
+
+.voice-message-player {
+    width: 100%;
+    height: 36px;
+    outline: none;
+}
+
+/* Custom styles for the audio player scrollbar/appearance in some browsers */
+.voice-message-player::-webkit-media-controls-panel {
+    background-color: #2f3136;
+}
+
+.voice-message-player::-webkit-media-controls-play-button,
+.voice-message-player::-webkit-media-controls-current-time-display,
+.voice-message-player::-webkit-media-controls-time-remaining-display,
+.voice-message-player::-webkit-media-controls-timeline {
+    filter: invert(100%);
+}
