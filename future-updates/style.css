@@ -160,6 +160,16 @@ body {
     font-size: 0.95rem;
 }
 
+.roadmap-card li.completed {
+    color: #43b581;
+    font-weight: 500;
+}
+
+.roadmap-card li.completed i {
+    margin-left: 8px;
+    font-size: 0.9rem;
+}
+
 .roadmap-card li::before {
     content: "•";
     color: var(--primary);
