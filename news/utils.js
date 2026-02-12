@@ -399,6 +399,45 @@ window.GitHubAPI = {
         // Return the public URL
         return `${this._supabaseConfig.url}/storage/v1/object/public/${bucket}/${filePath}`;
     },
+
+    /**
+     * Delete an audio file from Supabase Storage.
+     * @param {string} audioUrl The full public URL of the audio file.
+     */
+    async deleteAudio(audioUrl) {
+        if (!audioUrl) return;
+        await this._waitForConfig();
+
+        if (!this._supabaseConfig) return; // Should already be loaded if upload worked
+
+        try {
+            // Extract the path from the URL
+            // Format: https://project.supabase.co/storage/v1/object/public/bucket/folder/file.webm
+            const urlObj = new URL(audioUrl);
+            const pathParts = urlObj.pathname.split('/storage/v1/object/public/')[1];
+            if (!pathParts) return;
+
+            const bucket = pathParts.split('/')[0];
+            const filePath = pathParts.substring(bucket.length + 1);
+
+            const deleteUrl = `${this._supabaseConfig.url}/storage/v1/object/${bucket}/${filePath}`;
+
+            const res = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${this._supabaseConfig.key}`,
+                    'apikey': this._supabaseConfig.key
+                }
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                console.warn('[Supabase Delete Warning]', errorData);
+            }
+        } catch (e) {
+            console.error('[GitHubAPI] Failed to delete audio from Supabase:', e);
+        }
+    },
     _supabaseConfig: null,
 
     /**

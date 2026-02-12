@@ -2404,6 +2404,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     // Remove the comment and all its replies
+                    const commentsToDelete = comments.filter(c => String(c.id) === String(commentId) || String(c.replyToId) === String(commentId));
+                    
+                    // Handle audio deletions from Supabase
+                    commentsToDelete.forEach(c => {
+                        if (c.audioUrl) {
+                            GitHubAPI.deleteAudio(c.audioUrl);
+                        }
+                    });
+
                     const updatedComments = comments.filter(c => String(c.id) !== String(commentId) && String(c.replyToId) !== String(commentId));
                     return JSON.stringify(updatedComments);
                 },
