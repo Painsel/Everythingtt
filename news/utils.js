@@ -359,8 +359,8 @@ window.GitHubAPI = {
         if (base.endsWith('/')) base = base.slice(0, -1);
         
         // Use the /audio endpoint on the middleware
-        // We use the root directory specified by the user: /Voice Messages
-        const uploadUrl = `${base}/audio?path=${encodeURIComponent('/Voice Messages')}`; 
+        // The path parameter is exactly "Voice Messages"
+        const uploadUrl = `${base}/audio?path=${encodeURIComponent('Voice Messages')}`; 
 
         const res = await fetch(uploadUrl, {
             method: 'POST',
