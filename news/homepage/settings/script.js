@@ -254,6 +254,83 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {}
     }
 
+    // Load all settings
+    const loadAllSettings = () => {
+        const settings = JSON.parse(localStorage.getItem('user_settings')) || {
+            showJoinDate: true,
+            showContributions: true,
+            compactSidebar: false,
+            animations: true
+        };
+
+        document.getElementById('setting-show-join-date').checked = settings.showJoinDate;
+        document.getElementById('setting-show-contributions').checked = settings.showContributions;
+        document.getElementById('setting-compact-sidebar').checked = settings.compactSidebar;
+        document.getElementById('setting-animations').checked = settings.animations;
+
+        applyInterfaceSettings(settings);
+    };
+
+    const applyInterfaceSettings = (settings) => {
+        // Apply animations
+        if (settings.animations) {
+            document.body.classList.remove('no-animations');
+        } else {
+            document.body.classList.add('no-animations');
+        }
+
+        // Update profile preview based on visibility settings
+        const joinDateEl = document.getElementById('settings-join-date');
+        if (joinDateEl) {
+            joinDateEl.style.display = settings.showJoinDate ? 'block' : 'none';
+        }
+    };
+
+    // Save settings
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+    if (btnSaveSettings) {
+        btnSaveSettings.addEventListener('click', () => {
+            const settings = {
+                showJoinDate: document.getElementById('setting-show-join-date').checked,
+                showContributions: document.getElementById('setting-show-contributions').checked,
+                compactSidebar: document.getElementById('setting-compact-sidebar').checked,
+                animations: document.getElementById('setting-animations').checked
+            };
+
+            localStorage.setItem('user_settings', JSON.stringify(settings));
+            applyInterfaceSettings(settings);
+
+            // Show success feedback
+            const originalText = btnSaveSettings.innerHTML;
+            btnSaveSettings.innerHTML = '<i class="fas fa-check"></i> Settings Saved!';
+            btnSaveSettings.style.background = '#3ba55c';
+            
+            setTimeout(() => {
+                btnSaveSettings.innerHTML = originalText;
+                btnSaveSettings.style.background = '';
+            }, 2000);
+        });
+    }
+
+    // Reset settings
+    const btnResetSettings = document.getElementById('btn-reset-settings');
+    if (btnResetSettings) {
+        btnResetSettings.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all settings to default?')) {
+                const defaults = {
+                    showJoinDate: true,
+                    showContributions: true,
+                    compactSidebar: false,
+                    animations: true
+                };
+                
+                localStorage.setItem('user_settings', JSON.stringify(defaults));
+                loadAllSettings();
+            }
+        });
+    }
+
     // Initial load
     loadSounds();
+    loadAllSettings();
 });
