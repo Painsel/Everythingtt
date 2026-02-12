@@ -349,10 +349,7 @@ window.GitHubAPI = {
     async uploadAudio(blob) {
         await this._waitForConfig();
         
-        // Per user preference: Direct client-side upload to Supabase
-        // We need the Supabase Project URL and Anon Key from config
         if (!this._supabaseConfig) {
-            // Fetch configuration if not already present
             const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
             try {
                 const res = await fetch(MAIN_BIN, { headers: { 'X-Bin-Meta': 'false' } });
@@ -373,24 +370,32 @@ window.GitHubAPI = {
         const folder = 'Voice Messages';
         const filePath = `${folder}/${fileName}`;
 
-        // Direct upload to Supabase via REST API
-        // https://supabase.com/docs/guides/storage/uploading/standard-upload#uploading-with-rest-api
+        // Use the standard object upload URL
         const uploadUrl = `${this._supabaseConfig.url}/storage/v1/object/${bucket}/${filePath}`;
+
+        // Switch to FormData which is often more reliable for standard uploads
+        const formData = new FormData();
+        formData.append('file', blob, fileName);
 
         const res = await fetch(uploadUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this._supabaseConfig.key}`,
                 'apikey': this._supabaseConfig.key,
-                'Content-Type': blob.type || 'audio/webm',
                 'x-upsert': 'true'
             },
-            body: blob
+            body: formData
         });
 
         if (!res.ok) {
-            const error = await res.json().catch(() => ({ error: 'Upload failed' }));
-            throw new Error(error.error || error.message || 'Failed to upload audio to Supabase');
+            const errorData = await res.json().catch(() => ({}));
+            console.error('[Supabase Upload Error]', errorData);
+            
+            // Provide a more helpful error message for the common RLS policy issue
+            if (res.status === 400 || res.status === 403 || res.status === 401) {
+                throw new Error('Unauthorized: Please ensure your Supabase Storage RLS policies allow "INSERT" for anonymous users on the "AudiosAndNotifs" bucket.');
+            }
+            throw new Error(errorData.error || errorData.message || `Upload failed (${res.status})`);
         }
 
         // Return the public URL
