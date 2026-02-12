@@ -342,41 +342,61 @@ window.GitHubAPI = {
     },
 
     /**
-     * Upload an audio blob to Supabase via the middleware.
+     * Upload an audio blob to Supabase Storage.
      * @param {Blob} blob The audio blob to upload.
      * @returns {Promise<string>} The public URL of the uploaded audio.
      */
     async uploadAudio(blob) {
         await this._waitForConfig();
-        if (!this.middlewareURL) {
-            throw new Error('Middleware URL not configured');
+        
+        // Per user preference: Direct client-side upload to Supabase
+        // We need the Supabase Project URL and Anon Key from config
+        if (!this._supabaseConfig) {
+            // Fetch configuration if not already present
+            const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
+            try {
+                const res = await fetch(MAIN_BIN, { headers: { 'X-Bin-Meta': 'false' } });
+                const data = await res.json();
+                const config = data.record || data;
+                this._supabaseConfig = {
+                    url: 'https://fdodsmjxbxknnqfnzdtr.supabase.co',
+                    key: config.supabase_anon_key || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZkb2RzbWp4Ynhrbm5xZm56ZHRyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTU3MzgsImV4cCI6MjA4NjQ5MTczOH0.ATFjEwr8X07AcYMy0WjuANlCnFHLN05uZkIMyXaJasI'
+                };
+            } catch (e) {
+                console.error('[GitHubAPI] Failed to fetch Supabase config:', e);
+                throw new Error('Supabase configuration failed');
+            }
         }
 
         const fileName = `voice_${Date.now()}.webm`;
-        const formData = new FormData();
-        formData.append('audio', blob, fileName);
+        const bucket = 'AudiosAndNotifs';
+        const folder = 'Voice Messages';
+        const filePath = `${folder}/${fileName}`;
 
-        let base = this.middlewareURL;
-        if (base.endsWith('/')) base = base.slice(0, -1);
-        
-        // Per user instruction and Supabase requirements:
-        // The path must include the bucket name "AudiosAndNotifs" and the target filename.
-        const path = `AudiosAndNotifs/Voice Messages/${fileName}`;
-        const uploadUrl = `${base}/audio?path=${encodeURIComponent(path)}`; 
+        // Direct upload to Supabase via REST API
+        // https://supabase.com/docs/guides/storage/uploading/standard-upload#uploading-with-rest-api
+        const uploadUrl = `${this._supabaseConfig.url}/storage/v1/object/${bucket}/${filePath}`;
 
         const res = await fetch(uploadUrl, {
             method: 'POST',
-            body: formData
+            headers: {
+                'Authorization': `Bearer ${this._supabaseConfig.key}`,
+                'apikey': this._supabaseConfig.key,
+                'Content-Type': blob.type || 'audio/webm',
+                'x-upsert': 'true'
+            },
+            body: blob
         });
 
         if (!res.ok) {
             const error = await res.json().catch(() => ({ error: 'Upload failed' }));
-            throw new Error(error.error || 'Failed to upload audio');
+            throw new Error(error.error || error.message || 'Failed to upload audio to Supabase');
         }
 
-        const data = await res.json();
-        return data.url; 
+        // Return the public URL
+        return `${this._supabaseConfig.url}/storage/v1/object/public/${bucket}/${filePath}`;
     },
+    _supabaseConfig: null,
 
     /**
      * Compare two IP addresses to see if they are in the same subnet.
