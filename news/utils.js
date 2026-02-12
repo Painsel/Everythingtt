@@ -793,12 +793,13 @@ window.GitHubAPI = {
         return result;
     },
 
-    async getFile(path) {
+    async getFile(path, suppressErrors = false) {
         try {
             const data = await this.request(`/contents/${path}`);
             return await this._processFileData(data, path);
         } catch (e) {
             if (e.status === 404) return null;
+            if (!suppressErrors) console.error(`[GitHubAPI] getFile failed for ${path}:`, e);
             throw e;
         }
     },

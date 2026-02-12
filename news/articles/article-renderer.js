@@ -426,9 +426,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function pollNotifications() {
         if (!user || user.isGuest) return;
         try {
-            // Using a try-catch and specific error check to avoid console noise if possible
-            // although 404s in network tab are hard to suppress from client-side
-            const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`);
+            // Using a try-catch and suppressErrors to avoid console noise for expected 404s
+            const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`, true);
             if (data && data.sha !== notificationsSHA) {
                 notificationsSHA = data.sha;
                 notifications = JSON.parse(data.content);
@@ -2239,11 +2238,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             ${formatCommentText(c.text)}
                             ${c.edited ? `<span class="comment-edited-tag" title="Last edited: ${new Date(c.lastEdited).toLocaleString()}">(edited)</span>` : ''}
                             ${c.audioUrl ? `
-                                <div class="voice-message-container">
-                                    <audio controls class="voice-message-player">
-                                        <source src="${c.audioUrl}" type="audio/webm">
-                                        Your browser does not support the audio element.
-                                    </audio>
+                                <div class="voice-message-container" data-audio-url="${c.audioUrl}">
+                                    <div class="custom-audio-player">
+                                        <button class="audio-play-btn" onclick="window.toggleAudioPlay(this)">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <div class="audio-waveform-container" onclick="window.seekAudio(event, this)">
+                                            <div class="audio-progress-bar">
+                                                <div class="audio-progress-fill"></div>
+                                            </div>
+                                        </div>
+                                        <span class="audio-time">0:00</span>
+                                        <audio src="${c.audioUrl}" preload="metadata" ontimeupdate="window.updateAudioProgress(this)" onended="window.resetAudioPlayer(this)" onloadedmetadata="window.initAudioDuration(this)"></audio>
+                                    </div>
                                 </div>
                             ` : ''}
                             ${c.attachment ? `
@@ -2441,6 +2448,75 @@ document.addEventListener('DOMContentLoaded', async () => {
           const info = document.querySelector('.replying-to-info');
           if (info) info.remove();
       };
+
+    // --- Custom Audio Player Logic ---
+    window.toggleAudioPlay = function(btn) {
+        const container = btn.closest('.custom-audio-player');
+        const audio = container.querySelector('audio');
+        const icon = btn.querySelector('i');
+
+        // Stop all other playing audios first
+        document.querySelectorAll('audio').forEach(a => {
+            if (a !== audio && !a.paused) {
+                a.pause();
+                const otherBtn = a.closest('.custom-audio-player').querySelector('.audio-play-btn i');
+                if (otherBtn) otherBtn.className = 'fas fa-play';
+            }
+        });
+
+        if (audio.paused) {
+            audio.play().catch(e => console.error('Audio play failed:', e));
+            icon.className = 'fas fa-pause';
+        } else {
+            audio.pause();
+            icon.className = 'fas fa-play';
+        }
+    };
+
+    window.updateAudioProgress = function(audio) {
+        const container = audio.closest('.custom-audio-player');
+        const fill = container.querySelector('.audio-progress-fill');
+        const timeDisplay = container.querySelector('.audio-time');
+        
+        if (audio.duration && !isNaN(audio.duration)) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            fill.style.width = `${percent}%`;
+            timeDisplay.innerText = formatDuration(Math.floor(audio.currentTime));
+        }
+    };
+
+    window.resetAudioPlayer = function(audio) {
+        const container = audio.closest('.custom-audio-player');
+        const icon = container.querySelector('.audio-play-btn i');
+        const fill = container.querySelector('.audio-progress-fill');
+        const timeDisplay = container.querySelector('.audio-time');
+        
+        if (icon) icon.className = 'fas fa-play';
+        fill.style.width = '0%';
+        timeDisplay.innerText = formatDuration(Math.floor(audio.duration || 0));
+        audio.currentTime = 0;
+    };
+
+    window.initAudioDuration = function(audio) {
+        const container = audio.closest('.custom-audio-player');
+        const timeDisplay = container.querySelector('.audio-time');
+        if (audio.duration && !isNaN(audio.duration)) {
+            timeDisplay.innerText = formatDuration(Math.floor(audio.duration));
+        }
+    };
+
+    window.seekAudio = function(e, container) {
+        const audio = container.closest('.custom-audio-player').querySelector('audio');
+        const rect = container.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const width = rect.width;
+        const percent = x / width;
+        
+        if (audio.duration && !isNaN(audio.duration)) {
+            audio.currentTime = percent * audio.duration;
+        }
+    };
+
 
     window.togglePinComment = async function(commentId) {
         if (!currentArticleIdForComments || !user) return;
