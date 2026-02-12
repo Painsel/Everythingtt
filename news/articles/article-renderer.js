@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const voiceDuration = document.getElementById('voice-duration');
     const btnCancelVoice = document.getElementById('btn-cancel-voice');
     const btnStopVoice = document.getElementById('btn-stop-voice');
+    const commentAudioUpload = document.getElementById('comment-audio-upload');
+    const labelAudioUpload = document.getElementById('label-audio-upload');
 
     let mediaRecorder = null;
     let audioChunks = [];
@@ -1884,6 +1886,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         commentsModal.classList.add('hidden');
         resetCommentInput();
     };
+
+    // Role-based visibility for audio upload
+    const checkAudioUploadVisibility = () => {
+        if (labelAudioUpload) {
+            if (user && !user.isGuest && GitHubAPI.isBetaTester(user)) {
+                labelAudioUpload.classList.remove('hidden');
+            } else {
+                labelAudioUpload.classList.add('hidden');
+            }
+        }
+    };
     window.onclick = (event) => {
         if (profileModal && event.target == profileModal) profileModal.classList.add('hidden');
         if (commentsModal && event.target == commentsModal) {
@@ -1897,6 +1910,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentReplyToId = null;
         currentAttachmentBase64 = null;
         recordedAudioBlob = null;
+        if (commentAudioUpload) commentAudioUpload.value = '';
         attachmentPreview.innerHTML = '';
         attachmentPreview.classList.add('hidden');
         if (voiceRecordUI) voiceRecordUI.classList.add('hidden');
@@ -1918,6 +1932,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Re-use optimizeImage if available or simple base64
                 const base64 = await fileToBase64(file);
                 currentAttachmentBase64 = base64;
+                recordedAudioBlob = null; // Clear any audio if image is picked
+                if (commentAudioUpload) commentAudioUpload.value = '';
                 
                 if (attachmentPreview) {
                     attachmentPreview.innerHTML = `
@@ -1927,6 +1943,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     `;
                     attachmentPreview.classList.remove('hidden');
+                    if (voiceRecordUI) voiceRecordUI.classList.add('hidden');
                     
                     const removeBtn = attachmentPreview.querySelector('.remove-attachment');
                     if (removeBtn) {
@@ -1940,6 +1957,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err) {
                 alert('Error loading image');
+            }
+        });
+    }
+
+    if (commentAudioUpload) {
+        commentAudioUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('audio/')) {
+                alert('Please select an audio file');
+                commentAudioUpload.value = '';
+                return;
+            }
+
+            recordedAudioBlob = file;
+            currentAttachmentBase64 = null; // Clear any image if audio is picked
+            if (commentFileUpload) commentFileUpload.value = '';
+
+            if (attachmentPreview) {
+                attachmentPreview.innerHTML = `
+                    <div class="preview-item audio-preview">
+                        <span class="preview-icon">🎵</span>
+                        <span class="preview-filename">${file.name}</span>
+                        <button class="remove-attachment">&times;</button>
+                    </div>
+                `;
+                attachmentPreview.classList.remove('hidden');
+                if (voiceRecordUI) voiceRecordUI.classList.add('hidden');
+
+                const removeBtn = attachmentPreview.querySelector('.remove-attachment');
+                if (removeBtn) {
+                    removeBtn.onclick = () => {
+                        recordedAudioBlob = null;
+                        attachmentPreview.innerHTML = '';
+                        attachmentPreview.classList.add('hidden');
+                        if (commentAudioUpload) commentAudioUpload.value = '';
+                    };
+                }
             }
         });
     }
@@ -1981,6 +2037,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         mediaRecorder.onstop = () => {
             recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
             stream.getTracks().forEach(track => track.stop());
+            currentAttachmentBase64 = null; // Clear any image if voice is recorded
+            if (commentFileUpload) commentFileUpload.value = '';
+            if (commentAudioUpload) commentAudioUpload.value = '';
             
             if (attachmentPreview) {
                 attachmentPreview.innerHTML = `
@@ -2048,6 +2107,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         commentsModal.classList.remove('hidden');
         commentsList.innerHTML = '<p class="status-msg">Loading comments...</p>';
         
+        checkAudioUploadVisibility();
+
         try {
             const data = await GitHubAPI.getFile(`article-comments-storage/${articleId}.json`);
             if (data) {
