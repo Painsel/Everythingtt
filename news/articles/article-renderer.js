@@ -1081,6 +1081,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnSaveSettings.innerText = 'Saving...';
 
             try {
+                GitHubAPI.showPauseModal('Syncing article changes...');
                 // Get latest UI state for mutes
                 const currentMutes = localArticle.mutes || {};
 
@@ -1116,6 +1117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('Failed to update article:', e);
                 alert('Failed to save changes: ' + e.message);
             } finally {
+                GitHubAPI.hidePauseModal();
                 btnSaveSettings.disabled = false;
                 btnSaveSettings.innerText = 'Save Changes';
             }
@@ -1140,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnDeleteArticle.innerText = 'Deleting...';
 
             try {
+                GitHubAPI.showPauseModal('Deleting article and associated comments...');
                 // 1. Fetch latest SHA to ensure we can delete without conflict
                 const latest = await GitHubAPI.getFile(`created-articles-storage/${currentEditingArticleId}.json`);
                 if (!latest) throw new Error('Could not find article to delete.');
@@ -1205,6 +1208,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('Failed to delete article:', e);
                 alert('Failed to delete article: ' + e.message);
             } finally {
+                GitHubAPI.hidePauseModal();
                 btnDeleteArticle.disabled = false;
                 btnDeleteArticle.innerText = 'Delete Article';
             }

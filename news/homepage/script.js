@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Server-side check: Verify user still exists in storage
     if (!user.isGuest) {
         try {
+            GitHubAPI.showPauseModal('Authenticating your session...');
             const verifiedUser = await GitHubAPI.syncUserProfile();
             if (!verifiedUser) {
                 console.error('[Security] Account verification failed on load. Redirecting to login.');
@@ -18,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             user = verifiedUser; // Use the fresh data
         } catch (e) {
             console.warn('[Security] Could not verify account server-side. Continuing with cached data.', e);
+        } finally {
+            GitHubAPI.hidePauseModal();
         }
     }
 

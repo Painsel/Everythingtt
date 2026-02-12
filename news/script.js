@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Server-side check: Verify user still exists in storage
         try {
+            GitHubAPI.showPauseModal('Authenticating your session...');
             const verifiedUser = await GitHubAPI.syncUserProfile();
             if (verifiedUser) {
                 console.log('Account verified, redirecting to dashboard...');
@@ -36,6 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             console.error('Account verification failed:', e);
             // Fallback: stay on login page if verification fails critically
+        } finally {
+            GitHubAPI.hidePauseModal();
         }
     }
 
@@ -168,6 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btnText = btnLogin.querySelector('.btn-text');
         const btnLoader = btnLogin.querySelector('.btn-loader');
 
+        GitHubAPI.showPauseModal('Signing you in...');
         try {
             btnLogin.disabled = true;
             if (btnText) btnText.innerText = 'Connecting...';
@@ -385,6 +389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Auth Error:', e);
             showNotification('Authentication Error', e.message || 'An unexpected error occurred during login.', 'error');
         } finally {
+            GitHubAPI.hidePauseModal();
             btnLogin.disabled = false;
             btnLogin.innerText = 'Login / Sign Up';
         }

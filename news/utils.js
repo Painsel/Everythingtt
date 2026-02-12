@@ -89,6 +89,41 @@ window.GitHubAPI = {
     _fileCache: new Map(), // Client-side cache for GET requests
     CACHE_TTL: 10000, // 10 seconds client-side cache
     
+    /**
+     * Shows a "Pause" modal during long-running fetch operations
+     * @param {string} subtitle Optional subtitle to show (e.g. "Fetching profile...")
+     */
+    showPauseModal(subtitle = 'Fetching data...') {
+        let modal = document.getElementById('pause-modal');
+        if (!modal) {
+            const html = `
+                <div id="pause-modal" class="pause-modal">
+                    <div class="pause-content">
+                        <span class="pause-icon">⏸️</span>
+                        <h2 class="pause-title">PAUSED</h2>
+                        <p id="pause-subtitle" class="pause-subtitle">${subtitle}</p>
+                    </div>
+                    <div class="pause-spinner"></div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', html);
+            modal = document.getElementById('pause-modal');
+        } else {
+            document.getElementById('pause-subtitle').innerText = subtitle;
+        }
+        modal.classList.add('active');
+    },
+
+    /**
+     * Hides the "Pause" modal
+     */
+    hidePauseModal() {
+        const modal = document.getElementById('pause-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    },
+    
     _flaggedWords: null,
     async getFlaggedWords() {
         if (this._flaggedWords) return this._flaggedWords;

@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load Articles
     async function loadArticles() {
         try {
+            GitHubAPI.showPauseModal('Fetching articles from storage...');
             articlesList.innerHTML = '<p class="status-msg">Fetching articles from storage...</p>';
             const files = await GitHubAPI.listFiles('created-articles-storage');
             
@@ -60,6 +61,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             console.error('Failed to load articles:', e);
             articlesList.innerHTML = '<p class="status-msg error">Error loading articles. Check console.</p>';
+        } finally {
+            GitHubAPI.hidePauseModal();
         }
     }
 
@@ -133,6 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!articleToDelete) return;
 
         try {
+            GitHubAPI.showPauseModal('Deleting article permanently...');
             btnConfirmDelete.disabled = true;
             btnConfirmDelete.innerText = 'Deleting...';
 
@@ -147,6 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             alert('Failed to delete article: ' + e.message);
         } finally {
+            GitHubAPI.hidePauseModal();
             btnConfirmDelete.disabled = false;
             btnConfirmDelete.innerText = 'Delete Permanently';
         }

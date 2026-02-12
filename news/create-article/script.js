@@ -307,7 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check for rule violations
         const contentToCheck = `${title} ${content}`;
+        GitHubAPI.showPauseModal('Checking content for rule violations...');
         const ruleCheck = await GitHubAPI.checkContentForRules(contentToCheck);
+        GitHubAPI.hidePauseModal();
         
         if (!ruleCheck.isClean) {
             GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
@@ -330,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
+            GitHubAPI.showPauseModal('Publishing your article to the news feed...');
             btnPublish.disabled = true;
             btnPublish.innerText = 'Publishing...';
             
@@ -362,6 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '../articles/';
         } catch (e) {
             alert('Error publishing article: ' + e.message);
+        } finally {
+            GitHubAPI.hidePauseModal();
             btnPublish.disabled = false;
             btnPublish.innerText = 'Publish Article';
         }

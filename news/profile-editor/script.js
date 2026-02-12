@@ -330,6 +330,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (bio.length > 300) return alert('Bio cannot be longer than 300 characters');
         if (statusMsg.length > 30) return alert('Status Message cannot be longer than 30 characters');
 
+        // Show Pause Modal during the entire process
+        GitHubAPI.showPauseModal('Syncing your profile with the cloud...');
+
         // Check for rule violations
         const contentToCheck = `${username} ${bio} ${statusMsg}`;
         const ruleCheck = await GitHubAPI.checkContentForRules(contentToCheck);
@@ -358,6 +361,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error('Failed to track violation:', e);
             }
 
+            GitHubAPI.hidePauseModal();
             GitHubAPI.showRulesWarningModal(ruleCheck.violatedWords, '../');
             return;
         }
@@ -419,6 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } finally {
             btnSave.disabled = false;
             btnSave.innerText = 'Save Changes';
+            GitHubAPI.hidePauseModal();
         }
     });
 
