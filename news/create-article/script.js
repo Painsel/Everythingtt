@@ -107,7 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    pollUserProfile(); // Initial check
+    // Initial check
+    pollUserProfile().finally(() => {
+        GitHubAPI.hidePauseModal();
+    });
     checkIP(); // Initial IP check
     setInterval(pollUserProfile, 30000); // Poll every 30s
     setInterval(checkIP, 60000); // Poll IP every 60s

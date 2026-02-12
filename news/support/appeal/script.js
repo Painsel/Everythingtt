@@ -31,6 +31,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     updateUIWithStatus(user);
 
+    // Initial check: Verify user still exists in storage
+    try {
+        GitHubAPI.showPauseModal('Verifying account status...');
+        const verifiedUser = await GitHubAPI.syncUserProfile();
+        if (!verifiedUser) {
+            console.error('[Security] Account verification failed on load. Redirecting to login.');
+            localStorage.removeItem('current_user');
+            window.location.href = '../../index.html?error=account_deleted';
+            return;
+        }
+    } catch (e) {
+        console.warn('[Security] Could not verify account server-side. Continuing with cached data.', e);
+    } finally {
+        GitHubAPI.hidePauseModal();
+    }
+
     // Sidebar Toggle
     const sidebar = document.querySelector('.sidebar');
     const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -128,6 +144,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.innerText = 'Submitting...';
 
         try {
+            GitHubAPI.showPauseModal('Submitting appeal...');
             const userId = document.getElementById('user-id').value.trim();
             const subject = appealSubject.value;
             const subSubject = appealSubSubject.value;
@@ -159,6 +176,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Submission failed:', error);
             alert('Failed to submit appeal: ' + error.message);
         } finally {
+            GitHubAPI.hidePauseModal();
             btn.disabled = false;
             btn.innerText = 'Submit Appeal';
         }

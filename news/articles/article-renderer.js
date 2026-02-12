@@ -699,8 +699,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.notificationPollingInterval = setInterval(pollNotifications, 20000); // Check notifications every 20s
                 window.ipPollingInterval = setInterval(checkIP, 60000); // Check IP every 60s
             }
-        } catch (e) {
-            articlesList.innerHTML = `<p>Error loading articles: ${e.message}. Make sure you have set your PAT in the Dashboard.</p>`;
+        } finally {
+            GitHubAPI.hidePauseModal();
         }
     }
 
@@ -728,6 +728,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
+    }).finally(() => {
+        GitHubAPI.hidePauseModal();
     });
 
     // Article Management Modal

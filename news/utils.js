@@ -10,6 +10,9 @@ window.GitHubAPI = {
         // [SECURITY] Clear any legacy PATs from localStorage
         localStorage.removeItem('gh_pat');
         
+        // Show pause modal globally on initialization
+        this.showPauseModal('Initializing application resources...');
+        
         // Pre-fetch configuration to get middleware URL without exposing PAT
         this._configPromise = this._fetchConfig();
         

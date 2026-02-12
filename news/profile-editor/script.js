@@ -173,7 +173,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     
     // Initial sync
-    pollUserProfile();
+    pollUserProfile().finally(() => {
+        GitHubAPI.hidePauseModal();
+    });
     // Poll every 30s
     setInterval(pollUserProfile, 30000);
 

@@ -9,6 +9,7 @@ if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.id !== DEVE
 document.addEventListener('DOMContentLoaded', async () => {
     // Server-side check: Verify user still exists and is still an admin
     try {
+        GitHubAPI.showPauseModal('Verifying admin privileges...');
         const verifiedUser = await GitHubAPI.syncUserProfile();
         const DEVELOPER_ID = '845829137251567';
         if (!verifiedUser || (verifiedUser.role !== 'admin' && verifiedUser.role !== 'owner' && String(verifiedUser.id) !== DEVELOPER_ID)) {
@@ -19,6 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     } catch (e) {
         console.warn('[Security] Could not verify admin status server-side.', e);
+    } finally {
+        GitHubAPI.hidePauseModal();
     }
 
     // UI Elements
@@ -58,6 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch all accounts
     async function loadAccounts() {
         try {
+            GitHubAPI.showPauseModal('Fetching all accounts from storage...');
             accountsList.innerHTML = '<p class="status-msg">Fetching all accounts from storage...</p>';
             const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             
@@ -80,8 +84,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             console.error('Failed to load accounts:', e);
             accountsList.innerHTML = '<p class="status-msg error">Error loading accounts. Check console.</p>';
+        } finally {
+            GitHubAPI.hidePauseModal();
         }
     }
+
+    // Initial load
+    loadAccounts();
 
     function renderAccounts(accounts) {
         if (accounts.length === 0) {
