@@ -3,6 +3,104 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
+    let user = JSON.parse(localStorage.getItem('current_user'));
+    if (!user) {
+        window.location.href = '../../index.html';
+        return;
+    }
+
+    // Server-side check: Verify user still exists in storage
+    if (!user.isGuest) {
+        try {
+            GitHubAPI.showPauseModal('Authenticating your session...');
+            const verifiedUser = await GitHubAPI.syncUserProfile();
+            if (!verifiedUser) {
+                console.error('[Security] Account verification failed on load. Redirecting to login.');
+                localStorage.removeItem('current_user');
+                window.location.href = '../../index.html?error=account_deleted';
+                return;
+            }
+            user = verifiedUser; // Use the fresh data
+        } catch (e) {
+            console.warn('[Security] Could not verify account server-side. Continuing with cached data.', e);
+        } finally {
+            GitHubAPI.hidePauseModal();
+        }
+    }
+
+    // Update UI with current user info
+    const updateUI = (u) => {
+        const sidePfp = document.getElementById('side-pfp');
+        const sideUsername = document.getElementById('side-username');
+        const sideStatusIcon = document.getElementById('side-status-icon');
+        const sideBubble = document.getElementById('side-status-bubble');
+
+        if (sidePfp) sidePfp.src = u.pfp;
+        if (sideUsername) sideUsername.innerText = u.username;
+
+        if (sideStatusIcon) {
+            const isGuest = u.isGuest === true;
+            const statusIconName = isGuest ? 'Offline.png' : ((u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png')));
+            const iconPath = GitHubAPI.getStatusIconPath(statusIconName);
+            sideStatusIcon.style.backgroundImage = `url('${iconPath}')`;
+        }
+
+        if (sideBubble) {
+            if (u.statusMsg) {
+                sideBubble.innerText = u.statusMsg;
+                sideBubble.style.display = 'block';
+            } else {
+                sideBubble.style.display = 'none';
+            }
+        }
+
+        // Add badges to sidebar username row
+        if (sideUsername) {
+            let sideBadgeContainer = sideUsername.nextElementSibling;
+            if (!sideBadgeContainer || !sideBadgeContainer.classList.contains('badge-container')) {
+                sideBadgeContainer = document.createElement('div');
+                sideBadgeContainer.className = 'badge-container';
+                sideBadgeContainer.style.display = 'inline-flex';
+                sideBadgeContainer.style.marginLeft = '4px';
+                sideBadgeContainer.style.verticalAlign = 'middle';
+                sideUsername.parentNode.insertBefore(sideBadgeContainer, sideUsername.nextSibling);
+            }
+
+            let badges = '';
+            if (u.isGuest) {
+                badges = `<span class="user-badge guest-badge" title="Guest User">GUEST</span>`;
+            } else {
+                badges = `
+                    ${GitHubAPI.renderRoleBadge(u.role)}
+                    ${GitHubAPI.renderNewUserBadge(u.joinDate, 'user-badge side-badge')}
+                    ${GitHubAPI.renderThemeBadge('user-badge side-badge')}
+                `;
+            }
+            sideBadgeContainer.innerHTML = badges;
+        }
+
+        // Admin nav item check
+        const adminNavItem = document.getElementById('admin-nav-item');
+        if (adminNavItem) {
+            const ADMIN_ID = '845829137251567';
+            if (String(u.id) === ADMIN_ID || u.role === 'admin' || u.role === 'owner') {
+                adminNavItem.classList.remove('hidden');
+            }
+        }
+    };
+
+    updateUI(user);
+
+    // Logout handling
+    const btnLogout = document.getElementById('btn-logout');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            localStorage.removeItem('current_user');
+            GitHubAPI.hidePauseModal();
+            window.location.href = '../../index.html';
+        });
+    }
+
     const soundsContainer = document.getElementById('sounds-list-container');
     const currentSoundDisplay = document.getElementById('current-sound-name');
     let currentAudio = null;
