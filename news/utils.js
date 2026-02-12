@@ -371,20 +371,18 @@ window.GitHubAPI = {
         const filePath = `${folder}/${fileName}`;
 
         // Use the standard object upload URL
+        // Endpoint: https://fdodsmjxbxknnqfnzdtr.supabase.co/storage/v1/object/AudiosAndNotifs/Voice%20Messages/voice_123.webm
         const uploadUrl = `${this._supabaseConfig.url}/storage/v1/object/${bucket}/${filePath}`;
-
-        // Switch to FormData which is often more reliable for standard uploads
-        const formData = new FormData();
-        formData.append('file', blob, fileName);
 
         const res = await fetch(uploadUrl, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${this._supabaseConfig.key}`,
                 'apikey': this._supabaseConfig.key,
-                'x-upsert': 'true'
+                'x-upsert': 'true',
+                'Content-Type': blob.type || 'audio/webm'
             },
-            body: formData
+            body: blob // Using raw body for standard REST upload instead of FormData for better S3/Supabase compatibility
         });
 
         if (!res.ok) {
