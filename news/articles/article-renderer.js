@@ -426,6 +426,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function pollNotifications() {
         if (!user || user.isGuest) return;
         try {
+            // Using a try-catch and specific error check to avoid console noise if possible
+            // although 404s in network tab are hard to suppress from client-side
             const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`);
             if (data && data.sha !== notificationsSHA) {
                 notificationsSHA = data.sha;
@@ -433,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 updateNotificationUI();
             }
         } catch (e) {
-            // Probably doesn't exist yet
+            // Probably doesn't exist yet - expected for new users
             if (notifications.length > 0) {
                 notifications = [];
                 updateNotificationUI();
