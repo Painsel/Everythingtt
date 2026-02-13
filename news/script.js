@@ -373,11 +373,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 if (needsUpdate) {
-                    const res = await GitHubAPI.updateFile(
+                    const res = await GitHubAPI.safeUpdateFile(
                         `created-news-accounts-storage/${foundUser.id}.json`,
                         JSON.stringify(foundUser),
-                        `Update account metadata for ${foundUser.username}`,
-                        userSha
+                        `Update account metadata for ${foundUser.username}`
                     );
                     userSha = res.content.sha;
                 }
@@ -417,7 +416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentUser.bio = bio;
 
         try {
-            const res = await GitHubAPI.updateFile(`created-news-accounts-storage/${currentUser.id}.json`, JSON.stringify(currentUser), `Update profile ${currentUser.username}`, userSha);
+            const res = await GitHubAPI.safeUpdateFile(`created-news-accounts-storage/${currentUser.id}.json`, JSON.stringify(currentUser), `Update profile ${currentUser.username}`);
             userSha = res.content.sha;
             showDashboard(currentUser);
             showNotification('Profile Saved', 'Your profile changes have been applied successfully.', 'success');

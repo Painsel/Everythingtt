@@ -729,18 +729,34 @@ window.GitHubAPI = {
                 await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
                 
                 if (method === 'PUT') {
-                    // Strip query string for relative path extraction
-                    const [pathOnly] = originalPath.split('?');
-                    let relativePath = pathOnly;
-                    
-                    if (pathOnly.startsWith('http')) {
-                        const parts = pathOnly.split('/contents/');
-                        if (parts.length > 1) relativePath = parts[1];
-                    } else {
-                        relativePath = pathOnly.replace(/^\/contents\//, '').replace(/^contents\//, '');
+                    // Robust relative path extraction
+                    let relativePath = originalPath;
+                    if (originalPath.startsWith('http')) {
+                        try {
+                            const urlObj = new URL(originalPath);
+                            // Check for middleware path query param first
+                            const middlewarePath = urlObj.searchParams.get('path');
+                            if (middlewarePath) {
+                                relativePath = middlewarePath;
+                            } else {
+                                relativePath = urlObj.pathname;
+                            }
+                        } catch(e) {
+                            // Fallback to manual split if URL parsing fails
+                            const [pathOnly] = originalPath.split('?');
+                            const parts = pathOnly.split('/contents/');
+                            if (parts.length > 1) relativePath = parts[1];
+                        }
                     }
+                    
+                    // Clean up common prefixes to get a clean relative path for getFile
+                    relativePath = relativePath.split('?')[0]
+                        .replace(/^\/repos\/[^/]+\/[^/]+\/contents\//, '')
+                        .replace(/^\/contents\//, '')
+                        .replace(/^contents\//, '');
 
-                    const freshData = await this.getFile(relativePath);
+                    // Fetch fresh data without triggering another migration loop
+                    const freshData = await this.getFile(relativePath, true, true);
                     if (freshData && body) {
                         body.sha = freshData.sha;
                         return this.request(originalPath, method, body, retries - 1);
@@ -857,10 +873,10 @@ window.GitHubAPI = {
         return result;
     },
 
-    async getFile(path, suppressErrors = false) {
+    async getFile(path, suppressErrors = false, skipMigration = false) {
         try {
             const data = await this.request(`/contents/${path}`);
-            return await this._processFileData(data, path);
+            return await this._processFileData(data, path, skipMigration);
         } catch (e) {
             if (e.status === 404) return null;
             if (!suppressErrors) console.error(`[GitHubAPI] getFile failed for ${path}:`, e);
@@ -868,7 +884,7 @@ window.GitHubAPI = {
         }
     },
 
-    async _processFileData(data, path) {
+    async _processFileData(data, path, skipMigration = false) {
         try {
             let content;
             if (!data.content && data.download_url) {
@@ -896,7 +912,7 @@ window.GitHubAPI = {
             const decodedContent = this._decode(content);
 
             // Auto-migration: If legacy storage data is found, encode it and save back
-            if (isStorageFile && isLegacy && path && data.sha) {
+            if (!skipMigration && isStorageFile && isLegacy && path && data.sha) {
                 console.log(`[GitHubAPI] Storage Migration Protocol: Encoding legacy data for ${path}`);
                 // Run update in background so fetch is not delayed
                 this.updateFile(path, decodedContent, `System: Auto-migrate legacy data to encoded format`, data.sha)
@@ -912,13 +928,13 @@ window.GitHubAPI = {
         }
     },
 
-    async getFileRaw(path) {
+    async getFileRaw(path, skipMigration = false) {
         try {
             const { repo } = this.getRepoInfo(path);
             
             // For private repo, use getFile() to ensure we go through the middleware with PAT
             if (repo === 'EverythingTT-Critical-Data') {
-                const data = await this.getFile(path);
+                const data = await this.getFile(path, false, skipMigration);
                 return data ? data.content : null;
             }
 
