@@ -795,19 +795,27 @@ window.GitHubAPI = {
     writeQueues: {},
 
     /**
-     * Internal helper to decode fetched data.
-     * Uses a prefix-based detection to support both encoded and legacy plain-text data.
+     * Internal helper to decode data using TripleDES (DES3) and Base64.
      */
     _decode(content) {
         if (!content) return content;
         try {
-            // Check for our custom encoding prefix
+            // Support multiple encoding versions
+            if (content.startsWith('ett_enc_v2:')) {
+                const encryptedBase64 = content.substring('ett_enc_v2:'.length);
+                const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
+                const decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedBase64, passphrase);
+                const decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
+                if (!decryptedStr) throw new Error('Decryption failed');
+                return decryptedStr.replace(/\r\n/g, '\n');
+            }
+            
+            // Legacy v1 support (Base64 only)
             if (content.startsWith('ett_enc_v1:')) {
                 const encoded = content.substring('ett_enc_v1:'.length);
-                // Standard Base64 decode with UTF-8 support
                 return decodeURIComponent(escape(atob(encoded.replace(/\s/g, ''))));
             }
-            // If it's not our custom encoding, return as is (legacy support)
+
             return content;
         } catch (e) {
             console.error('[GitHubAPI] Decode failed:', e);
@@ -816,15 +824,16 @@ window.GitHubAPI = {
     },
 
     /**
-     * Internal helper to encode data before sending.
-     * Adds a prefix so the decoder knows how to handle it.
+     * Internal helper to encode data before sending using TripleDES (DES3) and Base64.
+     * Uses ASCII charset and CRLF line endings.
      */
     _encode(content) {
         if (!content) return content;
         try {
-            // Apply custom encoding: UTF-8 safe Base64 with prefix
-            const encoded = btoa(unescape(encodeURIComponent(content)));
-            return `ett_enc_v1:${encoded}`;
+            const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
+            const normalizedContent = content.replace(/\r?\n/g, '\r\n');
+            const encrypted = CryptoJS.TripleDES.encrypt(normalizedContent, passphrase).toString();
+            return `ett_enc_v2:${encrypted}`;
         } catch (e) {
             console.error('[GitHubAPI] Encode failed:', e);
             return content;
@@ -883,7 +892,7 @@ window.GitHubAPI = {
                 'banned-ips.json'
             ];
             const isStorageFile = storageFolders.some(folder => path.includes(folder));
-            const isLegacy = !content.startsWith('ett_enc_v1:');
+            const isLegacy = !content.startsWith('ett_enc_v2:');
             const decodedContent = this._decode(content);
 
             // Auto-migration: If legacy storage data is found, encode it and save back
