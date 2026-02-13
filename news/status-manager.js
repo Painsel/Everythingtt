@@ -62,7 +62,17 @@ const StatusManager = {
             const data = await GitHubAPI.getFile(`created-news-accounts-storage/${this.user.id}.json`);
             if (!data) return;
 
-            const userData = JSON.parse(data.content);
+            let userData;
+            try {
+                userData = JSON.parse(data.content);
+            } catch (parseError) {
+                console.error('[StatusManager] Failed to parse user data JSON:', parseError);
+                if (data.content && data.content.startsWith('ett_enc_v2:')) {
+                    console.error('[StatusManager] Content appears to be encoded but decryption failed (CryptoJS might be missing).');
+                }
+                return;
+            }
+
             userData.status = status;
             userData.sha = data.sha; // Save SHA for exit tracking
             // Also update lastActive

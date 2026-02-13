@@ -19,6 +19,31 @@ window.GitHubAPI = {
         });
     },
     _configPromise: null,
+    _cryptoPromise: null,
+
+    _loadCryptoJS() {
+        if (typeof CryptoJS !== 'undefined') return Promise.resolve();
+        if (this._cryptoPromise) return this._cryptoPromise;
+
+        this._cryptoPromise = new Promise((resolve, reject) => {
+            console.log('[GitHubAPI] CryptoJS not found. Attempting dynamic load...');
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js';
+            script.onload = () => {
+                console.log('[GitHubAPI] CryptoJS loaded successfully.');
+                resolve();
+            };
+            script.onerror = () => {
+                console.error('[GitHubAPI] Failed to load CryptoJS.');
+                this._cryptoPromise = null;
+                reject(new Error('CryptoJS load failed'));
+            };
+            document.head.appendChild(script);
+        });
+
+        return this._cryptoPromise;
+    },
+
     async _waitForConfig() {
         if (this._configPromise) {
             await this._configPromise;
@@ -827,32 +852,42 @@ window.GitHubAPI = {
      */
     _decode(content) {
         if (!content) return content;
-        try {
-            // Support multiple encoding versions
-            if (content.startsWith('ett_enc_v2:')) {
-                if (typeof CryptoJS === 'undefined') {
-                    console.error('[GitHubAPI] CryptoJS not loaded. Cannot decode v2 data.');
-                    return content;
-                }
+        
+        // Handle ett_enc_v2 (TripleDES)
+        if (content.startsWith('ett_enc_v2:')) {
+            if (typeof CryptoJS === 'undefined') {
+                // Return a special placeholder or wait? 
+                // For sync decode, we can only return content or error.
+                // But we can try to trigger load for future calls.
+                this._loadCryptoJS();
+                console.error('[GitHubAPI] CryptoJS not loaded. Cannot decode v2 data.');
+                return content;
+            }
+            try {
                 const encryptedBase64 = content.substring('ett_enc_v2:'.length);
                 const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
                 const decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedBase64, passphrase);
                 const decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
                 if (!decryptedStr) throw new Error('Decryption failed');
                 return decryptedStr.replace(/\r\n/g, '\n');
+            } catch (e) {
+                console.error('[GitHubAPI] Decode v2 failed:', e);
+                return content;
             }
-            
-            // Legacy v1 support (Base64 only)
-            if (content.startsWith('ett_enc_v1:')) {
+        }
+        
+        // Legacy v1 support (Base64 only)
+        if (content.startsWith('ett_enc_v1:')) {
+            try {
                 const encoded = content.substring('ett_enc_v1:'.length);
                 return decodeURIComponent(escape(atob(encoded.replace(/\s/g, ''))));
+            } catch (e) {
+                console.error('[GitHubAPI] Decode v1 failed:', e);
+                return content;
             }
-
-            return content;
-        } catch (e) {
-            console.error('[GitHubAPI] Decode failed:', e);
-            return content;
         }
+
+        return content;
     },
 
     /**
@@ -862,6 +897,7 @@ window.GitHubAPI = {
     _encode(content) {
         if (!content) return content;
         if (typeof CryptoJS === 'undefined') {
+            this._loadCryptoJS();
             console.error('[GitHubAPI] CryptoJS not loaded. Cannot encode data.');
             return content;
         }
@@ -918,6 +954,15 @@ window.GitHubAPI = {
             }
 
             if (!content || content.trim() === "") return null;
+
+            // Ensure CryptoJS is loaded if we encounter encoded data
+            if (content.startsWith('ett_enc_v2:') && typeof CryptoJS === 'undefined') {
+                try {
+                    await this._loadCryptoJS();
+                } catch (e) {
+                    console.error('[GitHubAPI] Failed to load CryptoJS for decoding:', e);
+                }
+            }
 
             // Protocol: Check for legacy plain-text in storage folders
             const storageFolders = [

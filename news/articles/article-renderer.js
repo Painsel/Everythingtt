@@ -683,12 +683,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return null;
                     }
                     try {
-                        const article = JSON.parse(data.content);
+                        const content = data.content;
+                        // Safety check for encoded data
+                        if (content.startsWith('ett_enc_v2:') && typeof CryptoJS === 'undefined') {
+                            console.warn(`[ArticleRenderer] CryptoJS missing, skipping encoded article: ${file.path}`);
+                            return null;
+                        }
+
+                        const article = JSON.parse(content);
                         article.sha = data.sha;
                         console.log(`Successfully loaded article: ${article.title} (${article.id})`);
                         return article;
                     } catch (e) { 
                         console.error(`Failed to parse article JSON for ${file.path}:`, e);
+                        // Log snippet of content for debugging
+                        if (data.content) console.error(`Content snippet: ${data.content.substring(0, 50)}`);
                         return null; 
                     }
                 }));
