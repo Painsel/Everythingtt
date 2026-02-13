@@ -248,9 +248,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             for (const file of accountFiles) {
                 const content = await GitHubAPI.getFileRaw(file.path);
                 if (content) {
-                    const acc = JSON.parse(content);
-                    if (acc.allowedIp === currentIp) {
-                        alts.push(acc);
+                    try {
+                        // Use GitHubAPI._decode to handle potential v2 encryption consistently
+                        const decodedContent = await GitHubAPI._decode(content);
+                        const acc = JSON.parse(decodedContent);
+                        if (acc.allowedIp === currentIp) {
+                            alts.push(acc);
+                        }
+                    } catch (e) {
+                        console.warn(`[AltScanner] Failed to parse account ${file.path}:`, e);
                     }
                 }
             }
@@ -315,6 +321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const data = await GitHubAPI.getFile(`created-news-accounts-storage/${targetId}.json`);
             if (data) {
+                // getFile already handles decoding via _processFileData
                 const targetUser = JSON.parse(data.content);
                 targetUser.sha = data.sha;
                 localStorage.setItem('current_user', JSON.stringify(targetUser));

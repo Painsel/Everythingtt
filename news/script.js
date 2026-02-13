@@ -221,8 +221,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     let user;
                     try {
-                        user = JSON.parse(content);
+                        // Use GitHubAPI._decode to handle potential v2 encryption consistently
+                        const decodedContent = await GitHubAPI._decode(content);
+                        user = JSON.parse(decodedContent);
                     } catch (e) {
+                        console.warn(`[Auth] Failed to parse user data for ${file.path}:`, e);
                         continue;
                     }
 
@@ -358,7 +361,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const content = await GitHubAPI.getFileRaw(file.path);
                         if (content) {
                             try {
-                                const article = JSON.parse(content);
+                                // Articles might be encrypted too
+                                const decodedContent = await GitHubAPI._decode(content);
+                                const article = JSON.parse(decodedContent);
                                 if (article.authorId === foundUser.id) {
                                     count++;
                                 }
