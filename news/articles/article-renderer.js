@@ -2255,12 +2255,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Separate pinned and unpinned, and organize into threads
         const pinnedComments = comments.filter(c => c.pinned).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const unpinnedComments = comments.filter(c => !c.pinned && !c.replyToId).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        
+        // Root comments (no replyToId OR its parent doesn't exist anymore)
+        const commentIds = new Set(comments.map(c => c.id));
+        const unpinnedRootComments = comments.filter(c => !c.pinned && (!c.replyToId || !commentIds.has(c.replyToId)))
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         
         const getReplies = (commentId) => comments.filter(c => c.replyToId === commentId).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        const renderCommentHtml = (c, isReply = false) => {
-            const replies = !isReply ? getReplies(c.id) : [];
+        const renderCommentHtml = (c, depth = 0) => {
+            const replies = depth < 5 ? getReplies(c.id) : []; // Limit depth to 5 for UI sanity
             const upvotes = (c.votes && c.votes.up) ? c.votes.up.length : 0;
             const downvotes = (c.votes && c.votes.down) ? c.votes.down.length : 0;
             const userUpvoted = user && c.votes && c.votes.up && c.votes.up.map(id => String(id)).includes(String(user.id));
@@ -2268,7 +2272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isCommentOwner = user && String(c.authorId) === String(user.id);
 
             return `
-                <div class="comment-thread">
+                <div class="comment-thread" style="${depth > 0 ? 'margin-left: 20px; border-left: 2px solid var(--border-color); padding-left: 10px;' : ''}">
                     <div class="comment-item ${c.pinned ? 'pinned' : ''}" id="comment-${c.id}">
                         ${c.pinned ? '<div class="pinned-badge">📌 Pinned by author</div>' : ''}
                         <div class="comment-header">
@@ -2337,7 +2341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     ${replies.length > 0 ? `
                         <div class="replies-container">
-                            ${replies.map(r => renderCommentHtml(r, true)).join('')}
+                            ${replies.map(r => renderCommentHtml(r, depth + 1)).join('')}
                         </div>
                     ` : ''}
                 </div>
@@ -2346,7 +2350,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         commentsList.innerHTML = [
             ...pinnedComments.map(c => renderCommentHtml(c)),
-            ...unpinnedComments.map(c => renderCommentHtml(c))
+            ...unpinnedRootComments.map(c => renderCommentHtml(c))
         ].join('');
 
         // Update statuses asynchronously
@@ -2440,8 +2444,18 @@ document.addEventListener('DOMContentLoaded', async () => {
              return;
          }
 
-         // Filter out the comment and its replies immediately
-         const optimisticallyUpdated = cachedComments.filter(c => String(c.id) !== String(commentId) && String(c.replyToId) !== String(commentId));
+         // Filter out the comment and its descendants immediately
+         const getDescendantIdsLocal = (parentId, allComments) => {
+             const children = allComments.filter(c => String(c.replyToId) === String(parentId));
+             let ids = children.map(c => String(c.id));
+             for (const child of children) {
+                 ids = [...ids, ...getDescendantIdsLocal(child.id, allComments)];
+             }
+             return ids;
+         };
+
+         const allIdsToDeleteLocal = [String(commentId), ...getDescendantIdsLocal(commentId, cachedComments)];
+         const optimisticallyUpdated = cachedComments.filter(c => !allIdsToDeleteLocal.includes(String(c.id)));
          localStorage.setItem(`comments_${currentArticleIdForComments}`, JSON.stringify(optimisticallyUpdated));
          renderComments(optimisticallyUpdated);
 
@@ -2463,8 +2477,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         throw new Error('You do not have permission to delete this comment.');
                     }
 
-                    // Remove the comment and all its replies
-                    const commentsToDelete = comments.filter(c => String(c.id) === String(commentId) || String(c.replyToId) === String(commentId));
+                    // Remove the comment and all its descendants (recursive delete)
+                    const getDescendantIds = (parentId, allComments) => {
+                        const children = allComments.filter(c => String(c.replyToId) === String(parentId));
+                        let ids = children.map(c => String(c.id));
+                        for (const child of children) {
+                            ids = [...ids, ...getDescendantIds(child.id, allComments)];
+                        }
+                        return ids;
+                    };
+
+                    const descendantIds = getDescendantIds(commentId, comments);
+                    const allIdsToDelete = [String(commentId), ...descendantIds];
+                    
+                    const commentsToDelete = comments.filter(c => allIdsToDelete.includes(String(c.id)));
                     
                     // Handle audio deletions from Supabase
                     commentsToDelete.forEach(c => {
@@ -2473,7 +2499,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     });
 
-                    const updatedComments = comments.filter(c => String(c.id) !== String(commentId) && String(c.replyToId) !== String(commentId));
+                    const updatedComments = comments.filter(c => !allIdsToDelete.includes(String(c.id)));
                     return JSON.stringify(updatedComments);
                 },
                 `Delete comment ${commentId}`
