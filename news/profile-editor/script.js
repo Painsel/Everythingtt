@@ -405,6 +405,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            // [SECURITY] Check payload size to avoid 400/413 errors
+            const payloadSize = JSON.stringify(transform).length;
+            console.log(`[ProfileEditor] Update payload size: ${payloadSize} characters`);
+            if (payloadSize > 2 * 1024 * 1024) { // 2MB limit for safety
+                alert('Profile update is too large. Please use smaller images.');
+                return;
+            }
+
             const res = await GitHubAPI.safeUpdateFile(
                 `created-news-accounts-storage/${currentUser.id}.json`,
                 transform,
