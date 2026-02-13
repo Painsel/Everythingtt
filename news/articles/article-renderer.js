@@ -486,11 +486,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const badge = document.getElementById('notification-badge');
         const unreadCount = notifications.filter(n => !n.read).length;
         
-        if (unreadCount > 0) {
-            badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
+        if (badge) {
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
         const list = document.getElementById('notifications-list');
@@ -763,7 +765,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!window.pollingInterval) {
                 window.pollingInterval = setInterval(pollReactions, 15000);
                 window.profilePollingInterval = setInterval(pollUserProfile, 30000); // Check profile every 30s
-                window.notificationPollingInterval = setInterval(pollNotifications, 20000); // Check notifications every 20s
+                window.notificationPollingInterval = setInterval(pollNotifications, 30000); // Check notifications every 30s (reduced frequency for V2 stability)
                 window.ipPollingInterval = setInterval(checkIP, 60000); // Check IP every 60s
             }
         } finally {
