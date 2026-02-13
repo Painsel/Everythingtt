@@ -2957,11 +2957,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 text: text,
                 timestamp: new Date().toISOString(),
                 replyToId: currentReplyToId,
+                rootCommentId: null, // Will be set below
                 attachment: currentAttachmentBase64,
                 audioUrl: audioUrl,
                 pinned: false,
                 votes: { up: [], down: [] }
             };
+
+            // Set rootCommentId
+            if (!currentReplyToId) {
+                newComment.rootCommentId = newComment.id;
+            } else {
+                // Find parent to get its root
+                const cachedComments = JSON.parse(localStorage.getItem(`comments_${currentArticleIdForComments}`) || '[]');
+                const parent = cachedComments.find(c => c.id === currentReplyToId);
+                newComment.rootCommentId = parent ? (parent.rootCommentId || parent.id) : currentReplyToId;
+            }
 
             const savedText = text;
             const savedAttachment = currentAttachmentBase64;

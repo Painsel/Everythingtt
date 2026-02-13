@@ -978,13 +978,60 @@ window.GitHubAPI = {
             ];
             const isStorageFile = storageFolders.some(folder => path.includes(folder));
             const isLegacy = !content.startsWith('ett_enc_v2:');
-            const decodedContent = this._decode(content);
+            let decodedContent = this._decode(content);
 
-            // Auto-migration: If legacy storage data is found, encode it and save back
-            if (!skipMigration && isStorageFile && isLegacy && path && data.sha) {
-                console.log(`[GitHubAPI] Storage Migration Protocol: Encoding legacy data for ${path}`);
+            // --- NESTED COMMENTS MIGRATION PROTOCOL ---
+            // If it's a comment storage file, ensure all comments have rootCommentId
+            if (path.includes('article-comments-storage/') && path.endsWith('.json')) {
+                try {
+                    let comments = JSON.parse(decodedContent);
+                    let migrated = false;
+
+                    if (Array.isArray(comments)) {
+                        // 1. Identify root comments
+                        const rootIds = new Set(comments.filter(c => !c.replyToId).map(c => c.id));
+                        
+                        comments.forEach(comment => {
+                            // If it doesn't have a rootCommentId, we need to assign one
+                            if (!comment.rootCommentId) {
+                                if (!comment.replyToId) {
+                                    // It is a root comment
+                                    comment.rootCommentId = comment.id;
+                                    migrated = true;
+                                } else {
+                                    // It is a reply. Find its root.
+                                    let current = comment;
+                                    let visited = new Set();
+                                    while (current && current.replyToId && !visited.has(current.id)) {
+                                        visited.add(current.id);
+                                        const parent = comments.find(c => c.id === current.replyToId);
+                                        if (!parent) break; // Parent missing, this is now a root-like comment
+                                        current = parent;
+                                    }
+                                    comment.rootCommentId = current.id;
+                                    migrated = true;
+                                }
+                            }
+                        });
+
+                        if (migrated) {
+                            console.log(`[GitHubAPI] Comment Migration Protocol: Updating nesting for ${path}`);
+                            decodedContent = JSON.stringify(comments);
+                            // We trigger the update via the migration logic below
+                        }
+                    }
+                } catch (e) {
+                    console.error('[GitHubAPI] Failed to migrate comments for nesting:', e);
+                }
+            }
+
+            // Auto-migration: If legacy storage data is found OR if we migrated comments, encode it and save back
+            const needsSaving = (isStorageFile && isLegacy) || (path.includes('article-comments-storage/') && decodedContent !== this._decode(content));
+            
+            if (!skipMigration && needsSaving && path && data.sha) {
+                console.log(`[GitHubAPI] Storage Migration Protocol: Saving updated data for ${path}`);
                 // Run update in background so fetch is not delayed
-                this.updateFile(path, decodedContent, `System: Auto-migrate legacy data to encoded format`, data.sha)
+                this.updateFile(path, decodedContent, `System: Auto-migrate data to latest format (V2/Nesting)`, data.sha)
                     .catch(err => console.error(`[GitHubAPI] Migration failed for ${path}:`, err));
             }
 
