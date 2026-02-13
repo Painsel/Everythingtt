@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
-                        const serverUser = JSON.parse(atob(data.content));
+                        const serverUser = JSON.parse(data.content);
                         serverUser.allowedIp = currentIp;
                         await GitHubAPI.updateFile(
                             `created-news-accounts-storage/${user.id}.json`,
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update on server
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(atob(data.content));
+                    const serverUser = JSON.parse(data.content);
                     serverUser.allowedIp = currentIp;
                     await GitHubAPI.updateFile(
                         `created-news-accounts-storage/${user.id}.json`,

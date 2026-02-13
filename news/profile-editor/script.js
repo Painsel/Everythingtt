@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                     if (data) {
-                        const serverUser = JSON.parse(atob(data.content));
+                        const serverUser = JSON.parse(data.content);
                         serverUser.allowedIp = currentIp;
                         await GitHubAPI.updateFile(
                             `created-news-accounts-storage/${currentUser.id}.json`,
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Update on server
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(atob(data.content));
+                    const serverUser = JSON.parse(data.content);
                     serverUser.allowedIp = currentIp;
                     await GitHubAPI.updateFile(
                         `created-news-accounts-storage/${currentUser.id}.json`,
@@ -391,22 +391,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             btnSave.innerText = 'Saving...';
 
-            const updatedUser = {
-                ...currentUser,
-                username,
-                pfp,
-                banner,
-                bio,
-                statusMsg,
-                statusType
-            };
+            const transform = {};
+            if (username !== currentUser.username) transform.username = username;
+            if (pfp !== currentUser.pfp) transform.pfp = pfp;
+            if (banner !== currentUser.banner) transform.banner = banner;
+            if (bio !== currentUser.bio) transform.bio = bio;
+            if (statusMsg !== currentUser.statusMsg) transform.statusMsg = statusMsg;
+            if (statusType !== currentUser.statusType) transform.statusType = statusType;
+
+            // If nothing changed, just alert and return
+            if (Object.keys(transform).length === 0) {
+                alert('No changes to save.');
+                return;
+            }
 
             const res = await GitHubAPI.safeUpdateFile(
                 `created-news-accounts-storage/${currentUser.id}.json`,
-                updatedUser,
+                transform,
                 `Update profile: ${username}`
             );
 
+            const updatedUser = { ...currentUser, ...transform };
             userSha = res.content.sha;
             currentUser = updatedUser;
             currentUser.sha = userSha; 

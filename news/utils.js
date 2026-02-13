@@ -970,6 +970,10 @@ window.GitHubAPI = {
                 'created-articles-storage',
                 'created-news-accounts-storage',
                 'notifications-storage',
+                'mail-storage',
+                'mail-accounts-storage',
+                'support-forms-storage',
+                'mail-relay/queue',
                 'banned-ips.json'
             ];
             const isStorageFile = storageFolders.some(folder => path.includes(folder));
