@@ -1009,6 +1009,16 @@ window.GitHubAPI = {
             const res = await fetch(`${url}${sep}t=${Date.now()}`);
             if (res.ok) {
                 const content = await res.text();
+                
+                // Ensure CryptoJS is loaded if we encounter encoded data in public repo
+                if (content.startsWith('ett_enc_v2:') && typeof CryptoJS === 'undefined') {
+                    try {
+                        await this._loadCryptoJS();
+                    } catch (e) {
+                        console.error('[GitHubAPI] Failed to load CryptoJS for raw decoding:', e);
+                    }
+                }
+                
                 return this._decode(content);
             }
             return null;
