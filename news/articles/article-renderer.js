@@ -423,6 +423,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return GitHubAPI.getStatusIconPath(iconName);
     }
 
+    let notificationsInitialized = false;
     async function pollNotifications() {
         if (!user || user.isGuest) return;
         try {
@@ -441,9 +442,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (newUnreadCount > oldUnreadCount) {
                     playNotificationSound();
                 }
+            } else if (!data && !notificationsInitialized) {
+                // If the file doesn't exist, create an empty one to stop 404 console noise
+                notificationsInitialized = true;
+                console.log('[ArticleRenderer] Initializing notification storage for user...');
+                await GitHubAPI.updateFile(
+                    `notifications-storage/${user.id}.json`,
+                    '[]',
+                    `System: Initialize notifications for ${user.username}`
+                );
             }
         } catch (e) {
-            // Probably doesn't exist yet - expected for new users
+            // Silently handle - the 404 is expected for new users
             if (notifications.length > 0) {
                 notifications = [];
                 updateNotificationUI();
