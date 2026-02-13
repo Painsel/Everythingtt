@@ -759,12 +759,6 @@ window.GitHubAPI = {
 
     async _proceedWithFetch(url, options, method, body, retries, originalPath) {
         try {
-            // [DEBUG] Log request details for troubleshooting 400 errors
-            if (method === 'POST' || method === 'PUT') {
-                console.log(`[GitHubAPI] Request: ${method} ${url}`);
-                console.log(`[GitHubAPI] Body:`, body);
-            }
-
             const response = await fetch(url, options);
             
             // Handle 409 Conflict (Git state mismatch)
@@ -1066,8 +1060,20 @@ window.GitHubAPI = {
 
     async safeUpdateFile(path, transform, message) {
         // Optimization: Atomic push via Middleware
-        // [IMPORTANT] Now fully supported for both strings and objects
-        const canUseMiddleware = this.middlewareURL && (typeof transform === 'string' || typeof transform === 'object');
+        // [SECURITY] We only use middleware for:
+        // 1. Full content updates (string transform) - middleware just pushes the encoded string.
+        // 2. Object transforms on NON-STORAGE files - where the middleware can parse the plain JSON.
+        // We SKIP middleware for object transforms on STORAGE files because they are encrypted (V2),
+        // and the middleware cannot parse the encrypted content to apply the transform.
+        const storageFolders = [
+            'created-articles-storage',
+            'created-news-accounts-storage',
+            'mail-storage',
+            'support-forms-storage'
+        ];
+        const isStoragePath = storageFolders.some(folder => path.includes(folder));
+        const canUseMiddleware = this.middlewareURL && 
+                                (typeof transform === 'string' || (typeof transform === 'object' && !isStoragePath));
 
         if (canUseMiddleware) {
             try {
@@ -1085,7 +1091,7 @@ window.GitHubAPI = {
                 if (res.skipped) return { ...res, finalContent: decodedFinalContent };
                 
                 // Update local cache with new content
-                // res.finalContent from middleware is guaranteed to be ett_enc_v1 encoded
+                // res.finalContent from middleware is the encoded content (V1 or V2)
                 this._fileCache.set(`/contents/${path}`, {
                     data: {
                         content: btoa(unescape(encodeURIComponent(finalContentToCache))),
