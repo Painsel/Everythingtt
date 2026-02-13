@@ -1982,6 +1982,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Verify image file type
+            if (!file.type.startsWith('image/')) {
+                alert('Invalid file type: Please select an image file.');
+                commentFileUpload.value = '';
+                return;
+            }
+
             try {
                 // Re-use optimizeImage if available or simple base64
                 const base64 = await fileToBase64(file);
@@ -2020,8 +2027,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Verify audio file type
             if (!file.type.startsWith('audio/')) {
-                alert('Please select an audio file');
+                alert('Invalid file type: Please select an audio file.');
                 commentAudioUpload.value = '';
                 return;
             }
@@ -2089,7 +2097,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         mediaRecorder.onstop = () => {
-            recordedAudioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            // Verify voice recording type
+            const voiceBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            if (!voiceBlob.type.startsWith('audio/')) {
+                alert('Recording error: Invalid voice data format.');
+                recordedAudioBlob = null;
+                return;
+            }
+            recordedAudioBlob = voiceBlob;
             stream.getTracks().forEach(track => track.stop());
             currentAttachmentBase64 = null; // Clear any image if voice is recorded
             if (commentFileUpload) commentFileUpload.value = '';
