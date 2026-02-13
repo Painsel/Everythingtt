@@ -10,9 +10,6 @@ window.GitHubAPI = {
         // [SECURITY] Clear any legacy PATs from localStorage
         localStorage.removeItem('gh_pat');
         
-        // Show pause modal globally on initialization
-        this.showPauseModal('Initializing application resources...');
-        
         // Pre-fetch configuration to get middleware URL without exposing PAT
         this._configPromise = this._fetchConfig();
         
@@ -45,7 +42,8 @@ window.GitHubAPI = {
             console.log('[GitHubAPI] Checking critical storage structure...');
             
             // Check for banned-ips.json as a canary for the repo state
-            const canary = await this.getFile('banned-ips.json');
+            // Use suppressErrors=true to avoid console noise on first-time setup
+            const canary = await this.getFile('banned-ips.json', true);
             
             if (!canary) {
                 console.warn('[GitHubAPI] Critical storage missing. Initializing new data structure...');
@@ -54,7 +52,6 @@ window.GitHubAPI = {
                 await this.updateFile('banned-ips.json', '[]', 'System: Initialize banned IPs storage');
                 
                 // 2. Create placeholder .gitkeep files for storage folders
-                // GitHub doesn't support empty folders, so we create a hidden file in each.
                 for (const folder of criticalFolders) {
                     await this.updateFile(`${folder}/.gitkeep`, '', `System: Initialize ${folder}`);
                 }
