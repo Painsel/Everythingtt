@@ -290,7 +290,19 @@ window.GitHubAPI = {
             
             if (data) {
                 this._userSHA = data.sha;
-                const remoteUser = JSON.parse(data.content);
+                
+                // Safety check: ensure content is valid JSON after decoding
+                let remoteUser;
+                try {
+                    remoteUser = JSON.parse(data.content);
+                } catch (parseError) {
+                    console.error('[GitHubAPI] Failed to parse remote profile JSON:', parseError, 'Content snippet:', data.content.substring(0, 50));
+                    // If content is encoded and we failed to decode it correctly (e.g. CryptoJS missing), 
+                    // we should NOT return null as it might trigger a redirect.
+                    // Instead, return localUser to keep the session alive.
+                    return localUser;
+                }
+                
                 remoteUser.sha = data.sha; // Preserve SHA
 
                 // Force Logout Check
@@ -818,6 +830,10 @@ window.GitHubAPI = {
         try {
             // Support multiple encoding versions
             if (content.startsWith('ett_enc_v2:')) {
+                if (typeof CryptoJS === 'undefined') {
+                    console.error('[GitHubAPI] CryptoJS not loaded. Cannot decode v2 data.');
+                    return content;
+                }
                 const encryptedBase64 = content.substring('ett_enc_v2:'.length);
                 const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
                 const decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedBase64, passphrase);
@@ -845,6 +861,10 @@ window.GitHubAPI = {
      */
     _encode(content) {
         if (!content) return content;
+        if (typeof CryptoJS === 'undefined') {
+            console.error('[GitHubAPI] CryptoJS not loaded. Cannot encode data.');
+            return content;
+        }
         try {
             const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
             const normalizedContent = content.replace(/\r?\n/g, '\r\n');
