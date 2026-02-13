@@ -759,6 +759,12 @@ window.GitHubAPI = {
 
     async _proceedWithFetch(url, options, method, body, retries, originalPath) {
         try {
+            // [DEBUG] Log request details for troubleshooting 400 errors
+            if (method === 'POST' || method === 'PUT') {
+                console.log(`[GitHubAPI] Request: ${method} ${url}`);
+                console.log(`[GitHubAPI] Body:`, body);
+            }
+
             const response = await fetch(url, options);
             
             // Handle 409 Conflict (Git state mismatch)
