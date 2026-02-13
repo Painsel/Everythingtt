@@ -646,7 +646,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (accessToken) {
                     try {
-                        const tempAccessData = await GitHubAPI.getFile(`news/temp-access-links/${accessToken}.json`);
+                        // Check temp-access-links (rerouted to critical storage automatically)
+                        const tempAccessData = await GitHubAPI.getFile(`temp-access-links/${accessToken}.json`);
                         if (tempAccessData) {
                             const accessInfo = JSON.parse(tempAccessData.content);
                             if (accessInfo.articleId === singleArticleId && accessInfo.expiry > Date.now()) {
@@ -1055,9 +1056,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     createdAt: new Date().toISOString()
                 };
 
-                // Save the token to GitHub storage
+                // Save the token to GitHub storage - Now rerouted to critical storage via the path change
                 await GitHubAPI.safeUpdateFile(
-                    `news/temp-access-links/${token}.json`,
+                    `temp-access-links/${token}.json`,
                     accessData,
                     `Generate temporary link for article: ${currentEditingArticleId}`
                 );
@@ -1943,11 +1944,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Role-based visibility for audio upload
     const checkAudioUploadVisibility = () => {
+        const article = articleData[currentArticleIdForComments];
+        const isPrivate = article && article.isPrivate;
+        const isBeta = user && !user.isGuest && GitHubAPI.isBetaTester(user);
+
         if (labelAudioUpload) {
-            if (user && !user.isGuest && GitHubAPI.isBetaTester(user)) {
+            if (isPrivate || isBeta) {
                 labelAudioUpload.classList.remove('hidden');
             } else {
                 labelAudioUpload.classList.add('hidden');
+            }
+        }
+
+        if (btnRecordVoice) {
+            if (isPrivate || isBeta) {
+                btnRecordVoice.classList.remove('hidden');
+            } else {
+                btnRecordVoice.classList.add('hidden');
             }
         }
     };
@@ -2952,6 +2965,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     btnSubmitComment.disabled = true;
                     btnSubmitComment.innerText = 'Uploading Audio...';
+                    
+                    // Private articles can bypass Beta Tester restriction for voice/audio
+                    const isPrivate = article && article.isPrivate;
+                    if (!isPrivate && (!user || user.isGuest || !GitHubAPI.isBetaTester(user))) {
+                        throw new Error('You do not have permission to upload audio to public articles.');
+                    }
+                    
                     audioUrl = await GitHubAPI.uploadAudio(recordedAudioBlob);
                 } catch (err) {
                     console.error('Audio upload failed:', err);

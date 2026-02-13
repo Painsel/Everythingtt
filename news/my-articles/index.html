@@ -130,11 +130,28 @@
                 <div id="attachment-preview" class="attachment-preview hidden"></div>
                 <textarea id="new-comment-text" placeholder="Write a comment..." rows="2"></textarea>
                 <div class="comment-controls">
-                    <label for="comment-file-upload" class="attachment-btn">
-                        📎
-                        <input type="file" id="comment-file-upload" accept="image/*" hidden>
-                    </label>
+                    <div class="comment-input-actions">
+                        <label for="comment-file-upload" class="attachment-btn" title="Attach image">
+                            📎
+                            <input type="file" id="comment-file-upload" accept="image/*" hidden>
+                        </label>
+                        <button id="btn-record-voice" class="attachment-btn hidden" title="Record voice message">🎤</button>
+                        <label for="comment-audio-upload" id="label-audio-upload" class="attachment-btn hidden" title="Upload audio file">
+                            🎵
+                            <input type="file" id="comment-audio-upload" accept="audio/*" hidden>
+                        </label>
+                    </div>
                     <button id="btn-submit-comment">Post</button>
+                </div>
+                <div id="voice-record-ui" class="voice-record-ui hidden">
+                    <div class="voice-record-info">
+                        <span class="recording-dot"></span>
+                        <span id="voice-duration">0:00</span>
+                    </div>
+                    <div class="voice-record-controls">
+                        <button id="btn-cancel-voice" class="voice-ui-btn cancel" title="Cancel recording">✕</button>
+                        <button id="btn-stop-voice" class="voice-ui-btn stop" title="Stop and save">✔</button>
+                    </div>
                 </div>
             </div>
         </div>

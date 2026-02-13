@@ -60,7 +60,8 @@ window.GitHubAPI = {
             'support-forms-storage',
             'mail-storage',
             'mail-accounts-storage',
-            'mail-relay'
+            'mail-relay',
+            'temp-access-links'
         ];
 
         try {
@@ -574,6 +575,7 @@ window.GitHubAPI = {
             'support-forms-storage',
             'mail-storage',
             'mail-accounts-storage',
+            'temp-access-links',
             'banned-ips.json'
         ];
         
@@ -974,6 +976,7 @@ window.GitHubAPI = {
                 'mail-accounts-storage',
                 'support-forms-storage',
                 'mail-relay/queue',
+                'temp-access-links',
                 'banned-ips.json'
             ];
             const isStorageFile = storageFolders.some(folder => path.includes(folder));
