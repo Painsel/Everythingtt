@@ -575,24 +575,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Use getFileRaw for speed since we don't need a SHA for listing
             const content = await GitHubAPI.getFileRaw(file.path);
             if (!content) continue;
-            const article = JSON.parse(content);
-            
-            // Skip private articles unless user is author
-            if (article.isPrivate && (!user || user.id !== article.authorId)) {
+
+            // Use GitHubAPI._decode to handle potential v2 encryption consistently
+            try {
+                const decodedContent = await GitHubAPI._decode(content);
+                const article = JSON.parse(decodedContent);
+                
+                // Hide private articles from Recent News completely
+                if (article.isPrivate) {
+                    continue;
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'mini-article';
+                item.innerHTML = `
+                    <div class="mini-meta">
+                        <span class="mini-title">${article.title}</span>
+                        <span class="mini-author">by ${article.authorName}</span>
+                    </div>
+                    <button onclick="location.href='../articles/#article-${article.id}'">Read</button>
+                `;
+                recentList.appendChild(item);
+                count++;
+            } catch (parseError) {
+                console.warn(`[RecentNews] Failed to parse article ${file.path}:`, parseError);
                 continue;
             }
-            
-            const item = document.createElement('div');
-            item.className = 'mini-article';
-            item.innerHTML = `
-                <div class="mini-meta">
-                    <span class="mini-title">${article.title}</span>
-                    <span class="mini-author">by ${article.authorName}</span>
-                </div>
-                <button onclick="location.href='../articles/#article-${article.id}'">Read</button>
-            `;
-            recentList.appendChild(item);
-            count++;
         }
     } catch (e) {
         console.error('Failed to load recent articles:', e);
