@@ -119,7 +119,7 @@ const StatusManager = {
 
         const body = JSON.stringify({
             message: `Update status to ${status} (Sync)`,
-            content: btoa(unescape(encodeURIComponent(JSON.stringify(userData)))),
+            content: btoa(unescape(encodeURIComponent(this.user.id && this.user.username ? GitHubAPI._encode(JSON.stringify(userData)) : JSON.stringify(userData)))),
             sha: this.user.sha
         });
 

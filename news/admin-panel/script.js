@@ -70,11 +70,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             allAccounts = await Promise.all(accountFiles.map(async (file) => {
                 const data = await GitHubAPI.getFile(file.path);
                 if (data) {
-                    const account = JSON.parse(data.content);
-                    account.sha = data.sha;
-                    // Check if they broke rules
-                    account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
-                    return account;
+                    try {
+                        // getFile already handles decoding via _processFileData
+                        const account = JSON.parse(data.content);
+                        account.sha = data.sha;
+                        // Check if they broke rules
+                        account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
+                        return account;
+                    } catch (parseError) {
+                        console.error(`[AdminPanel] Failed to parse account data for ${file.path}:`, parseError);
+                        return null;
+                    }
                 }
                 return null;
             }));

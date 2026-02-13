@@ -700,7 +700,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             return null;
                         }
 
-                        const article = JSON.parse(content);
+                        // Use GitHubAPI._decode to handle potential v2 encryption consistently
+                        const decodedContent = await GitHubAPI._decode(content);
+                        const article = JSON.parse(decodedContent);
                         article.sha = data.sha;
                         console.log(`Successfully loaded article: ${article.title} (${article.id})`);
                         return article;
