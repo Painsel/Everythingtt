@@ -813,6 +813,27 @@ window.GitHubAPI = {
                 return this.request(originalPath, method, body, retries - 1);
             }
 
+            // Handle 403 Rate Limit
+            if (response.status === 403) {
+                const remaining = response.headers.get('x-ratelimit-remaining');
+                if (remaining === '0') {
+                    const resetTime = response.headers.get('x-ratelimit-reset');
+                    const waitTime = resetTime ? (parseInt(resetTime) * 1000 - Date.now()) + 1000 : 60000;
+                    
+                    console.error(`[GitHubAPI] Rate limit exceeded. Resets in ${Math.round(waitTime / 1000)}s.`);
+                    
+                    if (retries > 0 && waitTime < 30000) { // Only auto-retry if wait is < 30s
+                        await new Promise(resolve => setTimeout(resolve, waitTime));
+                        return this.request(originalPath, method, body, retries - 1);
+                    }
+                    
+                    const error = new Error(`GitHub API Rate limit exceeded. Resets in ${Math.round(waitTime / 1000)}s.`);
+                    error.status = 403;
+                    error.rateLimitReset = resetTime;
+                    throw error;
+                }
+            }
+
             if (!response.ok) {
                 let errorMessage = `API request failed with status ${response.status}`;
                 try {

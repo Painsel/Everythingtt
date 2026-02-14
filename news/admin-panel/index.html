@@ -119,6 +119,9 @@
                     <div class="search-box">
                         <input type="text" id="account-search" name="admin_query_no_autofill" placeholder="Search by Username or ID..." autocomplete="one-time-code" data-lpignore="true" spellcheck="false">
                     </div>
+                    <div class="bulk-actions" style="margin-left: 10px;">
+                        <button id="btn-open-bulk-delete" class="btn-danger" style="padding: 8px 15px; font-size: 0.9em;">Bulk Delete</button>
+                    </div>
                 </div>
                 <div id="accounts-list" class="accounts-list">
                     <p class="status-msg">Loading accounts...</p>
@@ -333,7 +336,7 @@
             <div class="input-group" style="margin-top: 15px;">
                 <label for="new-mail-prefix-admin">Email Prefix:</label>
                 <div style="display: flex; align-items: center;">
-                    <input type="text" id="new-mail-prefix-admin" placeholder="e.g. john.doe" style="flex: 1; background: #2f3136; border: 1px solid #40444b; color: #dcddde; border-radius: 4px 0 0 4px; padding: 8px;">
+                    <input type="text" id="text" id="new-mail-prefix-admin" placeholder="e.g. john.doe" style="flex: 1; background: #2f3136; border: 1px solid #40444b; color: #dcddde; border-radius: 4px 0 0 4px; padding: 8px;">
                     <span style="background: #40444b; padding: 8px; border-radius: 0 4px 4px 0; color: #b9bbbe; font-size: 0.9em;">@ett.mail</span>
                 </div>
                 <p style="font-size: 0.8em; color: #b9bbbe; margin-top: 5px;">This will create a new mailbox and link it to this user account.</p>
@@ -341,6 +344,31 @@
             <div class="modal-actions" style="margin-top: 20px;">
                 <button id="btn-confirm-link-mail" class="btn-primary">Link Email</button>
                 <button id="btn-cancel-link-mail" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bulk-delete-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3 style="color: #ff4d4d;">Bulk Account Delete</h3>
+            <p>Delete all accounts containing a specific word in their username.</p>
+            
+            <div class="input-group" style="margin-top: 15px;">
+                <label for="bulk-delete-keyword">Username Keyword:</label>
+                <input type="text" id="bulk-delete-keyword" placeholder="e.g. bot, spam, attacker" style="width: 100%; background: #2f3136; border: 1px solid #40444b; color: #dcddde; border-radius: 4px; padding: 8px; margin-top: 5px;">
+            </div>
+
+            <div id="bulk-delete-preview" style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 4px; max-height: 150px; overflow-y: auto; display: none;">
+                <p style="font-size: 0.9em; margin-bottom: 5px;">Matched Accounts:</p>
+                <ul id="bulk-delete-match-list" style="font-size: 0.85em; list-style: disc; padding-left: 20px; color: #ff4d4d;"></ul>
+            </div>
+
+            <p style="margin-top: 15px; font-size: 0.85em; color: #ff4d4d;"><b>Warning:</b> This action is permanent and will delete all matched accounts and their associated files.</p>
+            
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button id="btn-confirm-bulk-delete" class="btn-danger" disabled>Delete Matched Accounts</button>
+                <button id="btn-cancel-bulk-delete" class="btn-secondary">Cancel</button>
             </div>
         </div>
     </div>

@@ -47,8 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const accountActionsModal = document.getElementById('account-actions-modal');
     const manageViolationsModal = document.getElementById('manage-violations-modal');
     const linkMailModal = document.getElementById('link-mail-modal');
+    const bulkDeleteModal = document.getElementById('bulk-delete-modal');
     const closeModals = document.querySelectorAll('.close-modal');
-    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal, manageViolationsModal, linkMailModal];
+    const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal, manageViolationsModal, linkMailModal, bulkDeleteModal];
     
     // Define window-scoped functions first to avoid ReferenceErrors
     window.openResetIp = (userId, username) => {
@@ -269,22 +270,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep');
             
-            allAccounts = await Promise.all(accountFiles.map(async (file) => {
-                const data = await GitHubAPI.getFile(file.path);
-                if (data) {
-                    const account = GitHubAPI.safeParse(data.content);
-                    if (account) {
-                        account.sha = data.sha;
-                        // Check if they broke rules
-                        account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
-                        return account;
-                    }
-                    console.warn(`[AdminPanel] Failed to parse account data for ${file.path}`);
-                }
-                return null;
-            }));
+            // Process in chunks of 5 to stay within rate limits and prevent abuse detection
+            const CHUNK_SIZE = 5;
+            allAccounts = [];
+            
+            for (let i = 0; i < accountFiles.length; i += CHUNK_SIZE) {
+                const chunk = accountFiles.slice(i, i + CHUNK_SIZE);
+                GitHubAPI.showPauseModal(`Fetching accounts ${i + 1} to ${Math.min(i + CHUNK_SIZE, accountFiles.length)} of ${accountFiles.length}...`);
+                
+                const chunkResults = await Promise.all(chunk.map(async (file) => {
+                    const data = await GitHubAPI.getFile(file.path);
+                    if (data) {
+                        const account = GitHubAPI.safeParse(data.content);
+                        if (account) {
+                            // --- AUTOMATIC "ECHO" DELETION PROTOCOL ---
+                            const username = (account.username || '').toLowerCase();
+                            const isProtected = account.role === 'owner' || account.role === 'admin' || String(account.id) === DEVELOPER_ID;
+                            
+                            if (username.includes('echo') && !isProtected) {
+                                console.warn(`[Auto-Delete] Found "ECHO" account: ${account.username} (ID: ${account.id}). Deleting immediately.`);
+                                try {
+                                    await GitHubAPI.safeDeleteFile(
+                                        `created-news-accounts-storage/${account.id}.json`,
+                                        `System: Automatic deletion of "ECHO" account (${account.username})`
+                                    );
+                                    return null; // Exclude from the rendered list
+                                } catch (e) {
+                                    console.error(`[Auto-Delete] Failed to delete ${account.username}:`, e);
+                                }
+                            }
+                            // ------------------------------------------
 
-            allAccounts = allAccounts.filter(a => a !== null);
+                            account.sha = data.sha;
+                            // Check if they broke rules
+                            account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
+                            return account;
+                        }
+                    }
+                    return null;
+                }));
+                
+                allAccounts.push(...chunkResults.filter(a => a !== null));
+                
+                // Small delay between chunks to be respectful to the API
+                if (i + CHUNK_SIZE < accountFiles.length) {
+                    await new Promise(r => setTimeout(r, 200));
+                }
+            }
+
             renderAccounts(allAccounts);
         } catch (e) {
             console.error('Failed to load accounts:', e);
@@ -708,6 +741,122 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTileClick('btn-cancel-ban', () => { if (banIpModal) banIpModal.classList.add('hidden'); });
     setTileClick('btn-cancel-unban', () => { if (unbanIpModal) unbanIpModal.classList.add('hidden'); });
     setTileClick('btn-cancel-link-mail', () => { if (linkMailModal) linkMailModal.classList.add('hidden'); });
+
+    // --- Bulk Delete Tool Logic ---
+    const bulkDeleteKeyword = document.getElementById('bulk-delete-keyword');
+    const bulkDeletePreview = document.getElementById('bulk-delete-preview');
+    const bulkDeleteMatchList = document.getElementById('bulk-delete-match-list');
+    const btnConfirmBulkDelete = document.getElementById('btn-confirm-bulk-delete');
+    const btnCancelBulkDelete = document.getElementById('btn-cancel-bulk-delete');
+    const btnOpenBulkDelete = document.getElementById('btn-open-bulk-delete');
+
+    let matchedBulkAccounts = [];
+
+    if (btnOpenBulkDelete) {
+        btnOpenBulkDelete.onclick = () => {
+            if (bulkDeleteModal) {
+                bulkDeleteModal.classList.remove('hidden');
+                if (bulkDeleteKeyword) {
+                    bulkDeleteKeyword.value = '';
+                    bulkDeleteKeyword.focus();
+                }
+                if (bulkDeletePreview) bulkDeletePreview.style.display = 'none';
+                if (bulkDeleteMatchList) bulkDeleteMatchList.innerHTML = '';
+                if (btnConfirmBulkDelete) {
+                    btnConfirmBulkDelete.disabled = true;
+                    btnConfirmBulkDelete.innerText = 'Delete Matched Accounts';
+                }
+                matchedBulkAccounts = [];
+            }
+        };
+    }
+
+    if (bulkDeleteKeyword) {
+        bulkDeleteKeyword.oninput = () => {
+            const keyword = bulkDeleteKeyword.value.trim().toLowerCase();
+            if (keyword.length < 2) {
+                if (bulkDeletePreview) bulkDeletePreview.style.display = 'none';
+                if (btnConfirmBulkDelete) {
+                    btnConfirmBulkDelete.disabled = true;
+                    btnConfirmBulkDelete.innerText = 'Delete Matched Accounts';
+                }
+                matchedBulkAccounts = [];
+                return;
+            }
+
+            matchedBulkAccounts = allAccounts.filter(acc => {
+                const username = acc.username.toLowerCase();
+                const isMatch = username.includes(keyword);
+                // Safety check: Don't match the developer, owner, or admins
+                const isProtected = acc.role === 'owner' || acc.role === 'admin' || String(acc.id) === DEVELOPER_ID;
+                return isMatch && !isProtected;
+            });
+
+            if (matchedBulkAccounts.length > 0) {
+                if (bulkDeleteMatchList) {
+                    bulkDeleteMatchList.innerHTML = matchedBulkAccounts.map(acc => `<li>${acc.username} (ID: ${acc.id})</li>`).join('');
+                }
+                if (bulkDeletePreview) bulkDeletePreview.style.display = 'block';
+                if (btnConfirmBulkDelete) {
+                    btnConfirmBulkDelete.disabled = false;
+                    btnConfirmBulkDelete.innerText = `Delete ${matchedBulkAccounts.length} Matched Accounts`;
+                }
+            } else {
+                if (bulkDeleteMatchList) {
+                    bulkDeleteMatchList.innerHTML = '<li>No non-admin accounts match this keyword.</li>';
+                }
+                if (bulkDeletePreview) bulkDeletePreview.style.display = 'block';
+                if (btnConfirmBulkDelete) {
+                    btnConfirmBulkDelete.disabled = true;
+                    btnConfirmBulkDelete.innerText = 'Delete Matched Accounts';
+                }
+            }
+        };
+    }
+
+    if (btnConfirmBulkDelete) {
+        btnConfirmBulkDelete.onclick = async () => {
+            if (matchedBulkAccounts.length === 0) return;
+            
+            const keyword = bulkDeleteKeyword.value.trim();
+            if (!confirm(`Are you sure you want to PERMANENTLY delete ${matchedBulkAccounts.length} accounts containing "${keyword}" in their username? This cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                btnConfirmBulkDelete.disabled = true;
+                btnConfirmBulkDelete.innerText = 'Deleting...';
+                
+                GitHubAPI.showPauseModal(`Deleting ${matchedBulkAccounts.length} accounts...`);
+
+                // Delete accounts sequentially to avoid hitting API rate limits or conflicts
+                for (const acc of matchedBulkAccounts) {
+                    await GitHubAPI.safeDeleteFile(
+                        `created-news-accounts-storage/${acc.id}.json`,
+                        `Admin: Bulk deleted account ${acc.username} (Keyword: ${keyword})`
+                    );
+                }
+
+                alert(`Successfully deleted ${matchedBulkAccounts.length} accounts.`);
+                if (bulkDeleteModal) bulkDeleteModal.classList.add('hidden');
+                loadAccounts();
+            } catch (e) {
+                alert('An error occurred during bulk deletion: ' + e.message);
+                console.error('Bulk delete error:', e);
+            } finally {
+                GitHubAPI.hidePauseModal();
+                btnConfirmBulkDelete.disabled = false;
+                btnConfirmBulkDelete.innerText = 'Delete Matched Accounts';
+            }
+        };
+    }
+
+    if (btnCancelBulkDelete) {
+        btnCancelBulkDelete.onclick = () => {
+            if (bulkDeleteModal) bulkDeleteModal.classList.add('hidden');
+        };
+    }
+    // --- End Bulk Delete Tool Logic ---
 
     // Initial Load
     loadAccounts();
