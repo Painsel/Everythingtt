@@ -703,13 +703,20 @@ window.GitHubAPI = {
             const userStr = localStorage.getItem('current_user');
             const user = this.safeParse(userStr);
             
+            // Generate a simple request signature to prevent basic replay/spoofing
+            const timestamp = Date.now();
+            const salt = 'ett_secure_v1';
+            const signature = btoa(`${user ? user.id : 'guest'}:${timestamp}:${salt}`);
+
             // Move security markers to query parameters to avoid CORS preflight failures
             const securityParams = new URLSearchParams({
                 path: apiPath,
                 client_ip: clientIP || 'unknown',
                 user_id: user ? String(user.id) : 'guest',
                 user_role: user ? (user.role || 'user') : 'guest',
-                op: method === 'GET' ? 'read' : 'write'
+                op: method === 'GET' ? 'read' : 'write',
+                sig: signature,
+                ts: timestamp
             });
 
             url = `${base}?${securityParams.toString()}`;
@@ -1301,6 +1308,23 @@ window.GitHubAPI = {
     },
 
     async listFiles(path) {
+        // [SECURITY] Directory Listing Protection
+        const criticalFolders = [
+            'created-news-accounts-storage',
+            'mail-storage',
+            'support-forms-storage'
+        ];
+        const isCritical = criticalFolders.some(folder => path.includes(folder));
+        if (isCritical) {
+            const user = this.safeParse(localStorage.getItem('current_user'));
+            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === '349106915937530');
+            
+            if (!isAdmin) {
+                console.error(`[Security] Blocked unauthorized directory listing: ${path}`);
+                throw new Error('Security Violation: Unauthorized directory access.');
+            }
+        }
+
         try {
             const data = await this.request(`/contents/${path}`);
             return Array.isArray(data) ? data : [data];

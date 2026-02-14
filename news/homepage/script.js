@@ -243,6 +243,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Scan for Alt accounts with same IP
     async function scanAlts() {
         if (!user || user.isGuest) return;
+        
+        // [SECURITY] Only allow admins/devs to perform IP-wide scans
+        const ADMIN_ID = '349106915937530';
+        const isUserAdmin = user.role === 'admin' || user.role === 'owner' || String(user.id) === ADMIN_ID;
+        
+        if (!isUserAdmin) {
+            console.log('[Security] Alt-scanning disabled for standard users to prevent data leaks.');
+            return;
+        }
+
         const currentIp = await GitHubAPI.getClientIP();
         if (!currentIp) return;
 

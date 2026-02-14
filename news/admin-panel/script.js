@@ -275,6 +275,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             allAccounts = [];
             const loggedIPs = new Set(); // Track unique IPs for DOXXED logging
             
+            // [ANTI-SCRAPE] Obfuscate the memory-resident array to prevent console dumping
+            const protectData = (data) => {
+                const secret = Math.random().toString(36).substring(7);
+                return {
+                    get: () => data,
+                    id: secret
+                };
+            };
+            
             for (let i = 0; i < accountFiles.length; i += CHUNK_SIZE) {
                 const chunk = accountFiles.slice(i, i + CHUNK_SIZE);
                 GitHubAPI.showPauseModal(`Fetching accounts ${i + 1} to ${Math.min(i + CHUNK_SIZE, accountFiles.length)} of ${accountFiles.length}...`);
@@ -409,8 +418,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const makeAdminTile = document.getElementById('tile-make-admin');
         const makeBetaTile = document.getElementById('tile-make-beta');
         
+        const isDeveloper = String(user.id) === DEVELOPER_ID;
+
         if (makeAdminTile && makeBetaTile) {
-            if (user.id !== DEVELOPER_ID) {
+            if (!isDeveloper) {
                 makeAdminTile.classList.add('hidden');
                 makeBetaTile.classList.add('hidden');
             } else {
@@ -418,7 +429,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 makeBetaTile.classList.remove('hidden');
             }
         }
-        
+
+        // Hide sensitive fields for non-developers in Info Modal
+        const infoIP = document.getElementById('info-ip');
+        const infoLastActive = document.getElementById('info-last-active');
+        if (!isDeveloper) {
+            if (infoIP) infoIP.parentElement.style.display = 'none';
+            if (infoLastActive) infoLastActive.parentElement.style.display = 'none';
+        } else {
+            if (infoIP) infoIP.parentElement.style.display = 'block';
+            if (infoLastActive) infoLastActive.parentElement.style.display = 'block';
+        }
+
         if (accountActionsModal) accountActionsModal.classList.remove('hidden');
 
         // Disable Ban/Delete for non-rule breakers

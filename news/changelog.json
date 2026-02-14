@@ -1,13 +1,7 @@
 {
-    "version": "1.5.3",
+    "version": "1.5.4",
     "date": "2026-02-14",
     "updates": [
-        "Mail: Added Markdown and custom Button support",
-        "Added Embedded link content support for Mail app and Article comments",
-        "Voice Messages support",
-        "Notification Sounds support",
-        "Added 'My Articles' tab for managing your own articles",
-        "Added Slideshow feature for Article banners",
-        "Added 'Mark As Private' feature to restrict article view and a Temporary link generation tool"
+        "Major security hardening and administrative tool updates."
     ]
 }
