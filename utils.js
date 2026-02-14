@@ -26,15 +26,11 @@ window.GitHubAPI = {
     _lastY: 0,
     _jitterCount: 0,
     _behaviorVerified: false,
-    _isDebugging: false,
 
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (High Performance Mode)`);
         
-        // [SECURITY] Anti-Debugging Trap
-        this._initAntiDebugging();
-
         // [SECURITY] Set Global Security Headers (CSP) via Meta
         this._applyCSP();
 
@@ -129,42 +125,6 @@ window.GitHubAPI = {
             console.error('[GitHubAPI] Storage check/init failed:', e);
         }
     },
-    _initAntiDebugging() {
-        // Detects if DevTools is open by checking timing differences
-        // and using a debugger statement trap.
-        const start = Date.now();
-        debugger; 
-        const end = Date.now();
-        if (end - start > 100) {
-            this._isDebugging = true;
-            console.warn('[SECURITY] Debugger detected. Requests may be restricted.');
-        }
-
-        // Periodic check for window size changes (often triggered by opening DevTools)
-        let lastWidth = window.outerWidth;
-        let lastHeight = window.outerHeight;
-        setInterval(() => {
-            if (window.outerWidth !== lastWidth || window.outerHeight !== lastHeight) {
-                this._isDebugging = true;
-                lastWidth = window.outerWidth;
-                lastHeight = window.outerHeight;
-            }
-        }, 2000);
-    },
-
-    _getCanary() {
-        // Generates a "fingerprint" of the current environment
-        // This makes it harder for an attacker to copy a signature and use it elsewhere.
-        const parts = [
-            navigator.userAgent.length,
-            navigator.language,
-            screen.colorDepth,
-            Math.round(screen.width / 100) * 100, // Round to avoid minor zoom issues
-            new Date().getTimezoneOffset()
-        ];
-        return btoa(parts.join('|'));
-    },
-
     _applyCSP() {
         // Since we are on GitHub Pages, we can't set HTTP headers.
         // We use a Meta tag for a strict Content Security Policy.
@@ -944,13 +904,6 @@ window.GitHubAPI = {
             // [SECURITY] Generate a robust request signature
             const timestamp = Date.now();
             const user_id = user ? String(user.id) : 'guest';
-            const canary = this._getCanary();
-            
-            // [ANTI-DEBUG] Block write requests if debugging is detected
-            if (method !== 'GET' && this._isDebugging) {
-                console.error('[SECURITY] Request blocked: Security violation (Debugging tools active).');
-                throw new Error('Security Violation: Unauthorized request context.');
-            }
             
             // [ANTI-AI] Proof-of-Work (PoW) Challenge
             // This forces the client to perform a computation that is easy for a human browser
@@ -972,7 +925,7 @@ window.GitHubAPI = {
 
             // Simple PoW loop: find a nonce such that the hash starts with '000'
             while (true) {
-                const payload = `${user_id}:${timestamp}:${nonce}:${apiPath}:${canary}`;
+                const payload = `${user_id}:${timestamp}:${nonce}:${apiPath}`;
                 const hash = await sha256(payload);
                 if (hash.startsWith(powTarget)) {
                     powHash = hash;
@@ -999,8 +952,8 @@ window.GitHubAPI = {
 
             // Generate a more complex HMAC-like signature
             // Salt is derived from multiple factors to prevent simple replay or brute force
-            const secretSalt = 'ett_v3_core_912834'; // Upgraded salt
-            const signaturePayload = `${user_id}:${timestamp}:${apiPath}:${method}:${secretSalt}:${nonce}:${canary}`;
+            const secretSalt = 'ett_v2_core_782391';
+            const signaturePayload = `${user_id}:${timestamp}:${apiPath}:${method}:${secretSalt}:${nonce}`;
             const signature = btoa(signaturePayload).split('').reverse().join(''); // Obfuscate the B64
 
             // Move security markers to query parameters to avoid CORS preflight failures
@@ -1014,8 +967,7 @@ window.GitHubAPI = {
                 ts: timestamp,
                 n: nonce,
                 pd: powDuration,
-                cn: canary, // Pass the canary to the middleware for validation
-                v: '3.1' // Protocol version update
+                v: '3' // Protocol version
             });
 
             url = `${base}?${securityParams.toString()}`;

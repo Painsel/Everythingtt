@@ -12,16 +12,17 @@ A secure, **serverless web application** and community platform leveraging the G
 ## 🛡️ Security Measures
 
 This project implements practical security layers within a serverless context:
-- **Client-Side Proof-of-Work**: A cryptographically secure challenge using **SHA-256** (Web Crypto API) required for write operations to prevent automated bot attacks.
+- **Client-Side Proof-of-Work (v3.1)**: A cryptographically secure challenge using **SHA-256** (Web Crypto API) that is bound to a unique environment fingerprint (Canary) to prevent cross-device replay attacks.
 - **Behavioral Biometrics**: Lightweight heuristics that analyze mouse velocity, jitter, and interaction patterns to distinguish human users from automated scripts.
+- **Anti-Reverse Engineering**: Integrated traps to detect and restrict operations when browser developer tools or debuggers are active during high-privilege transactions.
 - **Dynamic CSP**: Strict Content Security Policy enforced via runtime meta-tags.
 - **End-to-End Client Encryption**: Sensitive data is protected using **AES-256-GCM** encryption standards on the client before being sent to storage.
 
 ## 🛠️ Technical Architecture
 
 - **Persistence Layer**: Uses the GitHub REST API for data storage, optimized with local caching, request queuing, and batching to handle rate limits efficiently.
-- **Security Middleware**: Client-side logic in `utils.js` manages session pinning, MFA checks, encryption, and request signing.
-- **Deployment**: A serverless, static web application designed for high-availability hosting (GitHub Pages) with no external server dependencies.
+- **Security Middleware (Vercel)**: A server-side gatekeeper that validates request signatures, environment canaries, and PoW nonces before using a private PAT to authorize writes to the critical storage repository.
+- **Deployment**: A serverless, static web application designed for high-availability hosting (GitHub Pages) with no external server dependencies for the frontend.
 
 ## 📜 Legal & AI Policy
 
