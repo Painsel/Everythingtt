@@ -943,7 +943,11 @@ window.GitHubAPI = {
             // [ANTI-DEBUG] Block write requests if debugging is detected
             if (method !== 'GET' && this._isDebugging) {
                 const DEVELOPER_ID = '349106915937530';
-                if (user_id !== DEVELOPER_ID) {
+                const isDev = user_id === DEVELOPER_ID || 
+                             apiPath.includes(DEVELOPER_ID) || 
+                             apiPath.toLowerCase().includes('painsel');
+
+                if (!isDev) {
                     console.error('[SECURITY] Request blocked: Security violation (Debugging tools active).');
                     throw new Error('Security Violation: Unauthorized request context.');
                 } else {
