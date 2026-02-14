@@ -884,30 +884,17 @@ window.GitHubAPI = {
                 const encryptedData = content.substring('ett_enc_v2:'.length);
                 const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
                 
-                // [FIX] Decrypt using direct key from passphrase to avoid salt/prefix parsing issues
-                const key = CryptoJS.enc.Utf8.parse(passphrase.substring(0, 24));
-                const decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedData, key, {
-                    mode: CryptoJS.mode.ECB,
-                    padding: CryptoJS.pad.Pkcs7
-                });
-                
+                // Decrypt using the passphrase directly
+                // This correctly handles the "Salted__" prefix internally in CryptoJS
+                let decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedData, passphrase);
                 let decryptedStr = '';
+                
                 try {
                     decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
                 } catch (e) {
                     // Fallback to AES if TripleDES fails
-                    const aesKey = CryptoJS.enc.Utf8.parse(passphrase.substring(0, 32));
-                    const aesBytes = CryptoJS.AES.decrypt(encryptedData, aesKey, {
-                        mode: CryptoJS.mode.ECB,
-                        padding: CryptoJS.pad.Pkcs7
-                    });
+                    const aesBytes = CryptoJS.AES.decrypt(encryptedData, passphrase);
                     decryptedStr = aesBytes.toString(CryptoJS.enc.Utf8);
-                }
-
-                if (!decryptedStr) {
-                    // Last resort: try standard passphrase decryption (with salt parsing)
-                    const standardBytes = CryptoJS.TripleDES.decrypt(encryptedData, passphrase);
-                    decryptedStr = standardBytes.toString(CryptoJS.enc.Utf8);
                 }
 
                 if (!decryptedStr) throw new Error('Decryption produced empty string');
@@ -950,12 +937,8 @@ window.GitHubAPI = {
             const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
             const normalizedContent = content.replace(/\r?\n/g, '\r\n');
             
-            // [FIX] Encrypt using direct key from passphrase to avoid salt/prefix parsing
-            const key = CryptoJS.enc.Utf8.parse(passphrase.substring(0, 24));
-            const encrypted = CryptoJS.TripleDES.encrypt(normalizedContent, key, {
-                mode: CryptoJS.mode.ECB,
-                padding: CryptoJS.pad.Pkcs7
-            }).toString();
+            // Use passphrase directly for standard salted encryption
+            const encrypted = CryptoJS.TripleDES.encrypt(normalizedContent, passphrase).toString();
             
             return `ett_enc_v2:${encrypted}`;
         } catch (e) {
