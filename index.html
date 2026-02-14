@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverythingTT - Community Dashboard</title>
+    <style>
+        :root {
+            --primary: #5865f2;
+            --bg: #0f111a;
+            --text: #ffffff;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+        .logo {
+            width: 120px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+        p {
+            color: #8e9297;
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <img src="logo/EverythingTT.png" alt="EverythingTT Logo" class="logo">
+    <h1>EverythingTT</h1>
+    <p>A secure, serverless community dashboard for news, mail, and more.</p>
+    <a href="news/index.html" class="btn">Enter Dashboard</a>
+
+    <script>
+        // Automatic redirect if preferred
+        // window.location.href = 'news/index.html';
+    </script>
+</body>
+</html>

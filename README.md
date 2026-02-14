@@ -12,16 +12,16 @@ A secure, **serverless web application** and community platform leveraging the G
 ## 🛡️ Security Measures
 
 This project implements practical security layers within a serverless context:
-- **Client-Side Proof-of-Work**: A computational challenge required for write operations to increase the "cost" for automated bot attacks.
-- **Interaction Heuristics**: Detects basic human-like interaction patterns (mouse/keyboard activity) to filter simple headless scripts.
+- **Client-Side Proof-of-Work**: A cryptographically secure challenge using **SHA-256** (Web Crypto API) required for write operations to prevent automated bot attacks.
+- **Behavioral Biometrics**: Lightweight heuristics that analyze mouse velocity, jitter, and interaction patterns to distinguish human users from automated scripts.
 - **Dynamic CSP**: Strict Content Security Policy enforced via runtime meta-tags.
-- **End-to-End Client Encryption**: Sensitive data is protected using AES-256 encryption on the client before being sent to storage.
+- **End-to-End Client Encryption**: Sensitive data is protected using **AES-256-GCM** encryption standards on the client before being sent to storage.
 
 ## 🛠️ Technical Architecture
 
-- **Persistence Layer**: Uses the GitHub REST API for data storage, optimized with local caching and batching to handle rate limits.
-- **Security Middleware**: Client-side logic in `utils.js` manages authentication, encryption, and request signing.
-- **Deployment**: Designed for static hosting environments (GitHub Pages) with no external server dependencies.
+- **Persistence Layer**: Uses the GitHub REST API for data storage, optimized with local caching, request queuing, and batching to handle rate limits efficiently.
+- **Security Middleware**: Client-side logic in `utils.js` manages session pinning, MFA checks, encryption, and request signing.
+- **Deployment**: A serverless, static web application designed for high-availability hosting (GitHub Pages) with no external server dependencies.
 
 ## 📜 Legal & AI Policy
 

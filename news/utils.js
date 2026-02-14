@@ -22,6 +22,9 @@ window.GitHubAPI = {
     // [SECURITY] Behavioral Tracking
     _humanEvents: 0,
     _lastEventTime: 0,
+    _lastX: 0,
+    _lastY: 0,
+    _jitterCount: 0,
     _behaviorVerified: false,
 
     // Initialized at the bottom of the object to ensure all methods are available
@@ -151,12 +154,31 @@ window.GitHubAPI = {
     },
 
     _initBehavioralTracking() {
-        const handleEvent = () => {
+        const handleEvent = (e) => {
             const now = Date.now();
             if (now - this._lastEventTime > 50) { // Throttling
                 this._humanEvents++;
+                
+                // [HEURISTICS] Basic behavioral biometrics
+                // Track mouse jitter and velocity to distinguish humans from scripts
+                if (e.type === 'mousemove') {
+                    const dx = Math.abs(e.clientX - this._lastX);
+                    const dy = Math.abs(e.clientY - this._lastY);
+                    const velocity = Math.sqrt(dx*dx + dy*dy) / (now - this._lastEventTime);
+                    
+                    // Humans move with variable velocity and non-perfect paths
+                    if (velocity > 0.1 && velocity < 10) {
+                        this._jitterCount++;
+                    }
+                    
+                    this._lastX = e.clientX;
+                    this._lastY = e.clientY;
+                }
+
                 this._lastEventTime = now;
-                if (this._humanEvents > 15) {
+                
+                // Requirement: sufficient events + detected "human" movement patterns
+                if (this._humanEvents > 20 && this._jitterCount > 5) {
                     this._behaviorVerified = true;
                     // Stop listening once verified to save resources
                     window.removeEventListener('mousemove', handleEvent);
@@ -886,17 +908,27 @@ window.GitHubAPI = {
             // [ANTI-AI] Proof-of-Work (PoW) Challenge
             // This forces the client to perform a computation that is easy for a human browser
             // but expensive and complex for a simple script or AI agent to replicate instantly.
+            // Using SHA-256 for a cryptographically secure challenge.
             const difficulty = 3;
             let nonce = 0;
             let powHash = '';
             const powTarget = '0'.repeat(difficulty);
             const powStart = Date.now();
             
+            // Generate SHA-256 hash using Web Crypto API
+            async function sha256(message) {
+                const msgBuffer = new TextEncoder().encode(message);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
             // Simple PoW loop: find a nonce such that the hash starts with '000'
             while (true) {
-                const check = btoa(`${user_id}:${timestamp}:${nonce}:${apiPath}`);
-                if (check.startsWith(powTarget)) {
-                    powHash = check;
+                const payload = `${user_id}:${timestamp}:${nonce}:${apiPath}`;
+                const hash = await sha256(payload);
+                if (hash.startsWith(powTarget)) {
+                    powHash = hash;
                     break;
                 }
                 nonce++;
@@ -907,6 +939,7 @@ window.GitHubAPI = {
             // [BOT DEFENSE] Interaction Heuristics
             // Checks if any human-like activity (mouse/key) has been detected
             // to filter out simple automated headless scripts.
+            // Using jitter and velocity analysis for basic behavioral biometrics.
             if (method !== 'GET' && !this._behaviorVerified) {
                 const userStr = localStorage.getItem('current_user');
                 const user = userStr ? this.safeParse(userStr) : null;
@@ -1135,7 +1168,26 @@ window.GitHubAPI = {
     _decrypt(content) {
         if (!content) return content;
         
-        // Handle ett_enc_v2 (TripleDES/AES)
+        // Handle ett_enc_v3 (AES-256)
+        if (content.startsWith('ett_enc_v3:')) {
+            if (typeof CryptoJS === 'undefined') {
+                console.error('[GitHubAPI] CryptoJS not loaded. Cannot decrypt v3 data.');
+                return content;
+            }
+            try {
+                const encryptedData = content.substring('ett_enc_v3:'.length);
+                const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
+                const decryptedBytes = CryptoJS.AES.decrypt(encryptedData, passphrase);
+                const decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
+                if (!decryptedStr) throw new Error('Decryption failed');
+                return decryptedStr.replace(/\r\n/g, '\n');
+            } catch (e) {
+                console.error('[GitHubAPI] Decrypt v3 failed:', e);
+                return content;
+            }
+        }
+        
+        // Handle ett_enc_v2 (TripleDES/AES fallback)
         if (content.startsWith('ett_enc_v2:')) {
             if (typeof CryptoJS === 'undefined') {
                 console.error('[GitHubAPI] CryptoJS not loaded. Cannot decrypt v2 data.');
@@ -1184,8 +1236,8 @@ window.GitHubAPI = {
     _encode(content) { return this._encrypt(content); },
 
     /**
-     * Internal helper to encrypt data before sending using TripleDES (DES3) and Base64.
-     * Uses direct key from passphrase.
+     * Internal helper to encrypt data before sending using AES-256.
+     * v3 protocol uses modern AES standards.
      */
     _encrypt(content) {
         if (!content) return content;
@@ -1198,10 +1250,10 @@ window.GitHubAPI = {
             const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
             const normalizedContent = content.replace(/\r?\n/g, '\r\n');
             
-            // Use passphrase directly for standard salted encryption
-            const encrypted = CryptoJS.TripleDES.encrypt(normalizedContent, passphrase).toString();
+            // Use AES-256 for modern security (v3)
+            const encrypted = CryptoJS.AES.encrypt(normalizedContent, passphrase).toString();
             
-            return `ett_enc_v2:${encrypted}`;
+            return `ett_enc_v3:${encrypted}`;
         } catch (e) {
             console.error('[GitHubAPI] Encrypt failed:', e);
             return content;
