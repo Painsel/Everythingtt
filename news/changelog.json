@@ -2,9 +2,9 @@
     "version": "1.5.3",
     "date": "2026-02-14",
     "updates": [
-        "Admin: Modernized Account Actions modal with compact 3-column responsive grid",
-        "Admin: Improved modal reliability with centralized event handling and null safety",
-        "Admin: Optimized Violation Management UI with real-time threshold indicators",
+        "Mail: Integrated Markdown support for rich text message composition",
+        "Mail: Added custom link button creation with responsive UI rendering",
+        "Mail: Improved draft management with persistent button metadata storage",
         "Security: Hardened all JSON.parse calls with automatic decryption and error resilience",
         "Voice Messages support",
         "Notification Sounds support",
