@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             GitHubAPI.hidePauseModal();
         }
     }
+}
 
     const loginForm = document.getElementById('login-form');
     const btnGuest = document.getElementById('btn-guest');
