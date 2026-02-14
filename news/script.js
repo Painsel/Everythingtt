@@ -10,10 +10,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load session if exists
     const savedUser = localStorage.getItem('current_user');
-    if (savedUser) {
-        const user = JSON.parse(savedUser);
-        
-        if (user.isGuest) {
+     if (savedUser) {
+         const user = GitHubAPI.safeParse(savedUser);
+         if (user) {
+             if (user.isGuest) {
             console.log('Guest session detected, redirecting...');
             window.location.href = 'homepage/';
             return;
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Check if IP is banned
             const banListData = await GitHubAPI.getFile('banned-ips.json');
             if (banListData) {
-                const bannedIps = JSON.parse(banListData.content);
+                const bannedIps = GitHubAPI.safeParse(banListData.content) || [];
                 const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
                 
                 if (banRecord) {
@@ -221,9 +221,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     let user;
                     try {
-                        // Use GitHubAPI._decode to handle potential v2 encryption consistently
-                        const decodedContent = await GitHubAPI._decode(content);
-                        user = JSON.parse(decodedContent);
+                        // Use GitHubAPI.safeParse to handle potential v2 encryption consistently
+                        user = GitHubAPI.safeParse(content);
                     } catch (e) {
                         console.warn(`[Auth] Failed to parse user data for ${file.path}:`, e);
                         continue;
@@ -238,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // If we hit an IP ban earlier, and this is NOT the admin, block them now
                             const banListData = await GitHubAPI.getFile('banned-ips.json');
                             if (banListData && !isAdminOverride) {
-                                const bannedIps = JSON.parse(banListData.content);
+                                const bannedIps = GitHubAPI.safeParse(banListData.content) || [];
                                 const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
                                 if (banRecord) {
                                     btnLogin.disabled = false;
@@ -369,9 +368,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (content) {
                             try {
                                 // Articles might be encrypted too
-                                const decodedContent = await GitHubAPI._decode(content);
-                                const article = JSON.parse(decodedContent);
-                                if (article.authorId === foundUser.id) {
+                                const article = GitHubAPI.safeParse(content);
+                                if (article && article.authorId === foundUser.id) {
                                     count++;
                                 }
                             } catch(e) {}

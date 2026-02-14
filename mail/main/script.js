@@ -74,11 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const results = await Promise.all(filePromises);
             
             allMessages = results.map(r => {
-                try {
-                    return JSON.parse(r.content);
-                } catch (e) {
-                    return null;
-                }
+                return GitHubAPI.safeParse(r.content);
             }).filter(m => m !== null);
             
             // Sort by date newest first
@@ -237,8 +233,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const prefix = to.split('@')[0];
                     const mapData = await GitHubAPI.getFile(`mail-accounts-storage/email-map/${prefix}.json`);
                     if (mapData) {
-                        const map = JSON.parse(mapData.content);
-                        recipientMailboxId = map.mailboxId;
+                        const map = GitHubAPI.safeParse(mapData.content);
+                        if (map) {
+                            recipientMailboxId = map.mailboxId;
+                        }
                     }
                 } else {
                     // External Email Address
@@ -249,9 +247,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Assume User ID
                 const accData = await GitHubAPI.getFile(`mail-accounts-storage/${to}.json`);
                 if (accData) {
-                    const acc = JSON.parse(accData.content);
-                    recipientMailboxId = acc.mailboxId;
-                    recipientEmail = acc.email;
+                    const acc = GitHubAPI.safeParse(accData.content);
+                    if (acc) {
+                        recipientMailboxId = acc.mailboxId;
+                        recipientEmail = acc.email;
+                    }
                 }
             }
 

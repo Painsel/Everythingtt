@@ -162,14 +162,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // Update on server
                     const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
-                        const serverUser = JSON.parse(data.content);
-                        serverUser.allowedIp = currentIp;
-                        await GitHubAPI.updateFile(
-                            `created-news-accounts-storage/${user.id}.json`,
-                            JSON.stringify(serverUser),
-                            `Security: Session-based admin IP update for ${user.username}`,
-                            data.sha
-                        );
+                        const serverUser = GitHubAPI.safeParse(data.content);
+                        if (serverUser) {
+                            serverUser.allowedIp = currentIp;
+                            await GitHubAPI.updateFile(
+                                `created-news-accounts-storage/${user.id}.json`,
+                                JSON.stringify(serverUser),
+                                `Security: Session-based admin IP update for ${user.username}`,
+                                data.sha
+                            );
+                        }
                     }
                 } else {
                     console.error('IP Mismatch detected. Logging out.');
@@ -185,14 +187,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Update on server
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(data.content);
-                    serverUser.allowedIp = currentIp;
-                    await GitHubAPI.updateFile(
-                        `created-news-accounts-storage/${user.id}.json`,
-                        JSON.stringify(serverUser),
-                        `Security: Session-based dynamic IP update for ${user.username}`,
-                        data.sha
-                    );
+                    const serverUser = GitHubAPI.safeParse(data.content);
+                    if (serverUser) {
+                        serverUser.allowedIp = currentIp;
+                        await GitHubAPI.updateFile(
+                            `created-news-accounts-storage/${user.id}.json`,
+                            JSON.stringify(serverUser),
+                            `Security: Session-based dynamic IP update for ${user.username}`,
+                            data.sha
+                        );
+                    }
                 }
             }
         } catch (e) {
@@ -328,10 +332,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await GitHubAPI.getFile(`created-news-accounts-storage/${targetId}.json`);
             if (data) {
                 // getFile already handles decoding via _processFileData
-                const targetUser = JSON.parse(data.content);
-                targetUser.sha = data.sha;
-                localStorage.setItem('current_user', JSON.stringify(targetUser));
-                window.location.reload();
+                const targetUser = GitHubAPI.safeParse(data.content);
+                if (targetUser) {
+                    targetUser.sha = data.sha;
+                    localStorage.setItem('current_user', JSON.stringify(targetUser));
+                    window.location.reload();
+                } else {
+                    alert('Failed to parse account data.');
+                }
             }
         } catch (e) {
             alert('Failed to switch account: ' + e.message);
@@ -371,7 +379,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Use getFileRaw for high-speed polling (check for changes without SHA)
             const content = await GitHubAPI.getFileRaw(`notifications-storage/${user.id}.json`);
             if (content) {
-                const freshNotifications = JSON.parse(content);
+                const freshNotifications = GitHubAPI.safeParse(content);
+                if (!freshNotifications) return;
+                
                 // We only need to hit the API if the data actually changed
                 // (Comparing length or stringified content is a cheap way to check)
                 if (JSON.stringify(freshNotifications) !== JSON.stringify(notifications)) {
@@ -382,12 +392,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`);
                     if (data) {
                         notificationsSHA = data.sha;
-                        notifications = JSON.parse(data.content);
-                        updateNotificationUI();
+                        const parsedNotifications = GitHubAPI.safeParse(data.content);
+                        if (parsedNotifications) {
+                            notifications = parsedNotifications;
+                            updateNotificationUI();
 
-                        // Play sound if we have new unread notifications
-                        if (newUnreadCount > oldUnreadCount) {
-                            playNotificationSound();
+                            // Play sound if we have new unread notifications
+                            if (newUnreadCount > oldUnreadCount) {
+                                playNotificationSound();
+                            }
                         }
                     }
                 }

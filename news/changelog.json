@@ -1,7 +1,8 @@
 {
-    "version": "1.5.1",
-    "date": "2026-02-13",
+    "version": "1.5.2",
+    "date": "2026-02-14",
     "updates": [
+        "Security: Hardened all JSON.parse calls with automatic decryption and error resilience",
         "Voice Messages support",
         "Notification Sounds support",
         "Added 'My Articles' tab for managing your own articles",

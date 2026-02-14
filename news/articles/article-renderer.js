@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    let user = JSON.parse(localStorage.getItem('current_user'));
+    let user = GitHubAPI.safeParse(localStorage.getItem('current_user'));
     let userSHA = null;
 
     // Developer ID check for global access
@@ -197,14 +197,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
-                        const serverUser = JSON.parse(data.content);
-                        serverUser.allowedIp = currentIp;
-                        await GitHubAPI.updateFile(
-                            `created-news-accounts-storage/${user.id}.json`,
-                            JSON.stringify(serverUser),
-                            `Security: Session-based admin IP update for ${user.username}`,
-                            data.sha
-                        );
+                        const serverUser = GitHubAPI.safeParse(data.content);
+                        if (serverUser) {
+                            serverUser.allowedIp = currentIp;
+                            await GitHubAPI.updateFile(
+                                `created-news-accounts-storage/${user.id}.json`,
+                                JSON.stringify(serverUser),
+                                `Security: Session-based admin IP update for ${user.username}`,
+                                data.sha
+                            );
+                        }
                     }
                 } else {
                     console.error('IP Mismatch detected. Logging out.');
@@ -220,14 +222,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Update on server
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(data.content);
-                    serverUser.allowedIp = currentIp;
-                    await GitHubAPI.updateFile(
-                        `created-news-accounts-storage/${user.id}.json`,
-                        JSON.stringify(serverUser),
-                        `Security: Session-based dynamic IP update for ${user.username}`,
-                        data.sha
-                    );
+                    const serverUser = GitHubAPI.safeParse(data.content);
+                    if (serverUser) {
+                        serverUser.allowedIp = currentIp;
+                        await GitHubAPI.updateFile(
+                            `created-news-accounts-storage/${user.id}.json`,
+                            JSON.stringify(serverUser),
+                            `Security: Session-based dynamic IP update for ${user.username}`,
+                            data.sha
+                        );
+                    }
                 }
             }
         } catch (e) {
@@ -332,7 +336,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 (content) => {
                     let remoteNotifications = [];
                     try {
-                        if (content) remoteNotifications = JSON.parse(content);
+                        if (content) remoteNotifications = GitHubAPI.safeParse(content) || [];
                     } catch (e) {}
 
                     // 1. Avoid duplicate notifications for same type/user/article
@@ -398,14 +402,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const data = await GitHubAPI.getFile(`created-news-accounts-storage/${userId}.json`);
             if (data) {
-                const userData = JSON.parse(data.content);
-                userStatusCache[userId] = {
-                    status: userData.status || 'offline',
-                    statusType: userData.statusType || 'auto',
-                    statusMsg: userData.statusMsg || '',
-                    joinDate: userData.joinDate || null
-                };
-                return userStatusCache[userId];
+                const userData = GitHubAPI.safeParse(data.content);
+                if (userData) {
+                    userStatusCache[userId] = {
+                        status: userData.status || 'offline',
+                        statusType: userData.statusType || 'auto',
+                        statusMsg: userData.statusMsg || '',
+                        joinDate: userData.joinDate || null
+                    };
+                    return userStatusCache[userId];
+                }
             }
         } catch (e) {
             // Silently fail status fetch
@@ -436,7 +442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Using a try-catch and suppressErrors to avoid console noise for expected 404s
             const data = await GitHubAPI.getFile(`notifications-storage/${user.id}.json`, true);
             if (data && data.sha !== notificationsSHA) {
-                const freshNotifications = JSON.parse(data.content);
+                const freshNotifications = GitHubAPI.safeParse(data.content) || [];
                 const oldUnreadCount = notifications.filter(n => !n.read).length;
                 const newUnreadCount = freshNotifications.filter(n => !n.read).length;
 
@@ -473,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (savedSound) {
             try {
-                const soundObj = JSON.parse(savedSound);
+                const soundObj = GitHubAPI.safeParse(savedSound);
                 if (soundObj.url) {
                     soundUrl = soundObj.url;
                 }
@@ -544,7 +550,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `notifications-storage/${user.id}.json`,
                 (content) => {
                     if (!content) return JSON.stringify(notifications);
-                    const remoteNotifs = JSON.parse(content);
+                    const remoteNotifs = GitHubAPI.safeParse(content) || [];
                     const target = remoteNotifs.find(notif => notif.id === notificationId);
                     if (target) target.read = true;
                     return JSON.stringify(remoteNotifs);
@@ -643,7 +649,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 
-                const article = JSON.parse(data.content);
+                const article = GitHubAPI.safeParse(data.content);
+                if (!article) {
+                    articlesList.innerHTML = '<p class="status-msg">Failed to load article data.</p>';
+                    return;
+                }
                 
                 // Private check for single view
                 let hasTempAccess = false;
@@ -655,8 +665,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // Check temp-access-links (rerouted to critical storage automatically)
                         const tempAccessData = await GitHubAPI.getFile(`temp-access-links/${accessToken}.json`);
                         if (tempAccessData) {
-                            const accessInfo = JSON.parse(tempAccessData.content);
-                            if (accessInfo.articleId === singleArticleId && accessInfo.expiry > Date.now()) {
+                            const accessInfo = GitHubAPI.safeParse(tempAccessData.content);
+                            if (accessInfo && accessInfo.articleId === singleArticleId && accessInfo.expiry > Date.now()) {
                                 hasTempAccess = true;
                             }
                         }
@@ -709,11 +719,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             return null;
                         }
 
-                        // Use GitHubAPI._decode to handle potential v2 encryption consistently
-                        const decodedContent = await GitHubAPI._decode(content);
-                        const article = JSON.parse(decodedContent);
-                        article.sha = data.sha;
-                        console.log(`Successfully loaded article: ${article.title} (${article.id})`);
+                        // Use GitHubAPI.safeParse to handle potential v2 encryption consistently
+                        const article = GitHubAPI.safeParse(content);
+                        if (article) {
+                            article.sha = data.sha;
+                            console.log(`Successfully loaded article: ${article.title} (${article.id})`);
+                        }
                         return article;
                     } catch (e) { 
                         console.error(`Failed to parse article JSON for ${file.path}:`, e);
@@ -792,7 +803,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     (async () => {
                         try {
                             const data = await GitHubAPI.getFile(`article-comments-storage/${article.id}.json`);
-                            const count = data ? JSON.parse(data.content).length : 0;
+                            const parsedData = data ? GitHubAPI.safeParse(data.content) : [];
+                            const count = Array.isArray(parsedData) ? parsedData.length : 0;
                             console.log(`Migrating article ${article.id}: setting count to ${count}`);
                             await syncCommentCount(article.id, count);
                         } catch (e) {
@@ -978,7 +990,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await GitHubAPI.safeUpdateFile(
                     `created-articles-storage/${currentEditingArticleId}.json`,
                     (content) => {
-                        const data = JSON.parse(content);
+                        const data = GitHubAPI.safeParse(content);
+                        if (!data) return content;
                         if (!data.mutes) data.mutes = {};
                         delete data.mutes[userId];
                         return JSON.stringify(data);
@@ -1008,7 +1021,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await GitHubAPI.safeUpdateFile(
                     `created-articles-storage/${currentEditingArticleId}.json`,
                     (content) => {
-                        let article = JSON.parse(content);
+                        let article = GitHubAPI.safeParse(content);
+                        if (!article) return content;
                         if (!article.mutes) article.mutes = {};
                         
                         const expiry = duration === 'permanent' ? 'permanent' : (Date.now() + (parseInt(duration) * 1000));
@@ -1020,10 +1034,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 );
 
                 if (res.finalContent) {
-                    const updated = JSON.parse(res.finalContent);
-                    articleData[currentEditingArticleId] = updated;
-                    if (mutedUsersList) renderMutedUsers(updated.mutes);
-                    if (muteUserIdInput) muteUserIdInput.value = '';
+                    const updated = GitHubAPI.safeParse(res.finalContent);
+                    if (updated) {
+                        articleData[currentEditingArticleId] = updated;
+                        if (mutedUsersList) renderMutedUsers(updated.mutes);
+                        if (muteUserIdInput) muteUserIdInput.value = '';
+                    }
                 }
             } catch (e) {
                 console.error('Mute failed:', e);
@@ -1180,16 +1196,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 );
                 
                 if (res.finalContent) {
-                    const finalArticle = JSON.parse(res.finalContent);
-                    
-                    // Update local state
-                    articleData[currentEditingArticleId] = finalArticle;
-                    articleSHAs[currentEditingArticleId] = res.content.sha;
-                    
-                    // Reload or update UI
-                    if (settingsModal) settingsModal.classList.add('hidden');
-                    loadArticles(); // Refresh to show changes
-                    alert('Article updated successfully!');
+                    const finalArticle = GitHubAPI.safeParse(res.finalContent);
+                    if (finalArticle) {
+                        // Update local state
+                        articleData[currentEditingArticleId] = finalArticle;
+                        articleSHAs[currentEditingArticleId] = res.content.sha;
+                        
+                        // Reload or update UI
+                        if (settingsModal) settingsModal.classList.add('hidden');
+                        loadArticles(); // Refresh to show changes
+                        alert('Article updated successfully!');
+                    }
                 }
             } catch (e) {
                 console.error('Failed to update article:', e);
@@ -1250,15 +1267,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const userData = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (userData) {
-                        const profile = JSON.parse(userData.content);
-                        profile.contributions = Math.max(0, (profile.contributions || 1) - 1);
-                        await GitHubAPI.updateFile(
-                            `created-news-accounts-storage/${user.id}.json`,
-                            JSON.stringify(profile),
-                            `Decrement contributions for ${user.username}`,
-                            userData.sha
-                        );
-                        localStorage.setItem('current_user', JSON.stringify(profile));
+                        const profile = GitHubAPI.safeParse(userData.content);
+                        if (profile) {
+                            profile.contributions = Math.max(0, (profile.contributions || 1) - 1);
+                            await GitHubAPI.updateFile(
+                                `created-news-accounts-storage/${user.id}.json`,
+                                JSON.stringify(profile),
+                                `Decrement contributions for ${user.username}`,
+                                userData.sha
+                            );
+                            localStorage.setItem('current_user', JSON.stringify(profile));
+                        }
                     }
                 } catch (e) {
                     console.warn('Failed to update contributions count:', e);
@@ -1396,7 +1415,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = article.reactions[emoji];
             if (Array.isArray(data)) return data.includes(user.id);
             // Fallback for old data
-            const localReactions = JSON.parse(localStorage.getItem(`reactions_${article.id}`) || '[]');
+            const localReactions = GitHubAPI.safeParse(localStorage.getItem(`reactions_${article.id}`)) || [];
             return localReactions.includes(emoji);
         };
 
@@ -1720,7 +1739,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const res = await GitHubAPI.safeUpdateFile(
                 `created-articles-storage/${articleId}.json`,
                 (content) => {
-                    const latestArticle = JSON.parse(content);
+                    const latestArticle = GitHubAPI.safeParse(content);
+                    if (!latestArticle) return content;
                     if (!latestArticle.reactions) latestArticle.reactions = {};
                     if (!latestArticle.reactions[emoji]) latestArticle.reactions[emoji] = [];
                     
@@ -1736,16 +1756,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
 
             if (res.finalContent) {
-                const finalArticle = JSON.parse(res.finalContent);
-                articleData[articleId] = finalArticle;
-                articleSHAs[articleId] = res.content.sha;
-                updateReactionUI(finalArticle);
+                const finalArticle = GitHubAPI.safeParse(res.finalContent);
+                if (finalArticle) {
+                    articleData[articleId] = finalArticle;
+                    articleSHAs[articleId] = res.content.sha;
+                    updateReactionUI(finalArticle);
 
-                if (!isRemoving) {
-                    addNotification(finalArticle.authorId, 'reaction', {
-                        articleId: finalArticle.id,
-                        articleTitle: finalArticle.title
-                    });
+                    if (!isRemoving) {
+                        addNotification(finalArticle.authorId, 'reaction', {
+                            articleId: finalArticle.id,
+                            articleTitle: finalArticle.title
+                        });
+                    }
                 }
             }
         } catch (e) {
@@ -1767,7 +1789,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const data = await GitHubAPI.getFile(file.path);
                     if (!data || !data.content) continue; // Safety check
                     
-                    const article = JSON.parse(data.content);
+                    const article = GitHubAPI.safeParse(data.content);
+                    if (!article) continue;
                     
                     // Update state
                     articleSHAs[articleId] = data.sha;
@@ -1859,7 +1882,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const data = await GitHubAPI.getFile(`created-news-accounts-storage/${authorId}.json`);
             if (!data) return alert('Author profile not found.');
-            const author = JSON.parse(data.content);
+            const author = GitHubAPI.safeParse(data.content);
+            if (!author) return alert('Author profile not found.');
 
             // Use recorded contributions if available, otherwise calculate
             let authorArticlesCount = author.contributions;
@@ -1871,8 +1895,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const artData = await GitHubAPI.getFile(file.path);
                         if (artData) {
                             try {
-                                const art = JSON.parse(artData.content);
-                                if (art.authorId === authorId) authorArticlesCount++;
+                                const art = GitHubAPI.safeParse(artData.content);
+                                if (art && art.authorId === authorId) authorArticlesCount++;
                             } catch(e) {}
                         }
                     }
@@ -2201,7 +2225,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await GitHubAPI.getFile(`article-comments-storage/${articleId}.json`);
             if (data) {
                 commentsSHA = data.sha;
-                const comments = JSON.parse(data.content);
+                const comments = GitHubAPI.safeParse(data.content);
+                if (!comments) {
+                    commentsList.innerHTML = '<p class="status-msg">Failed to load comments data.</p>';
+                    return;
+                }
                 modalTitle.innerText = `Comments: ${title} (${comments.length})`;
                 // Cache comments for editing
                 localStorage.setItem(`comments_${articleId}`, data.content);
@@ -2265,8 +2293,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Use getFileRaw for speed since we don't need a SHA for searching
                 const content = await GitHubAPI.getFileRaw(file.path);
                 if (!content) continue;
-                const account = JSON.parse(content);
-                if (account.username.toLowerCase() === username.toLowerCase()) {
+                const account = GitHubAPI.safeParse(content);
+                if (account && account.username.toLowerCase() === username.toLowerCase()) {
                     window.showAuthorProfile(account.id);
                     return;
                 }
@@ -3090,8 +3118,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         if (!file.name.endsWith('.json')) continue;
                                         const accData = await GitHubAPI.getFile(file.path);
                                         if (!accData || !accData.content) continue;
-                                        const account = JSON.parse(accData.content);
-                                        if (account.username.toLowerCase() === username.toLowerCase()) {
+                                        const account = GitHubAPI.safeParse(accData.content);
+                                        if (account && account.username.toLowerCase() === username.toLowerCase()) {
                                             addNotification(account.id, 'mention', {
                                                 articleId: currentArticle.id,
                                                 articleTitle: currentArticle.title,

@@ -21,17 +21,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const accData = await GitHubAPI.getFile(`mail-accounts-storage/${user.id}.json`);
         if (accData) {
-            currentMailAcc = JSON.parse(accData.content);
-            
-            // Show access fields
-            signupFields.classList.add('hidden');
-            accessFields.classList.remove('hidden');
-            emailDisplay.innerText = currentMailAcc.email;
+            currentMailAcc = GitHubAPI.safeParse(accData.content);
+            if (currentMailAcc) {
+                // Show access fields
+                signupFields.classList.add('hidden');
+                accessFields.classList.remove('hidden');
+                emailDisplay.innerText = currentMailAcc.email;
 
-            // Handle multiple linked emails
-            if (currentMailAcc.linkedEmails && currentMailAcc.linkedEmails.length > 0) {
-                linkedContainer.classList.remove('hidden');
-                renderLinkedEmails();
+                // Handle multiple linked emails
+                if (currentMailAcc.linkedEmails && currentMailAcc.linkedEmails.length > 0) {
+                    linkedContainer.classList.remove('hidden');
+                    renderLinkedEmails();
+                }
             }
         }
     } catch (e) {

@@ -65,14 +65,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             const promises = jsonFiles.map(f => GitHubAPI.getFile(f.path));
             const results = await Promise.all(promises);
             allForms = results.filter(r => r !== null).map(r => {
-                try {
-                    const data = JSON.parse(r.content);
+                const data = GitHubAPI.safeParse(r.content);
+                if (data) {
                     data.sha = r.sha;
                     return data;
-                } catch (e) {
-                    console.warn('Failed to parse form:', e);
-                    return null;
                 }
+                console.warn('Failed to parse form:', r.path);
+                return null;
             }).filter(f => f !== null);
             
             // Sort by timestamp (newest first)
@@ -213,14 +212,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (userMailAcc) {
                     const mailAccData = await GitHubAPI.getFile(userMailAcc.path);
                     if (mailAccData) {
-                        const mailAcc = JSON.parse(mailAccData.content);
-                        const mailboxId = mailAcc.mailboxId;
+                        const mailAcc = GitHubAPI.safeParse(mailAccData.content);
+                        if (mailAcc) {
+                            const mailboxId = mailAcc.mailboxId;
 
-                        await GitHubAPI.safeUpdateFile(
-                            `mail-storage/${mailboxId}/${mailData.id}.json`,
-                            mailData,
-                            `Support: Email sent to ${currentViewingForm.username} regarding appeal ${currentViewingForm.id}`
-                        );
+                            await GitHubAPI.safeUpdateFile(
+                                `mail-storage/${mailboxId}/${mailData.id}.json`,
+                                mailData,
+                                `Support: Email sent to ${currentViewingForm.username} regarding appeal ${currentViewingForm.id}`
+                            );
+                        }
                     }
                 }
             } catch (mailError) {

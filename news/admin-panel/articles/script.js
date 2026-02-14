@@ -34,8 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             allArticles = await Promise.all(articleFiles.map(async (file) => {
                 const data = await GitHubAPI.getFile(file.path);
                 if (data) {
-                    try {
-                        const article = JSON.parse(data.content);
+                    const article = GitHubAPI.safeParse(data.content);
+                    if (article) {
                         article.sha = data.sha;
                         article.filePath = file.path;
                         
@@ -45,10 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         article.isRuleBreaker = !ruleCheck.isClean;
                         
                         return article;
-                    } catch (e) {
-                        console.warn('Failed to parse article:', file.path);
-                        return null;
                     }
+                    console.warn('Failed to parse article:', file.path);
                 }
                 return null;
             }));

@@ -1,4 +1,4 @@
-const user = JSON.parse(localStorage.getItem('current_user'));
+const user = GitHubAPI.safeParse(localStorage.getItem('current_user'));
 const DEVELOPER_ID = '845829137251567';
 
 // Top-level Security Check (Backup to inline check)
@@ -76,17 +76,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             allAccounts = await Promise.all(accountFiles.map(async (file) => {
                 const data = await GitHubAPI.getFile(file.path);
                 if (data) {
-                    try {
-                        // getFile already handles decoding via _processFileData
-                        const account = JSON.parse(data.content);
+                    const account = GitHubAPI.safeParse(data.content);
+                    if (account) {
                         account.sha = data.sha;
                         // Check if they broke rules
                         account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
                         return account;
-                    } catch (parseError) {
-                        console.error(`[AdminPanel] Failed to parse account data for ${file.path}:`, parseError);
-                        return null;
                     }
+                    console.warn(`[AdminPanel] Failed to parse account data for ${file.path}`);
                 }
                 return null;
             }));
@@ -325,35 +322,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const existingData = await GitHubAPI.getFile(`mail-accounts-storage/${currentEditingUserId}.json`);
                 if (existingData) {
-                    const existing = JSON.parse(existingData.content);
-                    // Move current to linkedEmails if not already there
-                    if (!existing.linkedEmails) existing.linkedEmails = [];
-                    
-                    // Add existing email to linked list if it's different
-                    if (existing.email && existing.email !== fullEmail) {
-                        const alreadyLinked = existing.linkedEmails.some(e => e.email === existing.email);
-                        if (!alreadyLinked) {
-                            existing.linkedEmails.push({
-                                email: existing.email,
-                                mailboxId: existing.mailboxId,
-                                createdAt: existing.createdAt || new Date().toISOString()
-                            });
+                    const existing = GitHubAPI.safeParse(existingData.content);
+                    if (existing) {
+                        // Move current to linkedEmails if not already there
+                        if (!existing.linkedEmails) existing.linkedEmails = [];
+                        
+                        // Add existing email to linked list if it's different
+                        if (existing.email && existing.email !== fullEmail) {
+                            const alreadyLinked = existing.linkedEmails.some(e => e.email === existing.email);
+                            if (!alreadyLinked) {
+                                existing.linkedEmails.push({
+                                    email: existing.email,
+                                    mailboxId: existing.mailboxId,
+                                    createdAt: existing.createdAt || new Date().toISOString()
+                                });
+                            }
                         }
+                        
+                        // Add new email to linked list
+                        existing.linkedEmails.push({
+                            email: fullEmail,
+                            mailboxId: mailAccountData.mailboxId,
+                            createdAt: mailAccountData.createdAt
+                        });
+                        
+                        // Update primary to the new one? Or just keep current primary?
+                        // Let's keep the new one as the primary for now as it's the one being linked.
+                        existing.email = fullEmail;
+                        existing.mailboxId = mailAccountData.mailboxId;
+                        
+                        mailAccountData = existing;
                     }
-                    
-                    // Add new email to linked list
-                    existing.linkedEmails.push({
-                        email: fullEmail,
-                        mailboxId: mailAccountData.mailboxId,
-                        createdAt: mailAccountData.createdAt
-                    });
-                    
-                    // Update primary to the new one? Or just keep current primary?
-                    // Let's keep the new one as the primary for now as it's the one being linked.
-                    existing.email = fullEmail;
-                    existing.mailboxId = mailAccountData.mailboxId;
-                    
-                    mailAccountData = existing;
                 }
             } catch (e) {
                 // No existing account, use the new one created above
@@ -647,18 +646,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 3. Fetch IP details if IP exists
             if (acc.allowedIp && acc.allowedIp !== 'None') {
                 try {
-                    const ipRes = await fetch(`https://ipwho.is/${acc.allowedIp}`);
+                    // Switch to ipapi.co for better CORS support on free plan
+                    const ipRes = await fetch(`https://ipapi.co/${acc.allowedIp}/json/`);
                     const ipData = await ipRes.json();
                     
-                    if (ipData.success) {
-                        document.getElementById('info-country').innerText = `${ipData.country} (${ipData.country_code})`;
+                    if (!ipData.error) {
+                        document.getElementById('info-country').innerText = `${ipData.country_name} (${ipData.country_code})`;
                         document.getElementById('info-region').innerText = ipData.region;
                         document.getElementById('info-city').innerText = ipData.city;
-                        document.getElementById('info-isp').innerText = ipData.connection.isp;
-                        document.getElementById('info-org').innerText = ipData.connection.org || 'N/A';
-                        document.getElementById('info-timezone').innerText = ipData.timezone.id;
+                        document.getElementById('info-isp').innerText = ipData.org; // ipapi.co uses 'org' for ISP
+                        document.getElementById('info-org').innerText = ipData.org || 'N/A';
+                        document.getElementById('info-timezone').innerText = ipData.timezone;
                     } else {
-                        throw new Error(ipData.message || 'IP lookup failed');
+                        throw new Error(ipData.reason || 'IP lookup failed');
                     }
                 } catch (e) {
                     console.warn('IP detail fetch failed:', e);

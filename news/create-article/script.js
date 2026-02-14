@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const user = JSON.parse(localStorage.getItem('current_user'));
+    const user = GitHubAPI.safeParse(localStorage.getItem('current_user'));
     if (!user || user.isGuest) {
         window.location.href = '../homepage/';
         return;
@@ -50,14 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                     if (data) {
-                        const serverUser = JSON.parse(data.content);
-                        serverUser.allowedIp = currentIp;
-                        await GitHubAPI.updateFile(
-                            `created-news-accounts-storage/${user.id}.json`,
-                            JSON.stringify(serverUser),
-                            `Security: Session-based admin IP update for ${user.username}`,
-                            data.sha
-                        );
+                        const serverUser = GitHubAPI.safeParse(data.content);
+                        if (serverUser) {
+                            serverUser.allowedIp = currentIp;
+                            await GitHubAPI.updateFile(
+                                `created-news-accounts-storage/${user.id}.json`,
+                                JSON.stringify(serverUser),
+                                `Security: Session-based admin IP update for ${user.username}`,
+                                data.sha
+                            );
+                        }
                     }
                 } else {
                     console.error('IP Mismatch detected. Logging out.');
@@ -73,14 +75,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update on server
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(data.content);
-                    serverUser.allowedIp = currentIp;
-                    await GitHubAPI.updateFile(
-                        `created-news-accounts-storage/${user.id}.json`,
-                        JSON.stringify(serverUser),
-                        `Security: Session-based dynamic IP update for ${user.username}`,
-                        data.sha
-                    );
+                    const serverUser = GitHubAPI.safeParse(data.content);
+                    if (serverUser) {
+                        serverUser.allowedIp = currentIp;
+                        await GitHubAPI.updateFile(
+                            `created-news-accounts-storage/${user.id}.json`,
+                            JSON.stringify(serverUser),
+                            `Security: Session-based dynamic IP update for ${user.username}`,
+                            data.sha
+                        );
+                    }
                 }
             }
         } catch (e) {
@@ -361,16 +365,18 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const userData = await GitHubAPI.getFile(`created-news-accounts-storage/${user.id}.json`);
                 if (userData) {
-                    const profile = JSON.parse(userData.content);
-                    profile.contributions = (profile.contributions || 0) + 1;
-                    await GitHubAPI.updateFile(
-                        `created-news-accounts-storage/${user.id}.json`,
-                        JSON.stringify(profile),
-                        `Increment contributions for ${user.username}`,
-                        userData.sha
-                    );
-                    // Update local storage
-                    localStorage.setItem('current_user', JSON.stringify(profile));
+                    const profile = GitHubAPI.safeParse(userData.content);
+                    if (profile) {
+                        profile.contributions = (profile.contributions || 0) + 1;
+                        await GitHubAPI.updateFile(
+                            `created-news-accounts-storage/${user.id}.json`,
+                            JSON.stringify(profile),
+                            `Increment contributions for ${user.username}`,
+                            userData.sha
+                        );
+                        // Update local storage
+                        localStorage.setItem('current_user', JSON.stringify(profile));
+                    }
                 }
             } catch (e) {
                 console.warn('Failed to update contributions count:', e);

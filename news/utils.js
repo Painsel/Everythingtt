@@ -272,7 +272,8 @@ window.GitHubAPI = {
                         // Async update on server
                         this.getFile(`created-news-accounts-storage/${user.id}.json`).then(data => {
                             if (data) {
-                                const serverUser = JSON.parse(data.content);
+                                const serverUser = this.safeParse(data.content);
+                                if (!serverUser) return;
                                 serverUser.violations = (serverUser.violations || 0) + 1;
                                 
                                 // Automatic Ban if violations reach threshold (e.g., 10)
@@ -309,8 +310,8 @@ window.GitHubAPI = {
         if (!localUserStr) return null;
         
         try {
-            const localUser = JSON.parse(localUserStr);
-            if (localUser.isGuest) return localUser; // Don't sync guest profile
+            const localUser = this.safeParse(localUserStr);
+            if (!localUser || localUser.isGuest) return localUser; // Don't sync guest profile
             
             const data = await this.getFile(`created-news-accounts-storage/${localUser.id}.json`);
             
@@ -318,11 +319,10 @@ window.GitHubAPI = {
                 this._userSHA = data.sha;
                 
                 // Safety check: ensure content is valid JSON after decoding
-                let remoteUser;
-                try {
-                    remoteUser = JSON.parse(data.content);
-                } catch (parseError) {
-                    console.error('[GitHubAPI] Failed to parse remote profile JSON:', parseError, 'Content snippet:', data.content.substring(0, 50));
+                const remoteUser = this.safeParse(data.content);
+                
+                if (!remoteUser) {
+                    console.error('[GitHubAPI] Failed to parse remote profile JSON. Content snippet:', data.content.substring(0, 50));
                     // If content is encoded and we failed to decode it correctly (e.g. CryptoJS missing), 
                     // we should NOT return null as it might trigger a redirect.
                     // Instead, return localUser to keep the session alive.
@@ -852,25 +852,61 @@ window.GitHubAPI = {
     /**
      * Internal helper to decode data using TripleDES (DES3) and Base64.
      */
+    /**
+     * Safely parse JSON content, with automatic decryption if needed.
+     * @param {string} content The content to parse.
+     * @returns {any|null} The parsed object or null if parsing failed.
+     */
+    safeParse(content) {
+        if (!content) return null;
+        if (typeof content !== 'string') return content; // Already parsed or not a string
+
+        let toParse = content;
+        if (toParse.startsWith('ett_enc_v2:') || toParse.startsWith('ett_enc_v1:')) {
+            toParse = this._decode(toParse);
+        }
+
+        try {
+            return JSON.parse(toParse);
+        } catch (e) {
+            console.error('[GitHubAPI] safeParse failed:', e, 'Content snippet:', toParse.substring(0, 100));
+            return null;
+        }
+    },
+
     _decode(content) {
         if (!content) return content;
         
-        // Handle ett_enc_v2 (TripleDES)
+        // Handle ett_enc_v2 (TripleDES/AES)
         if (content.startsWith('ett_enc_v2:')) {
             if (typeof CryptoJS === 'undefined') {
-                // Return a special placeholder or wait? 
-                // For sync decode, we can only return content or error.
-                // But we can try to trigger load for future calls.
-                this._loadCryptoJS();
                 console.error('[GitHubAPI] CryptoJS not loaded. Cannot decode v2 data.');
                 return content;
             }
             try {
                 const encryptedBase64 = content.substring('ett_enc_v2:'.length);
                 const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
-                const decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedBase64, passphrase);
-                const decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
-                if (!decryptedStr) throw new Error('Decryption failed');
+                
+                // Try TripleDES first (Default for v2)
+                let decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedBase64, passphrase);
+                let decryptedStr = '';
+                
+                try {
+                    decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
+                } catch (e) {
+                    // TripleDES failed, try AES as fallback
+                    console.warn('[GitHubAPI] TripleDES decode failed, trying AES fallback...');
+                    const aesBytes = CryptoJS.AES.decrypt(encryptedBase64, passphrase);
+                    decryptedStr = aesBytes.toString(CryptoJS.enc.Utf8);
+                }
+
+                if (!decryptedStr) {
+                    // Final attempt: maybe it was encrypted with AES directly
+                    const aesBytes = CryptoJS.AES.decrypt(encryptedBase64, passphrase);
+                    decryptedStr = aesBytes.toString(CryptoJS.enc.Utf8);
+                }
+
+                if (!decryptedStr) throw new Error('Decryption produced empty string');
                 return decryptedStr.replace(/\r\n/g, '\n');
             } catch (e) {
                 console.error('[GitHubAPI] Decode v2 failed:', e);
@@ -987,7 +1023,7 @@ window.GitHubAPI = {
             // If it's a comment storage file, ensure all comments have rootCommentId
             if (path.includes('article-comments-storage/') && path.endsWith('.json')) {
                 try {
-                    let comments = JSON.parse(decodedContent);
+                    let comments = this.safeParse(decodedContent);
                     let migrated = false;
 
                     if (Array.isArray(comments)) {
@@ -1168,7 +1204,7 @@ window.GitHubAPI = {
                 // If it's an object and we are here (fallback or no middleware), 
                 // we apply the same logic as the middleware would
                 try {
-                    const currentJSON = currentContent ? JSON.parse(currentContent) : {};
+                    const currentJSON = this.safeParse(currentContent) || {};
                     if (transform._action === 'append') {
                         const list = Array.isArray(currentJSON) ? currentJSON : [];
                         list.push(transform.data);

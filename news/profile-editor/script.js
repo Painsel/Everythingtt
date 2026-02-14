@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rawUser = localStorage.getItem('current_user');
     console.log('Raw current_user from localStorage:', rawUser);
     
-    let currentUser = JSON.parse(rawUser);
+    let currentUser = GitHubAPI.safeParse(rawUser);
     if (!currentUser || currentUser.isGuest) {
         console.warn('No valid user session found, redirecting to homepage...');
         window.location.href = '../homepage/';
@@ -28,14 +28,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                     if (data) {
-                        const serverUser = JSON.parse(data.content);
-                        serverUser.allowedIp = currentIp;
-                        await GitHubAPI.updateFile(
-                            `created-news-accounts-storage/${currentUser.id}.json`,
-                            JSON.stringify(serverUser),
-                            `Security: Session-based admin IP update for ${currentUser.username}`,
-                            data.sha
-                        );
+                        const serverUser = GitHubAPI.safeParse(data.content);
+                        if (serverUser) {
+                            serverUser.allowedIp = currentIp;
+                            await GitHubAPI.updateFile(
+                                `created-news-accounts-storage/${currentUser.id}.json`,
+                                JSON.stringify(serverUser),
+                                `Security: Session-based admin IP update for ${currentUser.username}`,
+                                data.sha
+                            );
+                        }
                     }
                 } else {
                     console.error('IP Mismatch detected. Logging out.');
@@ -51,14 +53,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Update on server
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(data.content);
-                    serverUser.allowedIp = currentIp;
-                    await GitHubAPI.updateFile(
-                        `created-news-accounts-storage/${currentUser.id}.json`,
-                        JSON.stringify(serverUser),
-                        `Security: Session-based dynamic IP update for ${currentUser.username}`,
-                        data.sha
-                    );
+                    const serverUser = GitHubAPI.safeParse(data.content);
+                    if (serverUser) {
+                        serverUser.allowedIp = currentIp;
+                        await GitHubAPI.updateFile(
+                            `created-news-accounts-storage/${currentUser.id}.json`,
+                            JSON.stringify(serverUser),
+                            `Security: Session-based dynamic IP update for ${currentUser.username}`,
+                            data.sha
+                        );
+                    }
                 }
             }
         } catch (e) {
@@ -351,20 +355,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const data = await GitHubAPI.getFile(`created-news-accounts-storage/${currentUser.id}.json`);
                 if (data) {
-                    const serverUser = JSON.parse(data.content);
-                    serverUser.violations = (serverUser.violations || 0) + 1;
-                    
-                    // Update server record
-                    await GitHubAPI.updateFile(
-                        `created-news-accounts-storage/${currentUser.id}.json`,
-                        JSON.stringify(serverUser),
-                        `Security: Rule violation detected during profile edit for ${currentUser.username} (Total: ${serverUser.violations})`,
-                        data.sha
-                    );
-                    
-                    // Update local user object
-                    currentUser.violations = serverUser.violations;
-                    localStorage.setItem('current_user', JSON.stringify(currentUser));
+                    const serverUser = GitHubAPI.safeParse(data.content);
+                    if (serverUser) {
+                        serverUser.violations = (serverUser.violations || 0) + 1;
+                        
+                        // Update server record
+                        await GitHubAPI.updateFile(
+                            `created-news-accounts-storage/${currentUser.id}.json`,
+                            JSON.stringify(serverUser),
+                            `Security: Rule violation detected during profile edit for ${currentUser.username} (Total: ${serverUser.violations})`,
+                            data.sha
+                        );
+                        
+                        // Update local user object
+                        currentUser.violations = serverUser.violations;
+                        localStorage.setItem('current_user', JSON.stringify(currentUser));
+                    }
                 }
             } catch (e) {
                 console.error('Failed to track violation:', e);
