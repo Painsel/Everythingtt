@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const DEVELOPER_ID = '349106915937530';
 
     // Top-level Security Check
-    if (!user || (user.role !== 'admin' && user.id !== DEVELOPER_ID)) {
+    if (!user || (user.role !== 'admin' && String(user.id) !== DEVELOPER_ID)) {
         window.location.replace('../../homepage/');
         return;
     }

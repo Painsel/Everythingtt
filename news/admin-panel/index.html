@@ -16,7 +16,7 @@
             try {
                 const user = JSON.parse(localStorage.getItem('current_user'));
                 const DEVELOPER_ID = '349106915937530';
-                if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.id !== DEVELOPER_ID)) {
+                if (!user || (user.role !== 'admin' && user.role !== 'owner' && String(user.id) !== DEVELOPER_ID)) {
                     window.location.replace('../homepage/');
                 }
             } catch (e) {

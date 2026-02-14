@@ -1,8 +1,8 @@
 const user = GitHubAPI.safeParse(localStorage.getItem('current_user'));
-const DEVELOPER_ID = '845829137251567';
+const DEVELOPER_ID = '349106915937530';
 
 // Top-level Security Check (Backup to inline check)
-if (!user || (user.role !== 'admin' && user.role !== 'owner' && user.id !== DEVELOPER_ID)) {
+if (!user || (user.role !== 'admin' && user.role !== 'owner' && String(user.id) !== DEVELOPER_ID)) {
     window.location.replace('../homepage/');
 }
 
