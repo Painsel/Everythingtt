@@ -1467,7 +1467,11 @@ window.GitHubAPI = {
             // Allow users to update THEIR OWN account file, but nothing else in critical storage
             const isOwnAccount = path === `created-news-accounts-storage/${user?.id}.json`;
             
-            if (!isAdmin && !isOwnAccount) {
+            // [SYSTEM-ACCESS] Allow indexing operations for account discovery
+            const isIndexing = path.includes('created-news-accounts-storage/username-map/') || 
+                               path.includes('created-news-accounts-storage/ip-map/');
+
+            if (!isAdmin && !isOwnAccount && !isIndexing) {
                 console.error(`[Security] Blocked unauthorized write to critical path: ${path}`);
                 throw new Error('Security Violation: Unauthorized write to critical storage.');
             }
