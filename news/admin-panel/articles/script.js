@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadArticles() {
         try {
             GitHubAPI.showPauseModal('Fetching articles from storage...');
-            articlesList.innerHTML = '<p class="status-msg">Fetching articles from storage...</p>';
+            GitHubAPI.setSafeHTML(articlesList, '<p class="status-msg">Fetching articles from storage...</p>');
             const files = await GitHubAPI.listFiles('created-articles-storage');
             
             const articleFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep');

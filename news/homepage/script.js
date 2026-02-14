@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const files = await GitHubAPI.listFiles('created-articles-storage');
         if (!files || files.length === 0) {
-            recentList.innerHTML = '<p class="empty">No news yet. Be the first to publish!</p>';
+            GitHubAPI.setSafeHTML(recentList, '<p class="empty">No news yet. Be the first to publish!</p>');
             return;
         }
 

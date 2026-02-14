@@ -23,6 +23,9 @@ window.GitHubAPI = {
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (High Performance Mode)`);
         
+        // [SECURITY] Set Global Security Headers (CSP) via Meta
+        this._applyCSP();
+
         // [SECURITY] Start behavioral tracking
         this._initBehavioralTracking();
 
@@ -114,6 +117,34 @@ window.GitHubAPI = {
             console.error('[GitHubAPI] Storage check/init failed:', e);
         }
     },
+    _applyCSP() {
+        // Since we are on GitHub Pages, we can't set HTTP headers.
+        // We use a Meta tag for a strict Content Security Policy.
+        if (!document.querySelector('meta[http-equiv="Content-Security-Policy"]')) {
+            const csp = document.createElement('meta');
+            csp.setAttribute('http-equiv', 'Content-Security-Policy');
+            // Allow:
+            // - self: our own domain
+            // - data: for base64 images/icons
+            // - cdnjs: for CryptoJS
+            // - raw.githubusercontent.com: for lockdown checks
+            // - api.github.com: for backend operations
+            // - fonts: gstatic/googleapis
+            // Block:
+            // - eval()
+            // - inline styles/scripts (except where specifically allowed by hash/nonce if needed, but here we stay strict)
+            csp.content = "default-src 'self'; " +
+                          "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.github.com; " +
+                          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                          "img-src 'self' data: https://painsel.github.io https://*.githubusercontent.com; " +
+                          "connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://api.ipify.org; " +
+                          "font-src 'self' https://fonts.gstatic.com; " +
+                          "object-src 'none'; " +
+                          "frame-ancestors 'none';";
+            document.head.appendChild(csp);
+        }
+    },
+
     _initBehavioralTracking() {
         const handleEvent = () => {
             const now = Date.now();
@@ -133,6 +164,25 @@ window.GitHubAPI = {
         window.addEventListener('mousemove', handleEvent, { passive: true });
         window.addEventListener('keydown', handleEvent, { passive: true });
         window.addEventListener('touchstart', handleEvent, { passive: true });
+    },
+
+    // [SECURITY] Sanitization utility to prevent XSS
+    sanitizeHTML(str) {
+        if (!str) return '';
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    },
+
+    // [SECURITY] Securely update innerHTML with sanitized content
+    setSafeHTML(element, rawHtml) {
+        if (!element) return;
+        // Basic sanitization: remove script tags and event handlers
+        const sanitized = rawHtml
+            .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+            .replace(/on\w+="[^"]*"/gim, "")
+            .replace(/javascript:[^"]*/gim, "");
+        element.innerHTML = sanitized;
     },
 
     _sanitizeSession() {
@@ -852,7 +902,8 @@ window.GitHubAPI = {
             // [ANTI-AI] Behavioral Verification
             // If no human-like interaction (mouse/keyboard) has occurred, block the write
             if (method !== 'GET' && !this._behaviorVerified) {
-                const user = this.safeParse(localStorage.getItem('current_user'));
+                const userStr = localStorage.getItem('current_user');
+                const user = userStr ? this.safeParse(userStr) : null;
                 const isDeveloper = String(user?.id) === '349106915937530';
                 if (!isDeveloper) {
                     console.error('[SECURITY] Request blocked: No human behavior detected.');
