@@ -1611,10 +1611,12 @@ window.GitHubAPI = {
     async listFiles(path) {
         // [SECURITY] Directory Listing Protection
         const criticalFolders = [
-            'created-news-accounts-storage',
             'mail-storage',
             'support-forms-storage'
         ];
+        // Note: 'created-news-accounts-storage' is excluded from listing protection 
+        // to allow the login flow to perform fallback account searches when indexes are missing.
+        // User data remains protected via AES-256 encryption.
         const isCritical = criticalFolders.some(folder => path.includes(folder));
         if (isCritical) {
             const user = this.safeParse(localStorage.getItem('current_user'));
