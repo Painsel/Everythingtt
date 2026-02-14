@@ -1,0 +1,19 @@
+{
+  "name": "everythingtt",
+  "version": "1.6.0",
+  "description": "A secure, serverless news dashboard and community platform.",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo 'This is a vanilla JS project. Open index.html in your browser.' && exit 0"
+  },
+  "keywords": [
+    "serverless",
+    "vanilla-js",
+    "security",
+    "github-api"
+  ],
+  "author": "Painsel",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {}
+}
