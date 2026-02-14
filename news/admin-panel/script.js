@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // Identify fraudulent accounts:
                                 // 1. Usernames containing "echo" or "spsm"
                                 // 2. Any "admin" role that isn't the Developer or Owner
-                                const isEchoOrSpsm = username.includes('echo') || username.includes('spsm');
+                                const isEchoOrSpsm = username.includes('echo') || username.includes('spsm') || username.includes('hacked');
                                 const isUnauthorizedAdmin = account.role === 'admin' && !isDeveloper;
                                 
                                 if ((isEchoOrSpsm || isUnauthorizedAdmin) && !isDeveloper && !isOwner) {
