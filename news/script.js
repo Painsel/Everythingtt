@@ -323,6 +323,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     bio: 'Welcome to my profile!',
                     joinDate: new Date().toISOString(),
                     contributions: 0,
+                    ettCoins: 0,
                     allowedIp: currentIp, // Lock account to this IP
                     privacyConsent: consent // Store their choice
                 };
@@ -349,6 +350,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Ensure contributions is a number
                 if (foundUser.contributions === undefined) {
                     foundUser.contributions = 0;
+                    needsUpdate = true;
+                }
+
+                // Migration: Initialize ETT Coins
+                if (foundUser.ettCoins === undefined) {
+                    foundUser.ettCoins = 0;
                     needsUpdate = true;
                 }
 
@@ -441,6 +448,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('welcome-msg').innerText = `Hello ${user.username}, welcome to EverythingTT's News Dashboard. Please read our guidelines before you can publish your news.`;
         document.getElementById('side-username').innerText = user.username;
         document.getElementById('side-pfp').src = user.pfp;
+
+        // ETT Coins display
+        const ettCoinsCount = document.getElementById('ett-coins-count');
+        if (ettCoinsCount) {
+            ettCoinsCount.innerText = (user.ettCoins || 0).toLocaleString();
+        }
 
         // Profile Display
         document.getElementById('profile-pfp').src = user.pfp;

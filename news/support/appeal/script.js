@@ -14,6 +14,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('side-pfp').src = u.pfp;
         document.getElementById('side-username').innerText = u.username;
+
+        // Update ETT Coins display
+        const ettCoinsCount = document.getElementById('ett-coins-count');
+        if (ettCoinsCount) {
+            ettCoinsCount.innerText = (u.ettCoins || 0).toLocaleString();
+        }
         document.getElementById('side-status-icon').style.backgroundImage = `url('${iconPath}')`;
         
         const sideBubble = document.getElementById('side-status-bubble');

@@ -69,6 +69,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('header-pfp').src = u.pfp;
         document.getElementById('header-username').innerText = u.username;
+
+        // Update ETT Coins display
+        const ettCoinsCount = document.getElementById('ett-coins-count');
+        if (ettCoinsCount) {
+            ettCoinsCount.innerText = (u.ettCoins || 0).toLocaleString();
+        }
         
         // Add badges to header username row
         const headerUsername = document.getElementById('header-username');

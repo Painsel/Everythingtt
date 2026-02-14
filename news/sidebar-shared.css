@@ -23,6 +23,71 @@ body.sidebar-layout .dashboard-container {
     position: relative;
 }
 
+/* Global Header Tools */
+.global-header-tools {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 1001;
+}
+
+.ett-coins-display {
+    background: rgba(32, 34, 37, 0.8);
+    backdrop-filter: blur(4px);
+    border: 1px solid #2f3136;
+    padding: 6px 14px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+.ett-coins-display:hover {
+    background: rgba(47, 49, 54, 0.9);
+    border-color: #5865f2;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(88, 101, 242, 0.2);
+}
+
+.ett-coin-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+}
+
+#ett-coins-count {
+    min-width: 1ch;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .global-header-tools {
+        top: 1rem;
+        right: 1rem;
+    }
+    
+    .ett-coins-display {
+        padding: 4px 10px;
+        font-size: 0.85rem;
+        gap: 6px;
+    }
+    
+    .ett-coin-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
 /* Sidebar Styling */
 .sidebar {
     width: 260px;

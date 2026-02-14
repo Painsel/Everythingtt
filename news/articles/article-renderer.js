@@ -83,6 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('side-pfp').src = u.pfp;
         document.getElementById('side-username').innerText = u.username;
 
+        // Update ETT Coins display
+        const ettCoinsCount = document.getElementById('ett-coins-count');
+        if (ettCoinsCount) {
+            ettCoinsCount.innerText = (u.ettCoins || 0).toLocaleString();
+        }
+
         // Add guest badge if applicable
         const sideUsername = document.getElementById('side-username');
         let sideBadgeContainer = sideUsername.nextElementSibling;

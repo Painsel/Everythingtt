@@ -38,6 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sidePfp) sidePfp.src = u.pfp;
         if (sideUsername) sideUsername.innerText = u.username;
 
+        // Update ETT Coins display
+        const ettCoinsCount = document.getElementById('ett-coins-count');
+        if (ettCoinsCount) {
+            ettCoinsCount.innerText = (u.ettCoins || 0).toLocaleString();
+        }
+
         if (sideStatusIcon) {
             const isGuest = u.isGuest === true;
             const statusIconName = isGuest ? 'Offline.png' : ((u.statusType === 'dnd') ? 'DoNotDisturb.png' : (u.status === 'idle' ? 'Idle.png' : (u.status === 'online' ? 'Online.png' : 'Offline.png')));

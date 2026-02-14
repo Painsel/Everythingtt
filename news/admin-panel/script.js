@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('side-pfp').src = user.pfp;
     document.getElementById('side-username').innerText = user.username;
 
+    // Update ETT Coins display
+    const ettCoinsCount = document.getElementById('ett-coins-count');
+    if (ettCoinsCount) {
+        ettCoinsCount.innerText = (user.ettCoins || 0).toLocaleString();
+    }
+
     const accountsList = document.getElementById('accounts-list');
     const accountSearch = document.getElementById('account-search');
     

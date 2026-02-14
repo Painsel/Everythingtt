@@ -51,39 +51,39 @@ const initRoadmap = () => {
         item.style.transition = 'all 0.2s ease';
     });
 
-    // Credits to Gold Calculator Logic
-    const creditsInput = document.getElementById('credits-input');
+    // Coins to Gold Calculator Logic
+    const coinsInput = document.getElementById('coins-input');
     const goldOutput = document.getElementById('gold-output');
     const calcWarning = document.getElementById('calc-warning');
 
-    if (creditsInput && goldOutput) {
+    if (coinsInput && goldOutput) {
         console.log('Calculator elements found');
         const calculateGold = () => {
-            const credits = parseFloat(creditsInput.value) || 0;
-            console.log('Calculating gold for credits:', credits);
+            const coins = parseFloat(coinsInput.value) || 0;
+            console.log('Calculating gold for coins:', coins);
             
             // Show warning if below 300, but calculate anyway for feedback
-            if (credits < 300 && credits > 0) {
+            if (coins < 300 && coins > 0) {
                 calcWarning.classList.remove('hidden');
             } else {
                 calcWarning.classList.add('hidden');
             }
 
-            const gold = credits / 15;
+            const gold = coins / 15;
             goldOutput.textContent = gold.toLocaleString(undefined, { 
                 minimumFractionDigits: 2, 
                 maximumFractionDigits: 2 
             });
         };
 
-        creditsInput.addEventListener('input', calculateGold);
-        creditsInput.addEventListener('change', calculateGold);
-        creditsInput.addEventListener('keyup', calculateGold);
+        coinsInput.addEventListener('input', calculateGold);
+        coinsInput.addEventListener('change', calculateGold);
+        coinsInput.addEventListener('keyup', calculateGold);
         
         // Initial calculation
         calculateGold();
     } else {
-        console.error('Calculator elements NOT found:', { creditsInput, goldOutput, calcWarning });
+        console.error('Calculator elements NOT found:', { coinsInput, goldOutput, calcWarning });
     }
 };
 

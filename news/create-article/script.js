@@ -16,6 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('side-pfp').src = user.pfp;
     document.getElementById('side-username').innerText = user.username;
     
+    // Update ETT Coins display
+    const ettCoinsCount = document.getElementById('ett-coins-count');
+    if (ettCoinsCount) {
+        ettCoinsCount.innerText = (user.ettCoins || 0).toLocaleString();
+    }
+    
     // Initial badge render
     const sideUsername = document.getElementById('side-username');
     let sideBadgeContainer = sideUsername.nextElementSibling;
@@ -91,6 +97,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update UI elements
             document.getElementById('side-pfp').src = remoteUser.pfp;
             document.getElementById('side-username').innerText = remoteUser.username;
+            
+            // Update ETT Coins display
+            const ettCoinsCount = document.getElementById('ett-coins-count');
+            if (ettCoinsCount) {
+                ettCoinsCount.innerText = (remoteUser.ettCoins || 0).toLocaleString();
+            }
             
             // Update badge
             if (sideBadgeContainer) {
