@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Threshold check: Article Creation (5 violations)
-    const DEVELOPER_ID = '845829137251567';
+    const DEVELOPER_ID = '349106915937530';
     if (user.violations >= 5 && String(user.id) !== DEVELOPER_ID) {
         alert("You have been restricted from creating articles due to multiple rule violations. You can appeal this restriction on the Support page.");
         window.location.href = '../homepage/';
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!user || user.isGuest) return;
         try {
             const currentIp = await GitHubAPI.getClientIP();
-            const ADMIN_ID = '845829137251567';
+            const ADMIN_ID = '349106915937530';
             const isAdminOverride = String(user.id) === ADMIN_ID;
 
             if (currentIp && user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {

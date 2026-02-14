@@ -332,7 +332,7 @@ window.GitHubAPI = {
                 remoteUser.sha = data.sha; // Preserve SHA
 
                 // Force Logout Check
-                const ADMIN_ID = '845829137251567';
+                const ADMIN_ID = '349106915937530';
                 const isAdmin = String(remoteUser.id) === ADMIN_ID;
 
                 if (remoteUser.forceLogout === true && !isAdmin) {

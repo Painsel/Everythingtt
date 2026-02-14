@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!user || user.isGuest) return;
         try {
             const currentIp = await GitHubAPI.getClientIP();
-            const ADMIN_ID = '845829137251567';
+            const ADMIN_ID = '349106915937530';
             const isAdminOverride = String(user.id) === ADMIN_ID;
 
             if (currentIp && user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== `${user.id}.json`);
             
             let alts = [];
-            const ADMIN_ID = '845829137251567';
+            const ADMIN_ID = '349106915937530';
             const isUserAdmin = user.id === ADMIN_ID;
 
             // Fetch ALL accounts with the same IP first

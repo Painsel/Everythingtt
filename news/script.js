@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (user.username === username) {
                         if (user.password === password) {
                             // Security check: IP Address restriction
-                            const ADMIN_ID = '845829137251567';
+                            const ADMIN_ID = '349106915937530';
                             const isAdminOverride = String(user.id) === ADMIN_ID;
 
                             // If we hit an IP ban earlier, and this is NOT the admin, block them now

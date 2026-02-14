@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Admin nav item check
         const adminNavItem = document.getElementById('admin-nav-item');
         if (adminNavItem) {
-            const ADMIN_ID = '845829137251567';
+            const ADMIN_ID = '349106915937530';
             if (String(u.id) === ADMIN_ID || u.role === 'admin' || u.role === 'owner') {
                 adminNavItem.classList.remove('hidden');
             }

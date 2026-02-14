@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         GitHubAPI.showPauseModal('Verifying admin privileges...');
         const verifiedUser = await GitHubAPI.syncUserProfile();
-        const DEVELOPER_ID = '845829137251567';
+        const DEVELOPER_ID = '349106915937530';
         if (!verifiedUser || (verifiedUser.role !== 'admin' && verifiedUser.role !== 'owner' && String(verifiedUser.id) !== DEVELOPER_ID)) {
             console.error('[Security] Admin verification failed server-side.');
             if (!verifiedUser) localStorage.removeItem('current_user');
