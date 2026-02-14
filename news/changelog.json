@@ -1,7 +1,10 @@
 {
-    "version": "1.5.2",
+    "version": "1.5.3",
     "date": "2026-02-14",
     "updates": [
+        "Admin: Modernized Account Actions modal with compact 3-column responsive grid",
+        "Admin: Improved modal reliability with centralized event handling and null safety",
+        "Admin: Optimized Violation Management UI with real-time threshold indicators",
         "Security: Hardened all JSON.parse calls with automatic decryption and error resilience",
         "Voice Messages support",
         "Notification Sounds support",

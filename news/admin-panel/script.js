@@ -50,6 +50,126 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeModals = document.querySelectorAll('.close-modal');
     const modals = [resetIpModal, changePwModal, deleteAccountModal, banIpModal, unbanIpModal, accountInfoModal, accountActionsModal, manageViolationsModal, linkMailModal];
     
+    // Define window-scoped functions first to avoid ReferenceErrors
+    window.openResetIp = (userId, username) => {
+        currentEditingUserId = userId;
+        const targetEl = document.getElementById('ip-target-user');
+        if (targetEl) targetEl.innerText = username;
+        const acc = allAccounts.find(a => a.id === userId);
+        const ipInput = document.getElementById('new-ip');
+        if (ipInput) ipInput.value = (acc && acc.allowedIp) || '';
+        if (resetIpModal) resetIpModal.classList.remove('hidden');
+    };
+
+    window.openChangePw = (userId, username) => {
+        currentEditingUserId = userId;
+        const targetEl = document.getElementById('pw-target-user');
+        if (targetEl) targetEl.innerText = username;
+        const hiddenUser = document.getElementById('pw-username-hidden');
+        if (hiddenUser) hiddenUser.value = username;
+        const newPwInput = document.getElementById('new-pw');
+        if (newPwInput) newPwInput.value = '';
+        if (changePwModal) changePwModal.classList.remove('hidden');
+    };
+
+    window.openDeleteAccount = (userId, username) => {
+        currentEditingUserId = userId;
+        const targetEl = document.getElementById('delete-target-user');
+        if (targetEl) targetEl.innerText = username;
+        if (deleteAccountModal) deleteAccountModal.classList.remove('hidden');
+    };
+
+    window.openBanIp = (userId, username, ip) => {
+        currentEditingUserId = userId;
+        const targetUserEl = document.getElementById('ban-target-user');
+        if (targetUserEl) targetUserEl.innerText = username;
+        const targetIpEl = document.getElementById('ban-target-ip');
+        if (targetIpEl) targetIpEl.innerText = ip || 'Unknown';
+        if (banIpModal) banIpModal.classList.remove('hidden');
+    };
+
+    window.openManageViolations = (userId, username) => {
+        currentEditingUserId = userId;
+        const targetEl = document.getElementById('violations-target-user');
+        if (targetEl) targetEl.innerText = username;
+        
+        const acc = allAccounts.find(a => a.id === userId);
+        tempViolationCount = (acc && acc.violations) || 0;
+        
+        updateViolationModalUI();
+        if (manageViolationsModal) manageViolationsModal.classList.remove('hidden');
+    };
+
+    window.openAccountInfo = async (userId) => {
+        const loading = document.getElementById('info-loading');
+        const content = document.getElementById('info-content');
+        
+        if (loading) loading.classList.remove('hidden');
+        if (content) content.classList.add('hidden');
+        if (accountInfoModal) accountInfoModal.classList.remove('hidden');
+
+        try {
+            const acc = allAccounts.find(a => a.id === userId);
+            if (!acc) throw new Error('Account not found');
+
+            const setInfo = (id, val) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = val;
+            };
+
+            setInfo('info-username', acc.username);
+            setInfo('info-password', acc.password);
+            setInfo('info-id', acc.id);
+            setInfo('info-join-date', acc.joinDate ? new Date(acc.joinDate).toLocaleString() : 'N/A');
+            setInfo('info-violations', acc.violations || 0);
+            
+            const consentSpan = document.getElementById('info-privacy');
+            if (consentSpan) {
+                if (acc.privacyConsent === true) {
+                    consentSpan.innerText = 'Accepted';
+                    consentSpan.style.color = '#3ba55d';
+                } else if (acc.privacyConsent === false) {
+                    consentSpan.innerText = 'Declined';
+                    consentSpan.style.color = '#ed4245';
+                } else {
+                    consentSpan.innerText = 'No Choice Made (Pre-Update)';
+                    consentSpan.style.color = '#72767d';
+                }
+            }
+
+            setInfo('info-ip', acc.allowedIp || 'None');
+
+            if (acc.allowedIp && acc.allowedIp !== 'None') {
+                try {
+                    const ipRes = await fetch(`https://ipapi.co/${acc.allowedIp}/json/`);
+                    const ipData = await ipRes.json();
+                    
+                    if (!ipData.error) {
+                        setInfo('info-country', `${ipData.country_name} (${ipData.country_code})`);
+                        setInfo('info-region', ipData.region);
+                        setInfo('info-city', ipData.city);
+                        setInfo('info-isp', ipData.org);
+                        setInfo('info-org', ipData.org || 'N/A');
+                        setInfo('info-timezone', ipData.timezone);
+                    } else {
+                        throw new Error(ipData.reason || 'IP lookup failed');
+                    }
+                } catch (e) {
+                    console.warn('IP detail fetch failed:', e);
+                    ['country', 'region', 'city', 'isp', 'org', 'timezone'].forEach(id => setInfo(`info-${id}`, 'Lookup Failed'));
+                }
+            } else {
+                ['country', 'region', 'city', 'isp', 'org', 'timezone'].forEach(id => setInfo(`info-${id}`, 'N/A (No IP)'));
+            }
+
+            if (loading) loading.classList.add('hidden');
+            if (content) content.classList.remove('hidden');
+        } catch (e) {
+            alert('Error fetching info: ' + e.message);
+            if (accountInfoModal) accountInfoModal.classList.add('hidden');
+        }
+    };
+
     // Close modals when clicking outside
     window.onclick = (event) => {
         modals.forEach(modal => {
@@ -58,11 +178,87 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     };
-    
+
+    // Close modals with X button
+    closeModals.forEach(btn => {
+        btn.onclick = () => {
+            modals.forEach(m => m.classList.add('hidden'));
+        };
+    });
+
     let allAccounts = [];
     let currentEditingUserId = null;
     let currentEditingUsername = null;
     let currentEditingUserIp = null;
+
+    // --- Violation Management logic ---
+    let tempViolationCount = 0;
+    const updateViolationModalUI = () => {
+        const countEl = document.getElementById('current-violation-count');
+        if (countEl) countEl.innerText = tempViolationCount;
+        
+        // Highlight active thresholds
+        const thresholds = [3, 5, 10, 15, 20];
+        thresholds.forEach(t => {
+            const el = document.getElementById(`threshold-${t}`);
+            if (el) {
+                if (tempViolationCount >= t) {
+                    el.style.color = '#ff4757';
+                    el.style.fontWeight = 'bold';
+                    el.style.opacity = '1';
+                } else {
+                    el.style.color = '#b9bbbe';
+                    el.style.fontWeight = 'normal';
+                    el.style.opacity = '0.6';
+                }
+            }
+        });
+    };
+
+    const setTileClick = (id, callback) => {
+        const el = document.getElementById(id);
+        if (el) el.onclick = callback;
+    };
+
+    setTileClick('btn-inc-violations', () => {
+        tempViolationCount++;
+        updateViolationModalUI();
+    });
+
+    setTileClick('btn-dec-violations', () => {
+        if (tempViolationCount > 0) tempViolationCount--;
+        updateViolationModalUI();
+    });
+
+    setTileClick('btn-save-violations', async () => {
+        if (!currentEditingUserId) return;
+        const btn = document.getElementById('btn-save-violations');
+        
+        try {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Syncing...';
+            }
+
+            await GitHubAPI.safeUpdateFile(
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
+                { violations: tempViolationCount },
+                `Admin: Updated violations to ${tempViolationCount} for user ${currentEditingUserId}`
+            );
+
+            alert('Violations updated successfully.');
+            if (manageViolationsModal) manageViolationsModal.classList.add('hidden');
+            loadAccounts();
+        } catch (e) {
+            alert('Failed to update violations: ' + e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Apply & Sync';
+            }
+        }
+    });
+    // --- End Violation Management logic ---
 
     // Fetch all accounts
     async function loadAccounts() {
@@ -149,209 +345,110 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingUserId = userId;
         currentEditingUsername = username;
         currentEditingUserIp = ip;
-        document.getElementById('actions-target-user').innerText = username;
+        const targetUserEl = document.getElementById('actions-target-user');
+        if (targetUserEl) targetUserEl.innerText = username;
         
         // Developer-only check for "Role" and "Beta" tiles
         const makeAdminTile = document.getElementById('tile-make-admin');
         const makeBetaTile = document.getElementById('tile-make-beta');
         
-        if (user.id !== DEVELOPER_ID) {
-            makeAdminTile.classList.add('hidden');
-            makeBetaTile.classList.add('hidden');
-        } else {
-            makeAdminTile.classList.remove('hidden');
-            makeBetaTile.classList.remove('hidden');
+        if (makeAdminTile && makeBetaTile) {
+            if (user.id !== DEVELOPER_ID) {
+                makeAdminTile.classList.add('hidden');
+                makeBetaTile.classList.add('hidden');
+            } else {
+                makeAdminTile.classList.remove('hidden');
+                makeBetaTile.classList.remove('hidden');
+            }
         }
         
-        accountActionsModal.classList.remove('hidden');
+        if (accountActionsModal) accountActionsModal.classList.remove('hidden');
 
         // Disable Ban/Delete for non-rule breakers
         const acc = allAccounts.find(a => a.id === userId);
         const banTile = document.getElementById('tile-ban-ip');
         const deleteTile = document.getElementById('tile-delete-acc');
 
-        if (acc && !acc.isRuleBreaker && acc.role !== 'admin' && acc.id !== DEVELOPER_ID) {
-            banTile.style.opacity = '0.3';
-            banTile.style.pointerEvents = 'none';
-            banTile.title = 'Only rule breakers can be banned';
+        if (acc && banTile && deleteTile) {
+            // Owner and Developer are exempt from restrictions
+            const isExempt = acc.role === 'owner' || acc.id === DEVELOPER_ID;
             
-            deleteTile.style.opacity = '0.3';
-            deleteTile.style.pointerEvents = 'none';
-            deleteTile.title = 'Only rule breakers can be deleted';
-        } else {
-            banTile.style.opacity = '1';
-            banTile.style.pointerEvents = 'auto';
-            banTile.title = '';
-            
-            deleteTile.style.opacity = '1';
-            deleteTile.style.pointerEvents = 'auto';
-            deleteTile.title = '';
+            if (!acc.isRuleBreaker && !isExempt && acc.role !== 'admin') {
+                banTile.style.opacity = '0.3';
+                banTile.style.pointerEvents = 'none';
+                banTile.title = 'Only rule breakers can be banned';
+                
+                deleteTile.style.opacity = '0.3';
+                deleteTile.style.pointerEvents = 'none';
+                deleteTile.title = 'Only rule breakers can be deleted';
+            } else {
+                banTile.style.opacity = '1';
+                banTile.style.pointerEvents = 'auto';
+                banTile.title = '';
+                
+                deleteTile.style.opacity = '1';
+                deleteTile.style.pointerEvents = 'auto';
+                deleteTile.title = '';
+            }
         }
     };
 
-    document.getElementById('tile-reset-ip').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        openResetIp(currentEditingUserId, currentEditingUsername);
-    };
+    setTileClick('tile-reset-ip', () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (window.openResetIp) window.openResetIp(currentEditingUserId, currentEditingUsername);
+    });
 
-    document.getElementById('tile-ban-ip').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        openBanIp(currentEditingUserId, currentEditingUsername, currentEditingUserIp);
-    };
+    setTileClick('tile-ban-ip', () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (window.openBanIp) window.openBanIp(currentEditingUserId, currentEditingUsername, currentEditingUserIp);
+    });
 
-    document.getElementById('tile-change-pw').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        openChangePw(currentEditingUserId, currentEditingUsername);
-    };
+    setTileClick('tile-change-pw', () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (window.openChangePw) window.openChangePw(currentEditingUserId, currentEditingUsername);
+    });
 
-    document.getElementById('tile-delete-acc').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        openDeleteAccount(currentEditingUserId, currentEditingUsername);
-    };
+    setTileClick('tile-delete-acc', () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (window.openDeleteAccount) window.openDeleteAccount(currentEditingUserId, currentEditingUsername);
+    });
 
-    document.getElementById('tile-get-info').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        openAccountInfo(currentEditingUserId);
-    };
+    setTileClick('tile-get-info', () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (window.openAccountInfo) window.openAccountInfo(currentEditingUserId);
+    });
 
-    document.getElementById('tile-violations').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        openManageViolations(currentEditingUserId, currentEditingUsername);
-    };
+    setTileClick('tile-violations', () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (window.openManageViolations) window.openManageViolations(currentEditingUserId, currentEditingUsername);
+    });
 
-    document.getElementById('tile-reset-mail').onclick = async () => {
-        accountActionsModal.classList.add('hidden');
-        if (!confirm(`Are you sure you want to RESET the mail account for ${currentEditingUsername}? This will disconnect their current mailbox.`)) return;
+    setTileClick('tile-force-logout', async () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
+        if (!confirm(`Force logout ${currentEditingUsername}? They will be redirected to login on their next page load.`)) return;
         
         try {
-            const btn = document.getElementById('tile-reset-mail');
-            btn.disabled = true;
+            const btn = document.getElementById('tile-force-logout');
+            if (btn) btn.disabled = true;
             
-            // Delete the account mapping
-            await GitHubAPI.safeDeleteFile(`mail-accounts-storage/${currentEditingUserId}.json`, `Admin: Reset mail account for ${currentEditingUsername}`);
+            await GitHubAPI.safeUpdateFile(
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
+                { forceLogout: true },
+                `Admin: Forced logout for user ${currentEditingUserId}`
+            );
             
-            alert('Mail account reset successfully.');
+            alert('Force logout signal sent successfully.');
         } catch (e) {
-            alert('Failed to reset mail account: ' + e.message);
+            alert('Failed to force logout: ' + e.message);
         } finally {
-            document.getElementById('tile-reset-mail').disabled = false;
+            const btn = document.getElementById('tile-force-logout');
+            if (btn) btn.disabled = false;
         }
-    };
+    });
 
-    document.getElementById('tile-link-mail').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        document.getElementById('link-mail-target-user').innerText = currentEditingUsername;
-        document.getElementById('new-mail-prefix-admin').value = '';
-        linkMailModal.classList.remove('hidden');
-    };
-
-    document.getElementById('btn-confirm-link-mail').onclick = async () => {
-        const prefix = document.getElementById('new-mail-prefix-admin').value.trim().toLowerCase();
-        if (!prefix) {
-            alert('Please enter an email prefix.');
-            return;
-        }
-        const fullEmail = `${prefix}@ett.mail`;
-        const btn = document.getElementById('btn-confirm-link-mail');
-
-        try {
-            btn.disabled = true;
-            btn.innerText = 'Linking...';
-
-            // 1. Check if email already exists in mapping
-            let existingMaps = [];
-            try {
-                existingMaps = await GitHubAPI.getFolderContents('mail-accounts-storage/email-map');
-            } catch (e) {
-                // Folder might not exist yet
-            }
-            
-            const emailExists = existingMaps.some(f => f.name === `${prefix}.json`);
-            if (emailExists) {
-                alert('This email address is already taken.');
-                return;
-            }
-
-            // 2. Load current account info or create new one
-            let mailAccountData = {
-                userId: currentEditingUserId,
-                email: fullEmail,
-                mailboxId: 'ettm_' + Math.random().toString(36).substr(2, 9),
-                createdAt: new Date().toISOString(),
-                linkedEmails: []
-            };
-
-            try {
-                const existingData = await GitHubAPI.getFile(`mail-accounts-storage/${currentEditingUserId}.json`);
-                if (existingData) {
-                    const existing = GitHubAPI.safeParse(existingData.content);
-                    if (existing) {
-                        // Move current to linkedEmails if not already there
-                        if (!existing.linkedEmails) existing.linkedEmails = [];
-                        
-                        // Add existing email to linked list if it's different
-                        if (existing.email && existing.email !== fullEmail) {
-                            const alreadyLinked = existing.linkedEmails.some(e => e.email === existing.email);
-                            if (!alreadyLinked) {
-                                existing.linkedEmails.push({
-                                    email: existing.email,
-                                    mailboxId: existing.mailboxId,
-                                    createdAt: existing.createdAt || new Date().toISOString()
-                                });
-                            }
-                        }
-                        
-                        // Add new email to linked list
-                        existing.linkedEmails.push({
-                            email: fullEmail,
-                            mailboxId: mailAccountData.mailboxId,
-                            createdAt: mailAccountData.createdAt
-                        });
-                        
-                        // Update primary to the new one? Or just keep current primary?
-                        // Let's keep the new one as the primary for now as it's the one being linked.
-                        existing.email = fullEmail;
-                        existing.mailboxId = mailAccountData.mailboxId;
-                        
-                        mailAccountData = existing;
-                    }
-                }
-            } catch (e) {
-                // No existing account, use the new one created above
-            }
-
-            // 3. Save account info
-            await GitHubAPI.safeUpdateFile(
-                `mail-accounts-storage/${currentEditingUserId}.json`,
-                mailAccountData,
-                `Admin: Linked additional email ${fullEmail} to ${currentEditingUsername}`
-            );
-
-            // 4. Save email mapping
-            await GitHubAPI.safeUpdateFile(
-                `mail-accounts-storage/email-map/${prefix}.json`,
-                { mailboxId: mailAccountData.mailboxId, userId: currentEditingUserId },
-                `Admin: Email mapping for ${fullEmail}`
-            );
-
-            alert(`Email ${fullEmail} linked successfully!`);
-            linkMailModal.classList.add('hidden');
-        } catch (error) {
-            alert('Failed to link email: ' + error.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'Link Email';
-        }
-    };
-
-    document.getElementById('btn-cancel-link-mail').onclick = () => {
-        linkMailModal.classList.add('hidden');
-    };
-
-    document.getElementById('tile-make-admin').onclick = async () => {
-        accountActionsModal.classList.add('hidden');
+    setTileClick('tile-make-admin', async () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
         
-        // Final security check: Only the developer can manage admin/owner roles
         if (user.id !== DEVELOPER_ID) {
             alert('Unauthorized: Only the Developer can manage roles.');
             return;
@@ -360,7 +457,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         const acc = allAccounts.find(a => a.id === currentEditingUserId);
         if (!acc) return;
 
-        // Sequence: user -> admin -> owner -> user
         let nextRole = 'user';
         let actionLabel = 'remove admin rights from';
         
@@ -379,7 +475,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const btn = document.getElementById('tile-make-admin');
-            btn.disabled = true;
+            if (btn) btn.disabled = true;
 
             await GitHubAPI.safeUpdateFile(
                 `created-news-accounts-storage/${currentEditingUserId}.json`,
@@ -392,14 +488,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             alert('Failed to update role: ' + e.message);
         } finally {
-            document.getElementById('tile-make-admin').disabled = false;
+            const btn = document.getElementById('tile-make-admin');
+            if (btn) btn.disabled = false;
         }
-    };
+    });
 
-    document.getElementById('tile-make-beta').onclick = async () => {
-        accountActionsModal.classList.add('hidden');
+    setTileClick('tile-make-beta', async () => {
+        if (accountActionsModal) accountActionsModal.classList.add('hidden');
         
-        // Final security check: Only the developer can manage BETA roles
         if (user.id !== DEVELOPER_ID) {
             alert('Unauthorized: Only the Developer can manage BETA roles.');
             return;
@@ -417,7 +513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             const btn = document.getElementById('tile-make-beta');
-            btn.disabled = true;
+            if (btn) btn.disabled = true;
 
             await GitHubAPI.safeUpdateFile(
                 `created-news-accounts-storage/${currentEditingUserId}.json`,
@@ -430,273 +526,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) {
             alert('Failed to update BETA Tester rights: ' + e.message);
         } finally {
-            document.getElementById('tile-make-beta').disabled = false;
+            const btn = document.getElementById('tile-make-beta');
+            if (btn) btn.disabled = false;
         }
-    };
-
-    document.getElementById('tile-force-logout').onclick = async () => {
-        accountActionsModal.classList.add('hidden');
-        if (!confirm(`Force logout ${currentEditingUsername}? They will be redirected to login on their next page load.`)) return;
-        
-        try {
-            const btn = document.getElementById('tile-force-logout');
-            btn.disabled = true;
-            
-            await GitHubAPI.safeUpdateFile(
-                `created-news-accounts-storage/${currentEditingUserId}.json`,
-                { forceLogout: true },
-                `Admin: Forced logout for user ${currentEditingUserId}`
-            );
-            
-            alert('Force logout signal sent successfully.');
-        } catch (e) {
-            alert('Failed to force logout: ' + e.message);
-        } finally {
-            document.getElementById('tile-force-logout').disabled = false;
-        }
-    };
-
-    window.openResetIp = (userId, username) => {
-        currentEditingUserId = userId;
-        document.getElementById('ip-target-user').innerText = username;
-        const acc = allAccounts.find(a => a.id === userId);
-        document.getElementById('new-ip').value = acc.allowedIp || '';
-        resetIpModal.classList.remove('hidden');
-    };
-
-    window.openChangePw = (userId, username) => {
-        currentEditingUserId = userId;
-        document.getElementById('pw-target-user').innerText = username;
-        document.getElementById('pw-username-hidden').value = username;
-        document.getElementById('new-pw').value = '';
-        changePwModal.classList.remove('hidden');
-    };
-
-    window.openDeleteAccount = (userId, username) => {
-        currentEditingUserId = userId;
-        document.getElementById('delete-target-user').innerText = username;
-        deleteAccountModal.classList.remove('hidden');
-    };
-
-    window.openBanIp = (userId, username, ip) => {
-        currentEditingUserId = userId;
-        document.getElementById('ban-target-user').innerText = username;
-        document.getElementById('ban-target-ip').innerText = ip || 'Unknown';
-        banIpModal.classList.remove('hidden');
-    };
-
-    let tempViolationCount = 0;
-    window.openManageViolations = (userId, username) => {
-        currentEditingUserId = userId;
-        document.getElementById('violations-target-user').innerText = username;
-        
-        const acc = allAccounts.find(a => a.id === userId);
-        tempViolationCount = acc.violations || 0;
-        
-        updateViolationModalUI();
-        manageViolationsModal.classList.remove('hidden');
-    };
-
-    function updateViolationModalUI() {
-        document.getElementById('current-violation-count').innerText = tempViolationCount;
-        
-        // Highlight active thresholds
-        const thresholds = [3, 5, 10, 15, 20];
-        thresholds.forEach(t => {
-            const el = document.getElementById(`threshold-${t}`);
-            if (tempViolationCount >= t) {
-                el.style.color = '#ff4d4d';
-                el.style.fontWeight = 'bold';
-                el.style.opacity = '1';
-            } else {
-                el.style.color = 'inherit';
-                el.style.fontWeight = 'normal';
-                el.style.opacity = '0.5';
-            }
-        });
-    }
-
-    document.getElementById('btn-dec-violations').onclick = () => {
-        if (tempViolationCount > 0) {
-            tempViolationCount--;
-            updateViolationModalUI();
-        }
-    };
-
-    document.getElementById('btn-inc-violations').onclick = () => {
-        if (tempViolationCount < 100) {
-            tempViolationCount++;
-            updateViolationModalUI();
-        }
-    };
-
-    document.getElementById('btn-save-violations').onclick = async () => {
-        const btn = document.getElementById('btn-save-violations');
-        try {
-            btn.disabled = true;
-            btn.innerText = 'Syncing...';
-            
-            const acc = allAccounts.find(a => a.id === currentEditingUserId);
-            const oldViolations = acc.violations || 0;
-            
-            // If they reached 20 violations, they become a permanent Rule-Breaker
-            const isRuleBreaker = tempViolationCount >= 20;
-            
-            const updateData = { 
-                violations: tempViolationCount,
-                ruleBreaker: isRuleBreaker || acc.ruleBreaker // Don't unset if already rulebreaker unless manually cleared?
-            };
-
-            // 3 violations: Lose admin role
-            if (tempViolationCount >= 3 && acc.role === 'admin') {
-                updateData.role = 'user';
-                alert(`${currentEditingUsername} has reached 3 violations and lost their admin role.`);
-            }
-
-            await GitHubAPI.safeUpdateFile(
-                `created-news-accounts-storage/${currentEditingUserId}.json`,
-                updateData,
-                `Admin: Updated violations for ${currentEditingUsername} (${oldViolations} -> ${tempViolationCount})`
-            );
-            
-            alert('Violations updated successfully.');
-            manageViolationsModal.classList.add('hidden');
-            loadAccounts();
-        } catch (e) {
-            alert('Failed to update violations: ' + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'Apply & Sync';
-        }
-    };
-
-    window.openAccountInfo = async (userId) => {
-        const loading = document.getElementById('info-loading');
-        const content = document.getElementById('info-content');
-        
-        loading.classList.remove('hidden');
-        content.classList.add('hidden');
-        accountInfoModal.classList.remove('hidden');
-
-        try {
-            // 1. Find account in local list
-            const acc = allAccounts.find(a => a.id === userId);
-            if (!acc) throw new Error('Account not found');
-
-            // 2. Populate account fields
-            document.getElementById('info-username').innerText = acc.username;
-            document.getElementById('info-password').innerText = acc.password;
-            document.getElementById('info-id').innerText = acc.id;
-            document.getElementById('info-join-date').innerText = acc.joinDate ? new Date(acc.joinDate).toLocaleString() : 'N/A';
-            document.getElementById('info-violations').innerText = acc.violations || 0;
-            
-            // Privacy Consent Info
-            const consentSpan = document.getElementById('info-privacy');
-            if (acc.privacyConsent === true) {
-                consentSpan.innerText = 'Accepted';
-                consentSpan.style.color = '#3ba55d'; // Success green
-            } else if (acc.privacyConsent === false) {
-                consentSpan.innerText = 'Declined';
-                consentSpan.style.color = '#ed4245'; // Danger red
-            } else {
-                consentSpan.innerText = 'No Choice Made (Pre-Update)';
-                consentSpan.style.color = '#72767d'; // Muted grey
-            }
-
-            document.getElementById('info-ip').innerText = acc.allowedIp || 'None';
-
-            // 3. Fetch IP details if IP exists
-            if (acc.allowedIp && acc.allowedIp !== 'None') {
-                try {
-                    // Switch to ipapi.co for better CORS support on free plan
-                    const ipRes = await fetch(`https://ipapi.co/${acc.allowedIp}/json/`);
-                    const ipData = await ipRes.json();
-                    
-                    if (!ipData.error) {
-                        document.getElementById('info-country').innerText = `${ipData.country_name} (${ipData.country_code})`;
-                        document.getElementById('info-region').innerText = ipData.region;
-                        document.getElementById('info-city').innerText = ipData.city;
-                        document.getElementById('info-isp').innerText = ipData.org; // ipapi.co uses 'org' for ISP
-                        document.getElementById('info-org').innerText = ipData.org || 'N/A';
-                        document.getElementById('info-timezone').innerText = ipData.timezone;
-                    } else {
-                        throw new Error(ipData.reason || 'IP lookup failed');
-                    }
-                } catch (e) {
-                    console.warn('IP detail fetch failed:', e);
-                    ['country', 'region', 'city', 'isp', 'org', 'timezone'].forEach(id => {
-                        document.getElementById(`info-${id}`).innerText = 'Lookup Failed';
-                    });
-                }
-            } else {
-                ['country', 'region', 'city', 'isp', 'org', 'timezone'].forEach(id => {
-                    document.getElementById(`info-${id}`).innerText = 'N/A (No IP)';
-                });
-            }
-
-            loading.classList.add('hidden');
-            content.classList.remove('hidden');
-        } catch (e) {
-            alert('Error fetching info: ' + e.message);
-            accountInfoModal.classList.add('hidden');
-        }
-    };
-
-    closeModals.forEach(btn => {
-        btn.onclick = () => {
-            resetIpModal.classList.add('hidden');
-            changePwModal.classList.add('hidden');
-            deleteAccountModal.classList.add('hidden');
-            banIpModal.classList.add('hidden');
-            unbanIpModal.classList.add('hidden');
-            accountInfoModal.classList.add('hidden');
-            accountActionsModal.classList.add('hidden');
-        };
     });
 
-    document.getElementById('btn-cancel-delete').onclick = () => {
-        deleteAccountModal.classList.add('hidden');
-    };
-
-    document.getElementById('btn-cancel-ban').onclick = () => {
-        banIpModal.classList.add('hidden');
-    };
-
-    document.getElementById('btn-cancel-unban').onclick = () => {
-        unbanIpModal.classList.add('hidden');
-    };
-
     // Action Confirmations
-    document.getElementById('btn-confirm-delete').onclick = async () => {
-        const btn = document.getElementById('btn-confirm-delete');
-        try {
-            btn.disabled = true;
-            btn.innerText = 'Deleting...';
-            
-            await GitHubAPI.safeDeleteFile(
-                `created-news-accounts-storage/${currentEditingUserId}.json`,
-                `Admin: Deleted account for user ${currentEditingUserId}`
-            );
-            
-            alert('Account deleted successfully');
-            deleteAccountModal.classList.add('hidden');
-            loadAccounts();
-        } catch (e) {
-            alert('Failed to delete account: ' + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = 'Delete Permanently';
-        }
+    const setOnSubmit = (id, callback) => {
+        const el = document.getElementById(id);
+        if (el) el.onsubmit = callback;
     };
 
-    document.getElementById('form-reset-ip').onsubmit = async (e) => {
+    setOnSubmit('form-reset-ip', async (e) => {
         e.preventDefault();
-        const newIp = document.getElementById('new-ip').value.trim();
+        const ipEl = document.getElementById('new-ip');
+        const newIp = ipEl ? ipEl.value.trim() : '';
         const btn = document.getElementById('btn-confirm-ip');
         
         try {
-            btn.disabled = true;
-            btn.innerText = 'Updating...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Updating...';
+            }
             
             await GitHubAPI.safeUpdateFile(
                 `created-news-accounts-storage/${currentEditingUserId}.json`,
@@ -705,26 +556,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             
             alert('IP updated successfully');
-            resetIpModal.classList.add('hidden');
+            if (resetIpModal) resetIpModal.classList.add('hidden');
             loadAccounts();
         } catch (e) {
             alert('Failed to update IP: ' + e.message);
         } finally {
-            btn.disabled = false;
-            btn.innerText = 'Update IP';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Update IP';
+            }
         }
-    };
+    });
 
-    document.getElementById('form-change-pw').onsubmit = async (e) => {
+    setOnSubmit('form-change-pw', async (e) => {
         e.preventDefault();
-        const newPw = document.getElementById('new-pw').value.trim();
+        const pwEl = document.getElementById('new-pw');
+        const newPw = pwEl ? pwEl.value.trim() : '';
         if (!newPw) return alert('Password cannot be empty');
         
         const btn = document.getElementById('btn-confirm-pw');
         
         try {
-            btn.disabled = true;
-            btn.innerText = 'Updating...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Updating...';
+            }
             
             await GitHubAPI.safeUpdateFile(
                 `created-news-accounts-storage/${currentEditingUserId}.json`,
@@ -733,26 +589,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             
             alert('Password changed successfully');
-            changePwModal.classList.add('hidden');
+            if (changePwModal) changePwModal.classList.add('hidden');
             loadAccounts();
         } catch (e) {
             alert('Failed to change password: ' + e.message);
         } finally {
-            btn.disabled = false;
-            btn.innerText = 'Change Password';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Change Password';
+            }
         }
-    };
+    });
 
-    document.getElementById('btn-confirm-ban').onclick = async () => {
-        const ip = document.getElementById('ban-target-ip').innerText;
-        const reason = document.getElementById('ban-reason').value.trim() || 'No reason provided';
+    setTileClick('btn-confirm-ban', async () => {
+        const targetIpEl = document.getElementById('ban-target-ip');
+        const ip = targetIpEl ? targetIpEl.innerText : '';
+        const reasonEl = document.getElementById('ban-reason');
+        const reason = (reasonEl ? reasonEl.value.trim() : '') || 'No reason provided';
         if (!ip || ip === 'Unknown' || ip === 'None') return alert('No valid IP to ban');
         
         const btn = document.getElementById('btn-confirm-ban');
         
         try {
-            btn.disabled = true;
-            btn.innerText = 'Banning...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Banning...';
+            }
             
             const banData = {
                 ip: ip,
@@ -768,24 +630,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
             
             alert(`IP ${ip} has been banned.`);
-            banIpModal.classList.add('hidden');
+            if (banIpModal) banIpModal.classList.add('hidden');
         } catch (e) {
             alert('Failed to ban IP: ' + e.message);
         } finally {
-            btn.disabled = false;
-            btn.innerText = 'Ban This IP';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Ban This IP';
+            }
         }
-    };
+    });
 
-    document.getElementById('btn-confirm-unban').onclick = async () => {
-        const ip = document.getElementById('unban-ip-input').value.trim();
+    setTileClick('btn-confirm-unban', async () => {
+        const inputEl = document.getElementById('unban-ip-input');
+        const ip = inputEl ? inputEl.value.trim() : '';
         if (!ip) return alert('Please enter an IP address to unban');
 
         const btn = document.getElementById('btn-confirm-unban');
 
         try {
-            btn.disabled = true;
-            btn.innerText = 'Unbanning...';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Unbanning...';
+            }
 
             await GitHubAPI.safeUpdateFile(
                 'banned-ips.json',
@@ -794,21 +661,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
 
             alert(`IP ${ip} has been unbanned.`);
-            unbanIpModal.classList.add('hidden');
+            if (unbanIpModal) unbanIpModal.classList.add('hidden');
         } catch (e) {
             alert('Failed to unban IP: ' + e.message);
         } finally {
-            btn.disabled = false;
-            btn.innerText = 'Unban IP';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Unban IP';
+            }
         }
-    };
+    });
 
-    // Logout
-    document.getElementById('btn-logout').onclick = () => {
+    setTileClick('btn-logout', () => {
         localStorage.removeItem('current_user');
         GitHubAPI.hidePauseModal();
         window.location.href = '../index.html';
-    };
+    });
+
+    setTileClick('btn-confirm-delete', async () => {
+        const btn = document.getElementById('btn-confirm-delete');
+        try {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerText = 'Deleting...';
+            }
+            
+            await GitHubAPI.safeDeleteFile(
+                `created-news-accounts-storage/${currentEditingUserId}.json`,
+                `Admin: Deleted account for user ${currentEditingUserId}`
+            );
+            
+            alert('Account deleted successfully');
+            if (deleteAccountModal) deleteAccountModal.classList.add('hidden');
+            loadAccounts();
+        } catch (e) {
+            alert('Failed to delete account: ' + e.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = 'Delete Permanently';
+            }
+        }
+    });
+
+    setTileClick('btn-cancel-delete', () => { if (deleteAccountModal) deleteAccountModal.classList.add('hidden'); });
+    setTileClick('btn-cancel-ban', () => { if (banIpModal) banIpModal.classList.add('hidden'); });
+    setTileClick('btn-cancel-unban', () => { if (unbanIpModal) unbanIpModal.classList.add('hidden'); });
+    setTileClick('btn-cancel-link-mail', () => { if (linkMailModal) linkMailModal.classList.add('hidden'); });
 
     // Initial Load
     loadAccounts();
