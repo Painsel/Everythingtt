@@ -15,11 +15,13 @@ This project implements practical security layers within a serverless context:
 - **Client-Side Proof-of-Work**: A computational challenge required for write operations to increase the "cost" for automated bot attacks.
 - **Interaction Heuristics**: Detects basic human-like interaction patterns (mouse/keyboard activity) to filter simple headless scripts.
 - **Dynamic CSP**: Strict Content Security Policy enforced via runtime meta-tags.
-- **End-to-End Client Encryption**: Sensitive data is protected using AES/TripleDES encryption on the client before being sent to storage.
+- **End-to-End Client Encryption**: Sensitive data is protected using AES-256 encryption on the client before being sent to storage.
 
-## 🛠️ Developer Tools
+## 🛠️ Technical Architecture
 
-- **poll_updates.js**: A Node.js utility for real-time repository monitoring, used to track updates to assets like badges and icons.
+- **Persistence Layer**: Uses the GitHub REST API for data storage, optimized with local caching and batching to handle rate limits.
+- **Security Middleware**: Client-side logic in `utils.js` manages authentication, encryption, and request signing.
+- **Deployment**: Designed for static hosting environments (GitHub Pages) with no external server dependencies.
 
 ## 📜 Legal & AI Policy
 

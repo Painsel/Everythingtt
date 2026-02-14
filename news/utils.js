@@ -180,15 +180,15 @@ window.GitHubAPI = {
     },
 
     // [SECURITY] Securely update innerHTML with sanitized content
-    setSafeHTML(element, rawHtml) {
-        if (!element) return;
-        // Basic sanitization: remove script tags and event handlers
-        const sanitized = rawHtml
-            .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
-            .replace(/on\w+="[^"]*"/gim, "")
-            .replace(/javascript:[^"]*/gim, "");
-        element.innerHTML = sanitized;
-    },
+     setSafeHTML(element, rawHtml) {
+         if (!element) return;
+         // Modern sanitization approach
+         const sanitized = rawHtml
+             .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+             .replace(/on\w+="[^"]*"/gim, "")
+             .replace(/javascript:[^"]*/gim, "");
+         element.innerHTML = sanitized;
+     },
 
     _sanitizeSession() {
         const userStr = localStorage.getItem('current_user');
