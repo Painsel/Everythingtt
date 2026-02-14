@@ -850,9 +850,6 @@ window.GitHubAPI = {
     writeQueues: {},
 
     /**
-     * Internal helper to decode data using TripleDES (DES3) and Base64.
-     */
-    /**
      * Safely parse JSON content, with automatic decryption if needed.
      * @param {string} content The content to parse.
      * @returns {any|null} The parsed object or null if parsing failed.
@@ -863,7 +860,7 @@ window.GitHubAPI = {
 
         let toParse = content;
         if (toParse.startsWith('ett_enc_v2:') || toParse.startsWith('ett_enc_v1:')) {
-            toParse = this._decode(toParse);
+            toParse = this._decrypt(toParse);
         }
 
         try {
@@ -874,42 +871,49 @@ window.GitHubAPI = {
         }
     },
 
-    _decode(content) {
+    _decrypt(content) {
         if (!content) return content;
         
         // Handle ett_enc_v2 (TripleDES/AES)
         if (content.startsWith('ett_enc_v2:')) {
             if (typeof CryptoJS === 'undefined') {
-                console.error('[GitHubAPI] CryptoJS not loaded. Cannot decode v2 data.');
+                console.error('[GitHubAPI] CryptoJS not loaded. Cannot decrypt v2 data.');
                 return content;
             }
             try {
-                const encryptedBase64 = content.substring('ett_enc_v2:'.length);
+                const encryptedData = content.substring('ett_enc_v2:'.length);
                 const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
                 
-                // Try TripleDES first (Default for v2)
-                let decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedBase64, passphrase);
-                let decryptedStr = '';
+                // [FIX] Decrypt using direct key from passphrase to avoid salt/prefix parsing issues
+                const key = CryptoJS.enc.Utf8.parse(passphrase.substring(0, 24));
+                const decryptedBytes = CryptoJS.TripleDES.decrypt(encryptedData, key, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7
+                });
                 
+                let decryptedStr = '';
                 try {
                     decryptedStr = decryptedBytes.toString(CryptoJS.enc.Utf8);
                 } catch (e) {
-                    // TripleDES failed, try AES as fallback
-                    console.warn('[GitHubAPI] TripleDES decode failed, trying AES fallback...');
-                    const aesBytes = CryptoJS.AES.decrypt(encryptedBase64, passphrase);
+                    // Fallback to AES if TripleDES fails
+                    const aesKey = CryptoJS.enc.Utf8.parse(passphrase.substring(0, 32));
+                    const aesBytes = CryptoJS.AES.decrypt(encryptedData, aesKey, {
+                        mode: CryptoJS.mode.ECB,
+                        padding: CryptoJS.pad.Pkcs7
+                    });
                     decryptedStr = aesBytes.toString(CryptoJS.enc.Utf8);
                 }
 
                 if (!decryptedStr) {
-                    // Final attempt: maybe it was encrypted with AES directly
-                    const aesBytes = CryptoJS.AES.decrypt(encryptedBase64, passphrase);
-                    decryptedStr = aesBytes.toString(CryptoJS.enc.Utf8);
+                    // Last resort: try standard passphrase decryption (with salt parsing)
+                    const standardBytes = CryptoJS.TripleDES.decrypt(encryptedData, passphrase);
+                    decryptedStr = standardBytes.toString(CryptoJS.enc.Utf8);
                 }
 
                 if (!decryptedStr) throw new Error('Decryption produced empty string');
                 return decryptedStr.replace(/\r\n/g, '\n');
             } catch (e) {
-                console.error('[GitHubAPI] Decode v2 failed:', e);
+                console.error('[GitHubAPI] Decrypt v2 failed:', e);
                 return content;
             }
         }
@@ -920,7 +924,7 @@ window.GitHubAPI = {
                 const encoded = content.substring('ett_enc_v1:'.length);
                 return decodeURIComponent(escape(atob(encoded.replace(/\s/g, ''))));
             } catch (e) {
-                console.error('[GitHubAPI] Decode v1 failed:', e);
+                console.error('[GitHubAPI] Decrypt v1 failed:', e);
                 return content;
             }
         }
@@ -929,23 +933,30 @@ window.GitHubAPI = {
     },
 
     /**
-     * Internal helper to encode data before sending using TripleDES (DES3) and Base64.
-     * Uses ASCII charset and CRLF line endings.
+     * Internal helper to encrypt data before sending using TripleDES (DES3) and Base64.
+     * Uses direct key from passphrase.
      */
-    _encode(content) {
+    _encrypt(content) {
         if (!content) return content;
         if (typeof CryptoJS === 'undefined') {
             this._loadCryptoJS();
-            console.error('[GitHubAPI] CryptoJS not loaded. Cannot encode data.');
+            console.error('[GitHubAPI] CryptoJS not loaded. Cannot encrypt data.');
             return content;
         }
         try {
             const passphrase = '7df5137c-c629-4741-b8df-fe07b001d5df';
             const normalizedContent = content.replace(/\r?\n/g, '\r\n');
-            const encrypted = CryptoJS.TripleDES.encrypt(normalizedContent, passphrase).toString();
+            
+            // [FIX] Encrypt using direct key from passphrase to avoid salt/prefix parsing
+            const key = CryptoJS.enc.Utf8.parse(passphrase.substring(0, 24));
+            const encrypted = CryptoJS.TripleDES.encrypt(normalizedContent, key, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            }).toString();
+            
             return `ett_enc_v2:${encrypted}`;
         } catch (e) {
-            console.error('[GitHubAPI] Encode failed:', e);
+            console.error('[GitHubAPI] Encrypt failed:', e);
             return content;
         }
     },
@@ -1065,7 +1076,7 @@ window.GitHubAPI = {
             }
 
             // Auto-migration: If legacy storage data is found OR if we migrated comments, encode it and save back
-            const needsSaving = (isStorageFile && isLegacy) || (path.includes('article-comments-storage/') && decodedContent !== this._decode(content));
+            const needsSaving = (isStorageFile && isLegacy) || (path.includes('article-comments-storage/') && decodedContent !== this._decrypt(content));
             
             if (!skipMigration && needsSaving && path && data.sha) {
                 console.log(`[GitHubAPI] Storage Migration Protocol: Saving updated data for ${path}`);
@@ -1109,7 +1120,7 @@ window.GitHubAPI = {
                     }
                 }
                 
-                return this._decode(content);
+                return this._decrypt(content);
             }
             return null;
         } catch (e) {
@@ -1172,7 +1183,7 @@ window.GitHubAPI = {
                 });
                 
                 const finalContentToCache = res.finalContent;
-                const decodedFinalContent = this._decode(finalContentToCache);
+                const decodedFinalContent = this._decrypt(finalContentToCache);
 
                 if (res.skipped) return { ...res, finalContent: decodedFinalContent };
                 
