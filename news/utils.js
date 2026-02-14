@@ -699,7 +699,20 @@ window.GitHubAPI = {
             if (!base.endsWith('/')) base += '/';
             
             // [SECURITY] Critical paths MUST go through the middleware.
-            url = `${base}?path=${encodeURIComponent(apiPath)}`;
+            const clientIP = await this.getClientIP();
+            const userStr = localStorage.getItem('current_user');
+            const user = this.safeParse(userStr);
+            
+            // Move security markers to query parameters to avoid CORS preflight failures
+            const securityParams = new URLSearchParams({
+                path: apiPath,
+                client_ip: clientIP || 'unknown',
+                user_id: user ? String(user.id) : 'guest',
+                user_role: user ? (user.role || 'user') : 'guest',
+                op: method === 'GET' ? 'read' : 'write'
+            });
+
+            url = `${base}?${securityParams.toString()}`;
             if (queryStr) {
                 url += `&${queryStr}`;
             }
@@ -740,22 +753,6 @@ window.GitHubAPI = {
         // Enqueue the request based on the target service
         return this._enqueue(async () => {
             try {
-                // [SECURITY] Inject Client Identity Headers for Middleware Validation
-                const clientIP = await this.getClientIP();
-                const userStr = localStorage.getItem('current_user');
-                const user = this.safeParse(userStr);
-                
-                if (queueName === 'middleware') {
-                    options.headers = {
-                        ...options.headers,
-                        'X-Client-IP': clientIP || 'unknown',
-                        'X-User-ID': user ? String(user.id) : 'guest',
-                        'X-User-Role': user ? (user.role || 'user') : 'guest',
-                        'X-Operation-Type': method === 'GET' ? 'read' : 'write',
-                        'X-Target-Path': apiPath
-                    };
-                }
-
                 return await this._proceedWithFetch(url, options, method, body, retries, path);
             } catch (e) {
                 // [SECURITY] Fallback to direct API is only allowed for non-critical paths
