@@ -218,8 +218,10 @@
     <div id="account-actions-modal" class="modal hidden">
         <div class="modal-content actions-modal-content">
             <span class="close-modal">&times;</span>
-            <h3>Account Actions</h3>
-            <p>Managing: <span id="actions-target-user" style="font-weight: bold;"></span></p>
+            <div class="actions-header">
+                <h3>Account Actions</h3>
+                <p>Managing: <span id="actions-target-user" style="font-weight: bold;"></span></p>
+            </div>
             <div class="actions-grid">
                 <button class="action-tile reset-ip" id="tile-reset-ip">
                     <span class="tile-icon">🌐</span>
@@ -229,10 +231,6 @@
                     <span class="tile-icon">🚫</span>
                     <span class="tile-label">Ban IP</span>
                 </button>
-                <button class="action-tile unban-ip" id="tile-unban-ip">
-                    <span class="tile-icon">✅</span>
-                    <span class="tile-label">Unban IP</span>
-                </button>
                 <button class="action-tile change-pw" id="tile-change-pw">
                     <span class="tile-icon">🔑</span>
                     <span class="tile-label">Password</span>
@@ -241,37 +239,25 @@
                     <span class="tile-icon">🚪</span>
                     <span class="tile-label">Logout</span>
                 </button>
-                <button class="action-tile delete-acc danger" id="tile-delete-acc">
-                    <span class="tile-icon">🗑️</span>
-                    <span class="tile-label">Delete</span>
+                <button class="action-tile violations" id="tile-violations">
+                    <span class="tile-icon">⚠️</span>
+                    <span class="tile-label">Violations</span>
                 </button>
-                <button class="action-tile get-info" id="tile-get-info">
-                    <span class="tile-icon">ℹ️</span>
-                    <span class="tile-label">Get Info</span>
-                </button>
-                <button class="action-tile get-ip" id="tile-get-ip">
-                    <span class="tile-icon">🔍</span>
-                    <span class="tile-label">Get IP</span>
+                <button class="action-tile beta" id="tile-make-beta">
+                    <span class="tile-icon">🧪</span>
+                    <span class="tile-label">Beta</span>
                 </button>
                 <button class="action-tile make-admin" id="tile-make-admin">
                     <span class="tile-icon">🛡️</span>
-                    <span class="tile-label" id="label-make-admin">Make Admin</span>
+                    <span class="tile-label">Role</span>
                 </button>
-                <button class="action-tile make-beta" id="tile-make-beta">
-                    <span class="tile-icon">🧪</span>
-                    <span class="tile-label" id="label-make-beta">Make BETA</span>
+                <button class="action-tile get-info" id="tile-get-info">
+                    <span class="tile-icon">ℹ️</span>
+                    <span class="tile-label">Info</span>
                 </button>
-                <button class="action-tile manage-violations" id="tile-manage-violations">
-                    <span class="tile-icon">⚖️</span>
-                    <span class="tile-label">Violations</span>
-                </button>
-                <button class="action-tile reset-mail" id="tile-reset-mail">
-                    <span class="tile-icon">📧</span>
-                    <span class="tile-label">Reset Mail</span>
-                </button>
-                <button class="action-tile link-mail" id="tile-link-mail">
-                    <span class="tile-icon">🔗</span>
-                    <span class="tile-label">Link Mail</span>
+                <button class="action-tile danger" id="tile-delete-acc">
+                    <span class="tile-icon">🗑️</span>
+                    <span class="tile-label">Delete</span>
                 </button>
             </div>
         </div>

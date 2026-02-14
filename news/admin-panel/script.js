@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentEditingUserIp = ip;
         document.getElementById('actions-target-user').innerText = username;
         
-        // Developer-only check for "Make Admin" and "Make BETA" tiles
+        // Developer-only check for "Role" and "Beta" tiles
         const makeAdminTile = document.getElementById('tile-make-admin');
         const makeBetaTile = document.getElementById('tile-make-beta');
         
@@ -161,28 +161,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             makeAdminTile.classList.remove('hidden');
             makeBetaTile.classList.remove('hidden');
-            
-            const acc = allAccounts.find(a => a.id === userId);
-            
-            // Update Make Admin tile
-            const labelAdmin = document.getElementById('label-make-admin');
-            if (acc) {
-                if (acc.role === 'owner') {
-                    labelAdmin.innerText = 'Reset Role';
-                } else if (acc.role === 'admin') {
-                    labelAdmin.innerText = 'Promote Owner';
-                } else {
-                    labelAdmin.innerText = 'Make Admin';
-                }
-            }
-
-            // Update Make BETA tile
-            const labelBeta = document.getElementById('label-make-beta');
-            if (acc && acc.role === 'beta') {
-                labelBeta.innerText = 'Remove BETA';
-            } else {
-                labelBeta.innerText = 'Make BETA';
-            }
         }
         
         accountActionsModal.classList.remove('hidden');
@@ -221,12 +199,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         openBanIp(currentEditingUserId, currentEditingUsername, currentEditingUserIp);
     };
 
-    document.getElementById('tile-unban-ip').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        document.getElementById('unban-ip-input').value = '';
-        unbanIpModal.classList.remove('hidden');
-    };
-
     document.getElementById('tile-change-pw').onclick = () => {
         accountActionsModal.classList.add('hidden');
         openChangePw(currentEditingUserId, currentEditingUsername);
@@ -242,17 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         openAccountInfo(currentEditingUserId);
     };
 
-    document.getElementById('tile-get-ip').onclick = () => {
-        accountActionsModal.classList.add('hidden');
-        const acc = allAccounts.find(a => a.id === currentEditingUserId);
-        const ip = (acc && acc.allowedIp) ? acc.allowedIp : 'No IP recorded for this user.';
-        
-        // Create a custom styled alert or just use a standard one for now
-        // Standard alert is easier for "copying" on most browsers
-        alert(`User: ${currentEditingUsername}\nIP Address: ${ip}`);
-    };
-
-    document.getElementById('tile-manage-violations').onclick = () => {
+    document.getElementById('tile-violations').onclick = () => {
         accountActionsModal.classList.add('hidden');
         openManageViolations(currentEditingUserId, currentEditingUsername);
     };
