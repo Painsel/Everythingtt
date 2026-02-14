@@ -129,12 +129,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('compose-to').value = msg.recipientId || '';
             document.getElementById('compose-subject').value = msg.subject === '(No Subject)' ? '' : msg.subject;
             document.getElementById('compose-body').value = msg.content || '';
+            
+            // Restore custom button if exists
+            if (msg.customButton) {
+                document.getElementById('compose-btn-label').value = msg.customButton.label || '';
+                document.getElementById('compose-btn-url').value = msg.customButton.url || '';
+            } else {
+                document.getElementById('compose-btn-label').value = '';
+                document.getElementById('compose-btn-url').value = '';
+            }
+            
             composeModal.classList.remove('hidden');
             return;
         }
 
         const content = document.getElementById('mail-view-content');
-        let displayContent = msg.htmlContent || msg.content.replace(/\n/g, '<br>');
+        
+        // Markdown Rendering
+        let displayContent = msg.htmlContent;
+        if (!displayContent) {
+            // Use marked if available, otherwise fallback to basic line breaks
+            if (typeof marked !== 'undefined') {
+                displayContent = marked.parse(msg.content);
+            } else {
+                displayContent = msg.content.replace(/\n/g, '<br>');
+            }
+        }
+        
+        // Custom Button Rendering
+        if (msg.customButton && msg.customButton.label && msg.customButton.url) {
+            const btnHtml = `<div style="text-align: center; margin: 20px 0;">
+                <a href="${msg.customButton.url}" target="_blank" class="mail-custom-button">${msg.customButton.label}</a>
+            </div>`;
+            displayContent += btnHtml;
+        }
         
         // Auto-highlight 6-digit verification codes
         const codeMatch = msg.content.match(/\b\d{6}\b/);
@@ -195,6 +223,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 recipientId: to,
                 subject: subject || '(No Subject)',
                 content: body,
+                customButton: {
+                    label: document.getElementById('compose-btn-label').value.trim() || null,
+                    url: document.getElementById('compose-btn-url').value.trim() || null
+                },
                 timestamp: new Date().toISOString(),
                 type: 'draft',
                 isRead: true
@@ -269,6 +301,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 recipientId: to,
                 subject: subject,
                 content: body,
+                customButton: {
+                    label: document.getElementById('compose-btn-label').value.trim() || null,
+                    url: document.getElementById('compose-btn-url').value.trim() || null
+                },
                 timestamp: new Date().toISOString(),
                 isRead: false
             };
