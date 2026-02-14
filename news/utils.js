@@ -177,6 +177,9 @@ window.GitHubAPI = {
             // - cdnjs: for CryptoJS
             // - raw.githubusercontent.com: for lockdown checks
             // - api.github.com: for backend operations
+            // - api.jsonbin.io: for external config
+            // - everything-tt-api.vercel.app: for security middleware
+            // - ipapi.co: for administrative IP auditing
             // - fonts: gstatic/googleapis
             // Block:
             // - eval()
@@ -185,10 +188,9 @@ window.GitHubAPI = {
                           "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://api.github.com; " +
                           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                           "img-src 'self' data: https://painsel.github.io https://*.githubusercontent.com; " +
-                          "connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://api.ipify.org; " +
+                          "connect-src 'self' https://api.github.com https://raw.githubusercontent.com https://api.ipify.org https://api.jsonbin.io https://everything-tt-api.vercel.app https://ipapi.co; " +
                           "font-src 'self' https://fonts.gstatic.com; " +
-                          "object-src 'none'; " +
-                          "frame-ancestors 'none';";
+                          "object-src 'none';";
             document.head.appendChild(csp);
         }
     },
@@ -315,22 +317,37 @@ window.GitHubAPI = {
         }
     },
 
-    async _fetchConfig() {
+    async _fetchConfig(retries = 3) {
         const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
-        try {
-            const res = await fetch(MAIN_BIN, { headers: { 'X-Bin-Meta': 'false' } });
-            const data = await res.json();
-            const config = data.record || data;
-            
-            if (config.middleware_url) {
-                this.middlewareURL = config.middleware_url;
+        for (let i = 0; i < retries; i++) {
+            try {
+                const res = await fetch(MAIN_BIN, { 
+                    headers: { 'X-Bin-Meta': 'false' },
+                    cache: 'no-store' // Ensure we get fresh config
+                });
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                
+                const data = await res.json();
+                const config = data.record || data;
+                
+                if (config.middleware_url) {
+                    this.middlewareURL = config.middleware_url;
+                }
+                
+                if (config.github_pat) {
+                    this.cachedPAT = config.github_pat;
+                }
+                
+                console.log('[GitHubAPI] Configuration loaded successfully.');
+                return; // Success
+            } catch (e) {
+                console.warn(`[GitHubAPI] Config fetch attempt ${i + 1} failed:`, e);
+                if (i === retries - 1) {
+                    console.error('[GitHubAPI] All config fetch attempts failed.');
+                } else {
+                    await new Promise(r => setTimeout(r, 1000 * (i + 1))); // Exponential backoff
+                }
             }
-            
-            if (config.github_pat) {
-                this.cachedPAT = config.github_pat;
-            }
-        } catch (e) {
-            console.error('[GitHubAPI] Failed to fetch config:', e);
         }
     },
     cachedPAT: null,
