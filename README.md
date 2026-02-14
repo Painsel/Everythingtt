@@ -17,9 +17,13 @@ This project implements advanced security measures:
 - **Dynamic CSP**: Strict Content Security Policy injected at runtime.
 - **Encrypted Storage**: Sensitive data is protected using AES/TripleDES encryption.
 
-## 📜 Legal Notice
+## 📜 Legal & AI Policy
 
-Unauthorized access, automated scraping, or AI-driven attacks against this system are strictly prohibited under our Terms of Service.
+This project distinguishes between **Authorized Development** and **Malicious Automation**:
+- **Permitted**: The use of AI-assisted development tools (e.g., Trae, GitHub Copilot, Gemini) by authorized contributors to build, maintain, and audit the codebase.
+- **Prohibited**: The use of automated scripts, scrapers, or adversarial AI agents to bypass security, scrape user data, or conduct denial-of-service attacks against the production environment.
+
+Unauthorized access to private data storage is considered a cyber-security violation. 
 
 ---
 *Built for the EverythingTT Community.*
