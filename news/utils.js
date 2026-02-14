@@ -740,6 +740,22 @@ window.GitHubAPI = {
         // Enqueue the request based on the target service
         return this._enqueue(async () => {
             try {
+                // [SECURITY] Inject Client Identity Headers for Middleware Validation
+                const clientIP = await this.getClientIP();
+                const userStr = localStorage.getItem('current_user');
+                const user = this.safeParse(userStr);
+                
+                if (queueName === 'middleware') {
+                    options.headers = {
+                        ...options.headers,
+                        'X-Client-IP': clientIP || 'unknown',
+                        'X-User-ID': user ? String(user.id) : 'guest',
+                        'X-User-Role': user ? (user.role || 'user') : 'guest',
+                        'X-Operation-Type': method === 'GET' ? 'read' : 'write',
+                        'X-Target-Path': apiPath
+                    };
+                }
+
                 return await this._proceedWithFetch(url, options, method, body, retries, path);
             } catch (e) {
                 // [SECURITY] Fallback to direct API is only allowed for non-critical paths
@@ -1138,6 +1154,21 @@ window.GitHubAPI = {
     },
 
     async updateFile(path, content, message, sha = null) {
+        // [SECURITY] Critical Write Protection Logic
+        const isCritical = this.getRepoInfo(path).repo === 'EverythingTT-Critical-Data';
+        if (isCritical) {
+            const user = this.safeParse(localStorage.getItem('current_user'));
+            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === '349106915937530');
+            
+            // Allow users to update THEIR OWN account file, but nothing else in critical storage
+            const isOwnAccount = path === `created-news-accounts-storage/${user?.id}.json`;
+            
+            if (!isAdmin && !isOwnAccount) {
+                console.error(`[Security] Blocked unauthorized write to critical path: ${path}`);
+                throw new Error('Security Violation: Unauthorized write to critical storage.');
+            }
+        }
+
         const encodedContent = this._encode(content);
         const body = {
             message,
@@ -1149,6 +1180,18 @@ window.GitHubAPI = {
     },
 
     async deleteFile(path, message, sha) {
+        // [SECURITY] Critical Delete Protection Logic
+        const isCritical = this.getRepoInfo(path).repo === 'EverythingTT-Critical-Data';
+        if (isCritical) {
+            const user = this.safeParse(localStorage.getItem('current_user'));
+            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === '349106915937530');
+            
+            if (!isAdmin) {
+                console.error(`[Security] Blocked unauthorized deletion from critical path: ${path}`);
+                throw new Error('Security Violation: Unauthorized deletion from critical storage.');
+            }
+        }
+
         const body = {
             message,
             sha
