@@ -207,113 +207,157 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // Check if user exists
-            const files = await GitHubAPI.listFiles('created-news-accounts-storage');
+            // 1. Check for IP-based spam (Multiple accounts from same IP)
+            const ipMapPath = `created-news-accounts-storage/ip-map/${currentIp.replace(/\./g, '_')}.json`;
+            const existingIpMapping = await GitHubAPI.getFile(ipMapPath, true);
+            let ipAccounts = [];
+            if (existingIpMapping) {
+                const mapping = GitHubAPI.safeParse(existingIpMapping.content);
+                ipAccounts = (mapping && mapping.userIds) || [];
+            }
+
+            // 2. Check for existing user via Username Index (Fast Path)
+            const usernameMapPath = `created-news-accounts-storage/username-map/${username.toLowerCase()}.json`;
+            const usernameMapping = await GitHubAPI.getFile(usernameMapPath, true);
+            let foundUserId = null;
+            if (usernameMapping) {
+                const mapping = GitHubAPI.safeParse(usernameMapping.content);
+                foundUserId = mapping ? mapping.userId : null;
+            }
+
             let foundUser = null;
+            let userSha = null;
 
-            if (files.length > 0) {
-                btnLogin.innerText = consent ? 'Searching...' : 'Checking...';
-                for (const file of files) {
-                    if (file.type !== 'file' || !file.name.endsWith('.json')) continue;
-                    
-                    // Use getFileRaw for high-speed searching
-                    const content = await GitHubAPI.getFileRaw(file.path);
-                    if (!content) continue;
-                    
-                    let user;
-                    try {
-                        // Use GitHubAPI.safeParse to handle potential v2 encryption consistently
-                        user = GitHubAPI.safeParse(content);
-                    } catch (e) {
-                        console.warn(`[Auth] Failed to parse user data for ${file.path}:`, e);
-                        continue;
-                    }
+            if (foundUserId) {
+                // Fetch the specific user directly
+                const userData = await GitHubAPI.getFile(`created-news-accounts-storage/${foundUserId}.json`);
+                if (userData) {
+                    foundUser = GitHubAPI.safeParse(userData.content);
+                    userSha = userData.sha;
+                }
+            }
 
-                    if (user.username === username) {
-                        if (user.password === password) {
-                            // Security check: IP Address restriction
-                            const ADMIN_ID = '349106915937530';
-                            const isAdminOverride = String(user.id) === ADMIN_ID;
+            // Fallback: If not found in index, perform slow search once (to handle existing unindexed accounts)
+            if (!foundUser) {
+                const files = await GitHubAPI.listFiles('created-news-accounts-storage');
+                if (files.length > 0) {
+                    btnLogin.innerText = consent ? 'Searching...' : 'Checking...';
+                    for (const file of files) {
+                        if (file.type !== 'file' || !file.name.endsWith('.json') || file.path.includes('username-map') || file.path.includes('ip-map')) continue;
+                        
+                        const content = await GitHubAPI.getFileRaw(file.path);
+                        if (!content) continue;
+                        
+                        let user;
+                        try {
+                            user = GitHubAPI.safeParse(content);
+                        } catch (e) { continue; }
 
-                            // If we hit an IP ban earlier, and this is NOT the admin, block them now
-                            const banListData = await GitHubAPI.getFile('banned-ips.json');
-                            if (banListData && !isAdminOverride) {
-                                const bannedIps = GitHubAPI.safeParse(banListData.content) || [];
-                                const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
-                                if (banRecord) {
-                                    btnLogin.disabled = false;
-                                    btnLogin.innerText = 'Login / Sign Up';
-                                    if (typeof banRecord === 'object') {
-                                        const reason = banRecord.reason || 'No reason provided';
-                                        const admin = banRecord.bannedBy || 'System';
-                                        return showNotification('Access Denied', `Your IP address has been banned.\n\nReason: ${reason}\nBanned by: ${admin}`, 'error');
-                                    } else {
-                                        return showNotification('Security Error', 'Your IP address has been banned from this service.', 'error');
-                                    }
-                                }
-                            }
-                            
-                            if (user.allowedIp && !GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
-                                if (isAdminOverride) {
-                                    console.log('[Security] Admin IP override triggered - allowing login from new IP');
-                                    // Update allowedIp for the admin so they don't get locked out during session
-                                    user.allowedIp = currentIp;
-                                } else {
-                                    btnLogin.disabled = false;
-                                    btnLogin.innerText = 'Login / Sign Up';
-                                    return showNotification('Security Error', 'This account is restricted to a different network. If you recently moved or changed ISPs, please contact the admin to reset your IP lock.', 'error');
-                                }
-                            }
-                            
-                            // If subnet matches but IP is slightly different, update it to follow the dynamic IP
-                            let ipUpdated = false;
-                            if (user.allowedIp && user.allowedIp !== currentIp && GitHubAPI.compareIPs(user.allowedIp, currentIp)) {
-                                console.log(`[Security] Updating dynamic IP for ${user.username}: ${user.allowedIp} -> ${currentIp}`);
-                                user.allowedIp = currentIp;
-                                ipUpdated = true;
-                            }
-
-                            // Migration: If account has no allowedIp (very old accounts), set it now
-                            if (!user.allowedIp) {
-                                user.allowedIp = currentIp;
-                                ipUpdated = true;
-                            }
-
-                            // For Admin, always ensure the remote record is updated with the new IP if it changed
-                            if (isAdminOverride && user.allowedIp === currentIp) {
-                                ipUpdated = true;
-                            }
-
-                            // Reset forceLogout if it was set or if IP was updated
-                            if (user.forceLogout || ipUpdated) {
-                                user.forceLogout = false;
-                                // We need the SHA to update
-                                const data = await GitHubAPI.getFile(file.path);
-                                await GitHubAPI.updateFile(
-                                    file.path,
-                                    JSON.stringify(user),
-                                    ipUpdated ? `Security: Updated dynamic IP for ${user.username}` : `User login: Reseting forceLogout for ${user.username}`,
-                                    data.sha
-                                );
-                            }
-
+                        if (user && user.username === username) {
                             foundUser = user;
-                            // We still need the SHA for the actual login sync later, so fetch it now
                             const data = await GitHubAPI.getFile(file.path);
                             userSha = data.sha;
+                            
+                            // [MIGRATION] Index this user for next time
+                            await GitHubAPI.safeUpdateFile(usernameMapPath, { userId: user.id }, `System: Indexing existing user ${username}`);
                             break;
-                        } else {
-                            btnLogin.disabled = false;
-                            btnLogin.innerText = 'Login / Sign Up';
-                            return showNotification('Authentication Failed', 'The password you entered is incorrect. Please try again.', 'error');
                         }
                     }
                 }
             }
 
-            if (!foundUser) {
+            if (foundUser) {
+                // EXISTING USER LOGIN
+                if (foundUser.password === password) {
+                    // Security check: IP Address restriction
+                    const ADMIN_ID = '349106915937530';
+                    const isAdminOverride = String(foundUser.id) === ADMIN_ID;
+
+                    // If we hit an IP ban earlier, and this is NOT the admin, block them now
+                    const banListData = await GitHubAPI.getFile('banned-ips.json');
+                    if (banListData && !isAdminOverride) {
+                        const bannedIps = GitHubAPI.safeParse(banListData.content) || [];
+                        const banRecord = bannedIps.find(b => (typeof b === 'string' ? b === currentIp : b.ip === currentIp));
+                        if (banRecord) {
+                            btnLogin.disabled = false;
+                            btnLogin.innerText = 'Login / Sign Up';
+                            const reason = (typeof banRecord === 'object') ? (banRecord.reason || 'No reason provided') : 'Security Violation';
+                            return showNotification('Access Denied', `Your IP address has been banned.\n\nReason: ${reason}`, 'error');
+                        }
+                    }
+                    
+                    if (foundUser.allowedIp && !GitHubAPI.compareIPs(foundUser.allowedIp, currentIp)) {
+                        if (isAdminOverride) {
+                            console.log('[Security] Admin IP override triggered');
+                            foundUser.allowedIp = currentIp;
+                        } else {
+                            btnLogin.disabled = false;
+                            btnLogin.innerText = 'Login / Sign Up';
+                            return showNotification('Security Error', 'This account is restricted to a different network.', 'error');
+                        }
+                    }
+                    
+                    let ipUpdated = false;
+                    if (foundUser.allowedIp && foundUser.allowedIp !== currentIp && GitHubAPI.compareIPs(foundUser.allowedIp, currentIp)) {
+                        foundUser.allowedIp = currentIp;
+                        ipUpdated = true;
+                    }
+
+                    if (!foundUser.allowedIp) {
+                        foundUser.allowedIp = currentIp;
+                        ipUpdated = true;
+                    }
+
+                    if (foundUser.forceLogout || ipUpdated) {
+                        foundUser.forceLogout = false;
+                        const res = await GitHubAPI.safeUpdateFile(
+                            `created-news-accounts-storage/${foundUser.id}.json`,
+                            JSON.stringify(foundUser),
+                            ipUpdated ? `Security: Updated dynamic IP for ${foundUser.username}` : `User login: Reset forceLogout for ${foundUser.username}`
+                        );
+                        userSha = res.content.sha;
+                    }
+
+                    // Sync metadata
+                    btnLogin.innerText = consent ? 'Syncing Profile...' : 'Finishing...';
+                    let needsUpdate = false;
+                    if (foundUser.privacyConsent !== consent) { foundUser.privacyConsent = consent; needsUpdate = true; }
+                    if (foundUser.ettCoins === undefined) { foundUser.ettCoins = 0; needsUpdate = true; }
+                    
+                    // Recalculate contributions (optional but kept for accuracy)
+                    const articles = await GitHubAPI.listFiles('created-articles-storage');
+                    let count = 0;
+                    for (const file of articles) {
+                        if (file.name.endsWith('.json')) {
+                            const artContent = await GitHubAPI.getFileRaw(file.path);
+                            const article = GitHubAPI.safeParse(artContent);
+                            if (article && article.authorId === foundUser.id) count++;
+                        }
+                    }
+                    if (foundUser.contributions !== count) { foundUser.contributions = count; needsUpdate = true; }
+
+                    if (needsUpdate) {
+                        const res = await GitHubAPI.safeUpdateFile(
+                            `created-news-accounts-storage/${foundUser.id}.json`,
+                            JSON.stringify(foundUser),
+                            `Update account metadata for ${foundUser.username}`
+                        );
+                        userSha = res.content.sha;
+                    }
+                } else {
+                    btnLogin.disabled = false;
+                    btnLogin.innerText = 'Login / Sign Up';
+                    return showNotification('Authentication Failed', 'The password you entered is incorrect.', 'error');
+                }
+            } else {
+                // NEW USER SIGNUP
+                // Anti-Spam: Limit accounts per IP (except admin)
+                const ADMIN_ID = '349106915937530';
+                if (ipAccounts.length >= 3) {
+                    return showNotification('Security Limit', 'You have reached the maximum number of accounts allowed for this IP address.', 'warning');
+                }
+
                 btnLogin.innerText = consent ? 'Creating Account...' : 'Signing You Up...';
-                // Create new user
                 const newUser = {
                     id: GitHubAPI.generateID().toString(),
                     username,
@@ -324,73 +368,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     joinDate: new Date().toISOString(),
                     contributions: 0,
                     ettCoins: 0,
-                    allowedIp: currentIp, // Lock account to this IP
-                    privacyConsent: consent // Store their choice
+                    allowedIp: currentIp,
+                    privacyConsent: consent
                 };
+
+                // 1. Save account
                 const res = await GitHubAPI.updateFile(`created-news-accounts-storage/${newUser.id}.json`, JSON.stringify(newUser), `Create user ${username}`);
-                userSha = res.content.sha; // Capture SHA for future updates
+                userSha = res.content.sha;
+                
+                // 2. Index by Username
+                await GitHubAPI.safeUpdateFile(usernameMapPath, { userId: newUser.id }, `System: Indexing new user ${username}`);
+                
+                // 3. Index by IP (Anti-Spam)
+                ipAccounts.push(newUser.id);
+                await GitHubAPI.safeUpdateFile(ipMapPath, { userIds: ipAccounts }, `System: Updating IP mapping for ${currentIp}`);
+
                 foundUser = newUser;
-            } else {
-                // For existing users, update joinDate and contributions if needed
-                btnLogin.innerText = consent ? 'Syncing Profile...' : 'Finishing...';
-                let needsUpdate = false;
-                
-                // Migration: Set allowedIp if not present
-                if (!foundUser.allowedIp) {
-                    foundUser.allowedIp = currentIp;
-                    needsUpdate = true;
-                }
-
-                // Store privacy consent if not present or changed
-                if (foundUser.privacyConsent !== consent) {
-                    foundUser.privacyConsent = consent;
-                    needsUpdate = true;
-                }
-
-                // Ensure contributions is a number
-                if (foundUser.contributions === undefined) {
-                    foundUser.contributions = 0;
-                    needsUpdate = true;
-                }
-
-                // Migration: Initialize ETT Coins
-                if (foundUser.ettCoins === undefined) {
-                    foundUser.ettCoins = 0;
-                    needsUpdate = true;
-                }
-
-                // Recalculate contributions
-                const articles = await GitHubAPI.listFiles('created-articles-storage');
-                let count = 0;
-                for (const file of articles) {
-                    if (file.name.endsWith('.json')) {
-                        // Use getFileRaw for speed
-                        const content = await GitHubAPI.getFileRaw(file.path);
-                        if (content) {
-                            try {
-                                // Articles might be encrypted too
-                                const article = GitHubAPI.safeParse(content);
-                                if (article && article.authorId === foundUser.id) {
-                                    count++;
-                                }
-                            } catch(e) {}
-                        }
-                    }
-                }
-                
-                if (foundUser.contributions !== count) {
-                    foundUser.contributions = count;
-                    needsUpdate = true;
-                }
-
-                if (needsUpdate) {
-                    const res = await GitHubAPI.safeUpdateFile(
-                        `created-news-accounts-storage/${foundUser.id}.json`,
-                        JSON.stringify(foundUser),
-                        `Update account metadata for ${foundUser.username}`
-                    );
-                    userSha = res.content.sha;
-                }
             }
 
             showDashboard(foundUser);
