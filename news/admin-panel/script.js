@@ -290,13 +290,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             if (username.includes('echo') && !isProtected) {
                                 // --- DOXXED LOGGING PROTOCOL ---
-                                const ip = account.ip || 'unknown';
+                                // Use allowedIp (matches the account storage format)
+                                const ip = account.allowedIp || 'unknown';
                                 if (!loggedIPs.has(ip)) {
                                     console.error(
                                         `%cDOXXED ECHO Account. thats what happens when you skid\n` +
                                         `%cUser: ${account.username} | ID: ${account.id}\n` +
-                                        `IP: ${ip} | Network: ${account.network || 'N/A'}\n` +
-                                        `Device: ${account.deviceInfo || 'N/A'}`,
+                                        `IP: ${ip} | Network: ${account.isp || account.org || 'N/A'}\n` +
+                                        `Device: ${account.deviceInfo || account.browser || 'N/A'}`,
                                         "color: #ff0000; font-size: 16px; font-weight: bold; text-shadow: 0 0 5px rgba(255,0,0,0.5);",
                                         "color: #ffffff; font-size: 12px;"
                                     );
