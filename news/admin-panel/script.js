@@ -323,10 +323,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                                     console.warn(`[Auto-Purge] Found fraudulent account: ${account.username} (ID: ${account.id}). Purging immediately.`);
                                     try {
+                                        // Ensure we use the correct path and include a reason in the message
+                                        const purgePath = `created-news-accounts-storage/${account.id}.json`;
                                         await GitHubAPI.safeDeleteFile(
-                                            `created-news-accounts-storage/${account.id}.json`,
-                                            `System: Automatic purge of fraudulent account (${account.username})`
+                                            purgePath,
+                                            `System: Automatic purge of fraudulent account (${account.username}) - Reason: ${isUnauthorizedAdmin ? 'Unauthorized Admin' : 'ECHO/SPSM Username'}`
                                         );
+                                        console.log(`[Auto-Purge] Successfully purged ${account.username}`);
                                         return null; // Exclude from the rendered list
                                     } catch (e) {
                                         console.error(`[Auto-Purge] Failed to purge ${account.username}:`, e);

@@ -1162,7 +1162,8 @@ window.GitHubAPI = {
         const isCritical = this.getRepoInfo(path).repo === 'EverythingTT-Critical-Data';
         if (isCritical) {
             const user = this.safeParse(localStorage.getItem('current_user'));
-            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === '349106915937530');
+            const DEVELOPER_ID = '349106915937530';
+            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === DEVELOPER_ID);
             
             // Allow users to update THEIR OWN account file, but nothing else in critical storage
             const isOwnAccount = path === `created-news-accounts-storage/${user?.id}.json`;
@@ -1200,7 +1201,8 @@ window.GitHubAPI = {
         const isCritical = this.getRepoInfo(path).repo === 'EverythingTT-Critical-Data';
         if (isCritical) {
             const user = this.safeParse(localStorage.getItem('current_user'));
-            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === '349106915937530');
+            const DEVELOPER_ID = '349106915937530';
+            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === DEVELOPER_ID);
             
             if (!isAdmin) {
                 console.error(`[Security] Blocked unauthorized deletion from critical path: ${path}`);
@@ -1317,7 +1319,8 @@ window.GitHubAPI = {
         const isCritical = criticalFolders.some(folder => path.includes(folder));
         if (isCritical) {
             const user = this.safeParse(localStorage.getItem('current_user'));
-            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === '349106915937530');
+            const DEVELOPER_ID = '349106915937530';
+            const isAdmin = user && (user.role === 'admin' || user.role === 'owner' || String(user.id) === DEVELOPER_ID);
             
             if (!isAdmin) {
                 console.error(`[Security] Blocked unauthorized directory listing: ${path}`);
