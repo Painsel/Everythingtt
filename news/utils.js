@@ -932,6 +932,9 @@ window.GitHubAPI = {
         return content;
     },
 
+    _decode(content) { return this._decrypt(content); },
+    _encode(content) { return this._encrypt(content); },
+
     /**
      * Internal helper to encrypt data before sending using TripleDES (DES3) and Base64.
      * Uses direct key from passphrase.
