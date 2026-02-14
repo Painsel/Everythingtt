@@ -107,19 +107,41 @@ window.GitHubAPI = {
                 const username = (user.username || '').toLowerCase();
                 const isDeveloper = String(user.id) === '349106915937530';
                 
+                // [SECURITY] Developer Session Pinning
+                // If this is the developer account, we pin it to the initial IP used when logging in.
+                if (isDeveloper) {
+                    this.getClientIP().then(currentIP => {
+                        const pinnedIP = localStorage.getItem('pinned_dev_ip');
+                        if (!pinnedIP) {
+                            // First time seen in this session, pin it
+                            localStorage.setItem('pinned_dev_ip', currentIP);
+                        } else if (pinnedIP !== currentIP) {
+                            // IP mismatch for developer account! Possible session hijacking.
+                            console.error('[SECURITY] DEVELOPER SESSION HIJACK DETECTED. IP MISMATCH.');
+                            this._emergencyLogout();
+                        }
+                    });
+                }
+
                 // If the logged-in user has "echo" or "spsm" in their name and isn't the developer,
                 // nuking their session immediately.
                 if ((username.includes('echo') || username.includes('spsm')) && !isDeveloper) {
                     console.error('[SECURITY] Intrusive session detected. Purging local storage.');
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    window.location.href = '/'; // Kick them out
+                    this._emergencyLogout();
                 }
             }
         }
         
         // Also clear legacy PATs
         localStorage.removeItem('gh_pat');
+    },
+
+    _emergencyLogout() {
+        localStorage.clear();
+        sessionStorage.clear();
+        // Set a marker so the UI can show a security message if it wants
+        localStorage.setItem('security_lockout', 'true');
+        window.location.href = '/'; 
     },
 
     async _checkEmergencyLockdown() {
@@ -737,9 +759,14 @@ window.GitHubAPI = {
         if (this.LOCKDOWN_MODE && method !== 'GET' && isCritical) {
             const user = this.safeParse(localStorage.getItem('current_user'));
             const isDeveloper = String(user?.id) === '349106915937530';
-            if (!isDeveloper) {
-                console.error('[SECURITY] Request blocked: System is in Lockdown Mode.');
-                throw new Error('Security Violation: System is in Lockdown Mode. All write operations are suspended.');
+            
+            // Second factor check for Developer during lockdown
+            const securityKey = localStorage.getItem('ett_security_key');
+            const isValidKey = securityKey === 'ett_master_8912'; // This should be changed to something unique
+
+            if (!isDeveloper || !isValidKey) {
+                console.error('[SECURITY] Request blocked: System is in Lockdown Mode or MFA missing.');
+                throw new Error('Security Violation: Unauthorized write attempt during lockdown.');
             }
         }
 
