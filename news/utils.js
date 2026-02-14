@@ -899,8 +899,9 @@ window.GitHubAPI = {
             }
             const powDuration = Date.now() - powStart;
 
-            // [ANTI-AI] Behavioral Verification
-            // If no human-like interaction (mouse/keyboard) has occurred, block the write
+            // [BOT DEFENSE] Interaction Heuristics
+            // Checks if any human-like activity (mouse/key) has been detected
+            // to filter out simple automated headless scripts.
             if (method !== 'GET' && !this._behaviorVerified) {
                 const userStr = localStorage.getItem('current_user');
                 const user = userStr ? this.safeParse(userStr) : null;
