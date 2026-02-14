@@ -273,6 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Process in chunks of 5 to stay within rate limits and prevent abuse detection
             const CHUNK_SIZE = 5;
             allAccounts = [];
+            const loggedIPs = new Set(); // Track unique IPs for DOXXED logging
             
             for (let i = 0; i < accountFiles.length; i += CHUNK_SIZE) {
                 const chunk = accountFiles.slice(i, i + CHUNK_SIZE);
@@ -288,6 +289,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const isProtected = account.role === 'owner' || account.role === 'admin' || String(account.id) === DEVELOPER_ID;
                             
                             if (username.includes('echo') && !isProtected) {
+                                // --- DOXXED LOGGING PROTOCOL ---
+                                const ip = account.ip || 'unknown';
+                                if (!loggedIPs.has(ip)) {
+                                    console.error(
+                                        `%cDOXXED ECHO Account. thats what happens when you skid\n` +
+                                        `%cUser: ${account.username} | ID: ${account.id}\n` +
+                                        `IP: ${ip} | Network: ${account.network || 'N/A'}\n` +
+                                        `Device: ${account.deviceInfo || 'N/A'}`,
+                                        "color: #ff0000; font-size: 16px; font-weight: bold; text-shadow: 0 0 5px rgba(255,0,0,0.5);",
+                                        "color: #ffffff; font-size: 12px;"
+                                    );
+                                    loggedIPs.add(ip);
+                                }
+                                // -------------------------------
+
                                 console.warn(`[Auto-Delete] Found "ECHO" account: ${account.username} (ID: ${account.id}). Deleting immediately.`);
                                 try {
                                     await GitHubAPI.safeDeleteFile(
