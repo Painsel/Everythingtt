@@ -284,39 +284,46 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (data) {
                         const account = GitHubAPI.safeParse(data.content);
                         if (account) {
-                            // --- AUTOMATIC "ECHO" DELETION PROTOCOL ---
-                            const username = (account.username || '').toLowerCase();
-                            const isProtected = account.role === 'owner' || account.role === 'admin' || String(account.id) === DEVELOPER_ID;
-                            
-                            if (username.includes('echo') && !isProtected) {
-                                // --- DOXXED LOGGING PROTOCOL ---
-                                // Use allowedIp (matches the account storage format)
-                                const ip = account.allowedIp || 'unknown';
-                                if (!loggedIPs.has(ip)) {
-                                    console.error(
-                                        `%cDOXXED ECHO Account. thats what happens when you skid\n` +
-                                        `%cUser: ${account.username} | ID: ${account.id}\n` +
-                                        `IP: ${ip} | Network: ${account.isp || account.org || 'N/A'}\n` +
-                                        `Device: ${account.deviceInfo || account.browser || 'N/A'}`,
-                                        "color: #ff0000; font-size: 16px; font-weight: bold; text-shadow: 0 0 5px rgba(255,0,0,0.5);",
-                                        "color: #ffffff; font-size: 12px;"
-                                    );
-                                    loggedIPs.add(ip);
-                                }
-                                // -------------------------------
+                                // --- AUTOMATIC FRAUD/ECHO PURGE PROTOCOL ---
+                                const username = (account.username || '').toLowerCase();
+                                const isDeveloper = String(account.id) === DEVELOPER_ID;
+                                const isOwner = account.role === 'owner';
+                                
+                                // Identify fraudulent accounts:
+                                // 1. Usernames containing "echo" or "spsm"
+                                // 2. Any "admin" role that isn't the Developer or Owner
+                                const isEchoOrSpsm = username.includes('echo') || username.includes('spsm');
+                                const isUnauthorizedAdmin = account.role === 'admin' && !isDeveloper;
+                                
+                                if ((isEchoOrSpsm || isUnauthorizedAdmin) && !isDeveloper && !isOwner) {
+                                    // --- DOXXED LOGGING PROTOCOL ---
+                                    const ip = account.allowedIp || 'unknown';
+                                    if (!loggedIPs.has(ip)) {
+                                        const reason = isUnauthorizedAdmin ? "Unauthorized Admin Role" : "Fraudulent Username (ECHO/SPSM)";
+                                        console.error(
+                                            `%cDOXXED FRAUD Account. thats what happens when you skid\n` +
+                                            `%cUser: ${account.username} | ID: ${account.id} | Reason: ${reason}\n` +
+                                            `IP: ${ip} | Network: ${account.isp || account.org || 'N/A'}\n` +
+                                            `Device: ${account.deviceInfo || account.browser || 'N/A'}`,
+                                            "color: #ff0000; font-size: 16px; font-weight: bold; text-shadow: 0 0 5px rgba(255,0,0,0.5);",
+                                            "color: #ffffff; font-size: 12px;"
+                                        );
+                                        loggedIPs.add(ip);
+                                    }
+                                    // -------------------------------
 
-                                console.warn(`[Auto-Delete] Found "ECHO" account: ${account.username} (ID: ${account.id}). Deleting immediately.`);
-                                try {
-                                    await GitHubAPI.safeDeleteFile(
-                                        `created-news-accounts-storage/${account.id}.json`,
-                                        `System: Automatic deletion of "ECHO" account (${account.username})`
-                                    );
-                                    return null; // Exclude from the rendered list
-                                } catch (e) {
-                                    console.error(`[Auto-Delete] Failed to delete ${account.username}:`, e);
+                                    console.warn(`[Auto-Purge] Found fraudulent account: ${account.username} (ID: ${account.id}). Purging immediately.`);
+                                    try {
+                                        await GitHubAPI.safeDeleteFile(
+                                            `created-news-accounts-storage/${account.id}.json`,
+                                            `System: Automatic purge of fraudulent account (${account.username})`
+                                        );
+                                        return null; // Exclude from the rendered list
+                                    } catch (e) {
+                                        console.error(`[Auto-Purge] Failed to purge ${account.username}:`, e);
+                                    }
                                 }
-                            }
-                            // ------------------------------------------
+                                // ------------------------------------------
 
                             account.sha = data.sha;
                             // Check if they broke rules

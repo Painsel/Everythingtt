@@ -1164,6 +1164,18 @@ window.GitHubAPI = {
                 console.error(`[Security] Blocked unauthorized write to critical path: ${path}`);
                 throw new Error('Security Violation: Unauthorized write to critical storage.');
             }
+
+            // [SECURITY] Role Escalation Protection
+            // If updating an account file, ensure non-admins cannot give themselves admin/owner roles
+            if (path.includes('created-news-accounts-storage/')) {
+                const newContent = this.safeParse(content);
+                if (newContent && (newContent.role === 'admin' || newContent.role === 'owner')) {
+                    if (!isAdmin) {
+                        console.error(`[Security] Blocked role escalation attempt to ${newContent.role} for path: ${path}`);
+                        throw new Error('Security Violation: Unauthorized role escalation.');
+                    }
+                }
+            }
         }
 
         const encodedContent = this._encode(content);
