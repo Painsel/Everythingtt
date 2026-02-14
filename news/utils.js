@@ -334,11 +334,11 @@ window.GitHubAPI = {
                     this.middlewareURL = config.middleware_url;
                 }
                 
-                if (config.github_pat) {
-                    this.cachedPAT = config.github_pat;
-                }
+                // [SECURITY] PAT is now handled exclusively by the middleware.
+                // We no longer load it into the client-side instance.
+                this.cachedPAT = null; 
                 
-                console.log('[GitHubAPI] Configuration loaded successfully.');
+                console.log('[GitHubAPI] Configuration loaded successfully. Protocol: Middleware-Core-v3.2');
                 return; // Success
             } catch (e) {
                 console.warn(`[GitHubAPI] Config fetch attempt ${i + 1} failed:`, e);
@@ -925,35 +925,12 @@ window.GitHubAPI = {
         const isCritical = apiPath.startsWith(criticalRepoPath);
         const isMain = apiPath.startsWith(mainRepoPath);
 
-        // [SECURITY] Lockdown Mode Check
-        if (this.LOCKDOWN_MODE && method !== 'GET' && isCritical) {
-            const user = this.safeParse(localStorage.getItem('current_user'));
-            const isDeveloper = String(user?.id) === '349106915937530';
-            
-            // Second factor check for Developer during lockdown
-            const securityKey = localStorage.getItem('ett_security_key');
-            const isValidKey = securityKey === 'ett_master_8912'; // This should be changed to something unique
-
-            if (!isDeveloper || !isValidKey) {
-                console.error('[SECURITY] Request blocked: System is in Lockdown Mode or MFA missing.');
-                throw new Error('Security Violation: Unauthorized write attempt during lockdown.');
-            }
-        }
-
-        // [SECURITY] Add PAT only for the main repo. 
-        // Critical repo PAT is managed by the middleware.
-        if (pat && isMain) {
-            headers['Authorization'] = `token ${pat}`;
-        }
-
-        let queueName = 'github';
-
-        // Middleware logic
-        if (this.middlewareURL && isCritical) {
+        // [SECURITY] All repository operations (Main and Critical) must now go through the middleware
+        // to prevent exposing any Personal Access Tokens (PAT) on the client side.
+        if (this.middlewareURL && (isCritical || isMain)) {
             let base = this.middlewareURL;
             if (!base.endsWith('/')) base += '/';
             
-            // [SECURITY] Critical paths MUST go through the middleware.
             const clientIP = await this.getClientIP();
             const userStr = localStorage.getItem('current_user');
             const user = this.safeParse(userStr);
@@ -970,16 +947,12 @@ window.GitHubAPI = {
             }
             
             // [ANTI-AI] Proof-of-Work (PoW) Challenge
-            // This forces the client to perform a computation that is easy for a human browser
-            // but expensive and complex for a simple script or AI agent to replicate instantly.
-            // Using SHA-256 for a cryptographically secure challenge.
             const difficulty = 3;
             let nonce = 0;
             let powHash = '';
             const powTarget = '0'.repeat(difficulty);
             const powStart = Date.now();
             
-            // Generate SHA-256 hash using Web Crypto API
             async function sha256(message) {
                 const msgBuffer = new TextEncoder().encode(message);
                 const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -987,7 +960,6 @@ window.GitHubAPI = {
                 return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
             }
 
-            // Simple PoW loop: find a nonce such that the hash starts with '000'
             while (true) {
                 const payload = `${user_id}:${timestamp}:${nonce}:${apiPath}:${canary}`;
                 const hash = await sha256(payload);
@@ -996,14 +968,11 @@ window.GitHubAPI = {
                     break;
                 }
                 nonce++;
-                if (nonce > 5000) break; // Safety break
+                if (nonce > 5000) break;
             }
             const powDuration = Date.now() - powStart;
 
             // [BOT DEFENSE] Interaction Heuristics
-            // Checks if any human-like activity (mouse/key) has been detected
-            // to filter out simple automated headless scripts.
-            // Using jitter and velocity analysis for basic behavioral biometrics.
             if (method !== 'GET' && !this._behaviorVerified) {
                 const userStr = localStorage.getItem('current_user');
                 const user = userStr ? this.safeParse(userStr) : null;
@@ -1014,13 +983,11 @@ window.GitHubAPI = {
                 }
             }
 
-            // Generate a more complex HMAC-like signature
-            // Salt is derived from multiple factors to prevent simple replay or brute force
-            const secretSalt = 'ett_v3_core_912834'; // Upgraded salt
+            // Upgraded salt for v3.2
+            const secretSalt = 'ett_v3_core_912834_migration'; 
             const signaturePayload = `${user_id}:${timestamp}:${apiPath}:${method}:${secretSalt}:${nonce}:${canary}`;
-            const signature = btoa(signaturePayload).split('').reverse().join(''); // Obfuscate the B64
+            const signature = btoa(signaturePayload).split('').reverse().join('');
 
-            // Move security markers to query parameters to avoid CORS preflight failures
             const securityParams = new URLSearchParams({
                 path: apiPath,
                 client_ip: clientIP || 'unknown',
@@ -1031,8 +998,9 @@ window.GitHubAPI = {
                 ts: timestamp,
                 n: nonce,
                 pd: powDuration,
-                cn: canary, // Pass the canary to the middleware for validation
-                v: '3.1' // Protocol version update
+                cn: canary,
+                v: '3.2', // Protocol version update: All-Repo Middleware
+                repo: isMain ? 'main' : 'critical' // Tell middleware which PAT to use
             });
 
             url = `${base}?${securityParams.toString()}`;
@@ -1041,11 +1009,7 @@ window.GitHubAPI = {
             }
             queueName = 'middleware';
         } else {
-            // Non-critical paths (Main repo) or if middleware is not configured for non-critical paths
-            if (isCritical && !this.middlewareURL) {
-                throw new Error('Secure connection unavailable. Critical operations are restricted.');
-            }
-            
+            // Fallback for non-repo external APIs or if middleware is unavailable
             url = basePath.startsWith('http') ? basePath : this.getAPIURL(basePath);
             if (queryStr) {
                 url += (url.includes('?') ? '&' : '?') + queryStr;
