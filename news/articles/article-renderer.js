@@ -2281,6 +2281,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Handle @username (no spaces)
         formatted = formatted.replace(/@([a-zA-Z0-9_]+)/g, '<span class="mention" onclick="findAndShowUser(\'$1\')">@$1</span>');
 
+        // Link Embedding (YouTube/Images)
+        if (GitHubAPI.embedLinks) {
+            formatted = GitHubAPI.embedLinks(formatted);
+        }
+
         return formatted.replace(/\n/g, '<br>');
     }
 

@@ -156,6 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
         
+        // Link Embedding (YouTube/Images)
+        if (GitHubAPI.embedLinks) {
+            displayContent = GitHubAPI.embedLinks(displayContent);
+        }
+        
         // Custom Button Rendering
         if (msg.customButton && msg.customButton.label && msg.customButton.url) {
             const btnHtml = `<div style="text-align: center; margin: 20px 0;">

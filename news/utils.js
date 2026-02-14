@@ -1338,6 +1338,48 @@ window.GitHubAPI = {
         }
         
         return '';
+    },
+
+    /**
+     * Processes text to embed links for images and YouTube videos.
+     * @param {string} text The input text to process.
+     * @returns {string} The processed HTML with embedded content.
+     */
+    embedLinks(text) {
+        if (!text) return '';
+
+        // 1. YouTube Embedding (Handles watch?v= and short youtu.be links)
+        const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
+        text = text.replace(youtubeRegex, (match, videoId) => {
+            return `
+                <div class="embedded-content youtube-embed">
+                    <iframe 
+                        width="100%" 
+                        height="315" 
+                        src="https://www.youtube.com/embed/${videoId}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                    <a href="${match}" target="_blank" class="embed-source-link">Watch on YouTube</a>
+                </div>
+            `;
+        });
+
+        // 2. Image Embedding (Handles common extensions)
+        const imageRegex = /(?:https?:\/\/)\S+\.(?:jpg|jpeg|png|gif|webp|svg)(?:\?\S*)?/gi;
+        text = text.replace(imageRegex, (match) => {
+            // Avoid double embedding if it's already inside an iframe or something
+            if (text.includes(`src="${match}"`)) return match;
+            
+            return `
+                <div class="embedded-content image-embed">
+                    <img src="${match}" alt="Embedded Image" onclick="window.open('${match}', '_blank')" style="max-width: 100%; border-radius: 8px; cursor: pointer;">
+                </div>
+            `;
+        });
+
+        return text;
     }
 };
 
