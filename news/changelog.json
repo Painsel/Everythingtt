@@ -5,7 +5,6 @@
         "Mail: Integrated Markdown support for rich text message composition",
         "Mail: Added custom link button creation with responsive UI rendering",
         "Mail: Improved draft management with persistent button metadata storage",
-        "Security: Hardened all JSON.parse calls with automatic decryption and error resilience",
         "Voice Messages support",
         "Notification Sounds support",
         "Added 'My Articles' tab for managing your own articles",
