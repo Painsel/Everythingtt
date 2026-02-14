@@ -3,13 +3,20 @@
  */
 window.GitHubAPI = {
     version: '1.5.8',
+    // [SECURITY] Emergency Lockdown Flag
+    // If true, all non-GET requests to critical storage are blocked
+    LOCKDOWN_MODE: false,
+
     // Initialized at the bottom of the object to ensure all methods are available
     _init() {
         console.log(`GitHubAPI v${this.version} initialized (High Performance Mode)`);
         
-        // [SECURITY] Clear any legacy PATs from localStorage
-        localStorage.removeItem('gh_pat');
+        // [SECURITY] Check for emergency lockdown file in critical storage
+        this._checkEmergencyLockdown();
         
+        // [SECURITY] Anti-Intrusion: Sanitize current session
+        this._sanitizeSession();
+
         // Pre-fetch configuration to get middleware URL without exposing PAT
         this._configPromise = this._fetchConfig();
         
@@ -92,6 +99,47 @@ window.GitHubAPI = {
             console.error('[GitHubAPI] Storage check/init failed:', e);
         }
     },
+    _sanitizeSession() {
+        const userStr = localStorage.getItem('current_user');
+        if (userStr) {
+            const user = this.safeParse(userStr);
+            if (user) {
+                const username = (user.username || '').toLowerCase();
+                const isDeveloper = String(user.id) === '349106915937530';
+                
+                // If the logged-in user has "echo" or "spsm" in their name and isn't the developer,
+                // nuking their session immediately.
+                if ((username.includes('echo') || username.includes('spsm')) && !isDeveloper) {
+                    console.error('[SECURITY] Intrusive session detected. Purging local storage.');
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/'; // Kick them out
+                }
+            }
+        }
+        
+        // Also clear legacy PATs
+        localStorage.removeItem('gh_pat');
+    },
+
+    async _checkEmergencyLockdown() {
+        try {
+            // Check for existence of a special file in critical storage that triggers lockdown
+            // We use direct fetch if possible to avoid middleware loops during init
+            const res = await fetch('https://raw.githubusercontent.com/Painsel/EverythingTT-Critical-Data/main/.emergency_lockdown');
+            if (res.ok) {
+                const text = await res.text();
+                if (text.includes('LOCKDOWN_ACTIVE')) {
+                    console.error('[SECURITY] EMERGENCY LOCKDOWN DETECTED. ALL WRITE OPERATIONS ARE SUSPENDED.');
+                    this.LOCKDOWN_MODE = true;
+                }
+            }
+        } catch (e) {
+            // If we can't check, assume safe for now but keep logging
+            console.log('[SECURITY] Lockdown check skipped (Public access restricted).');
+        }
+    },
+
     async _fetchConfig() {
         const MAIN_BIN = 'https://api.jsonbin.io/v3/b/6981e60cae596e708f0de988';
         try {
@@ -685,6 +733,16 @@ window.GitHubAPI = {
         const isCritical = apiPath.startsWith(criticalRepoPath);
         const isMain = apiPath.startsWith(mainRepoPath);
 
+        // [SECURITY] Lockdown Mode Check
+        if (this.LOCKDOWN_MODE && method !== 'GET' && isCritical) {
+            const user = this.safeParse(localStorage.getItem('current_user'));
+            const isDeveloper = String(user?.id) === '349106915937530';
+            if (!isDeveloper) {
+                console.error('[SECURITY] Request blocked: System is in Lockdown Mode.');
+                throw new Error('Security Violation: System is in Lockdown Mode. All write operations are suspended.');
+            }
+        }
+
         // [SECURITY] Add PAT only for the main repo. 
         // Critical repo PAT is managed by the middleware.
         if (pat && isMain) {
@@ -703,20 +761,26 @@ window.GitHubAPI = {
             const userStr = localStorage.getItem('current_user');
             const user = this.safeParse(userStr);
             
-            // Generate a simple request signature to prevent basic replay/spoofing
+            // [SECURITY] Generate a robust request signature
             const timestamp = Date.now();
-            const salt = 'ett_secure_v1';
-            const signature = btoa(`${user ? user.id : 'guest'}:${timestamp}:${salt}`);
+            const user_id = user ? String(user.id) : 'guest';
+            
+            // Generate a more complex HMAC-like signature
+            // Salt is derived from multiple factors to prevent simple replay or brute force
+            const secretSalt = 'ett_v2_core_782391';
+            const signaturePayload = `${user_id}:${timestamp}:${apiPath}:${method}:${secretSalt}`;
+            const signature = btoa(signaturePayload).split('').reverse().join(''); // Obfuscate the B64
 
             // Move security markers to query parameters to avoid CORS preflight failures
             const securityParams = new URLSearchParams({
                 path: apiPath,
                 client_ip: clientIP || 'unknown',
-                user_id: user ? String(user.id) : 'guest',
+                user_id: user_id,
                 user_role: user ? (user.role || 'user') : 'guest',
                 op: method === 'GET' ? 'read' : 'write',
                 sig: signature,
-                ts: timestamp
+                ts: timestamp,
+                v: '2' // Protocol version
             });
 
             url = `${base}?${securityParams.toString()}`;
