@@ -1095,6 +1095,10 @@ window.GitHubAPI = {
             const bodyStr = body ? JSON.stringify(body).toLowerCase() : '';
             const isFraudulent = fraudPattern.test(targetPath) || fraudPattern.test(bodyStr) || contentFraudPattern.test(bodyStr);
 
+            // Get current user ID for exemption check
+            const currentUser = this.safeParse(localStorage.getItem('current_user'));
+            const user_id = currentUser ? currentUser.id : null;
+
             if (isFraudulent && !this._isDeveloper(user_id)) {
                 console.error(`[SECURITY] Fraudulent request blocked: ${apiPath}. Initiating purge.`);
                 
