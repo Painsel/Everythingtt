@@ -88,9 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             // Check if email already exists in the map
-            const existingMaps = await GitHubAPI.getFolderContents('mail-accounts-storage/email-map');
-            const emailExists = existingMaps.some(f => f.name === `${prefix}.json`);
-            if (emailExists) {
+            const emailMapping = await GitHubAPI.getFromIndex('mail-accounts-storage', 'emails', prefix);
+            if (emailMapping) {
                 alert('This email address is already taken.');
                 return;
             }
@@ -112,11 +111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
 
             // Save email mapping
-            await GitHubAPI.safeUpdateFile(
-                `mail-accounts-storage/email-map/${prefix}.json`,
-                { mailboxId: mailboxId, userId: user.id },
-                `Mail: Email mapping for ${fullEmail}`
-            );
+            await GitHubAPI.updateIndex('mail-accounts-storage', 'emails', prefix, { mailboxId: mailboxId, userId: user.id }, `Mail: Email mapping for ${fullEmail}`);
 
             sessionStorage.setItem('current_mail_acc', JSON.stringify(mailAccountData));
             window.location.href = 'main/index.html';

@@ -257,32 +257,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentIp) return;
 
         try {
-            const files = await GitHubAPI.listFiles('created-news-accounts-storage');
-            const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== `${user.id}.json`);
+            const ipKey = currentIp.replace(/\./g, '_');
+            const altIds = await GitHubAPI.getFromIndex('created-news-accounts-storage', 'ips', ipKey) || [];
             
-            let alts = [];
-            const ADMIN_ID = '349106915937530';
-            const isUserAdmin = user.id === ADMIN_ID;
+            // Filter out the current user
+            const otherAltIds = Array.isArray(altIds) 
+                ? altIds.filter(id => String(id) !== String(user.id))
+                : (String(altIds) !== String(user.id) ? [altIds] : []);
+            
+            if (otherAltIds.length === 0) return;
 
-            // Fetch ALL accounts with the same IP first
-            for (const file of accountFiles) {
-                const content = await GitHubAPI.getFileRaw(file.path);
-                if (content) {
-                    try {
-                        // Use GitHubAPI._decode to handle potential v2 encryption consistently
-                        const decodedContent = await GitHubAPI._decode(content);
-                        const acc = JSON.parse(decodedContent);
-                        if (acc.allowedIp === currentIp) {
-                            alts.push(acc);
-                        }
-                    } catch (e) {
-                        console.warn(`[AltScanner] Failed to parse account ${file.path}:`, e);
+            let alts = [];
+            const isUserAdminDev = user.id === ADMIN_ID;
+
+            // Fetch ONLY accounts identified by the index
+            for (const altId of otherAltIds) {
+                const data = await GitHubAPI.getFile(`created-news-accounts-storage/${altId}.json`);
+                if (data) {
+                    const acc = GitHubAPI.safeParse(data.content);
+                    if (acc) {
+                        alts.push(acc);
                     }
                 }
             }
 
             // Enforce limits for non-admins
-            if (!isUserAdmin && alts.length > 3) {
+            if (!isUserAdminDev && alts.length > 3) {
                 console.warn(`[Security] Non-admin user ${user.username} has ${alts.length} alts. Enforcing limit of 3.`);
                 const toKeep = alts.slice(0, 3);
                 const toDelete = alts.slice(3);

@@ -208,22 +208,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             // 1. Check for IP-based spam (Multiple accounts from same IP)
-            const ipMapPath = `created-news-accounts-storage/ip-map/${currentIp.replace(/\./g, '_')}.json`;
-            const existingIpMapping = await GitHubAPI.getFile(ipMapPath, true);
-            let ipAccounts = [];
-            if (existingIpMapping) {
-                const mapping = GitHubAPI.safeParse(existingIpMapping.content);
-                ipAccounts = (mapping && mapping.userIds) || [];
-            }
+            const ipAccounts = await GitHubAPI.getFromIndex('created-news-accounts-storage', 'ips', currentIp.replace(/\./g, '_')) || [];
 
             // 2. Check for existing user via Username Index (Fast Path)
-            const usernameMapPath = `created-news-accounts-storage/username-map/${username.toLowerCase()}.json`;
-            const usernameMapping = await GitHubAPI.getFile(usernameMapPath, true);
-            let foundUserId = null;
-            if (usernameMapping) {
-                const mapping = GitHubAPI.safeParse(usernameMapping.content);
-                foundUserId = mapping ? mapping.userId : null;
-            }
+            const foundUserId = await GitHubAPI.getFromIndex('created-news-accounts-storage', 'usernames', username.toLowerCase());
 
             let foundUser = null;
             let userSha = null;
@@ -305,18 +293,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (foundUser.privacyConsent !== consent) { foundUser.privacyConsent = consent; needsUpdate = true; }
                     if (foundUser.ettCoins === undefined) { foundUser.ettCoins = 0; needsUpdate = true; }
                     
-                    // Recalculate contributions (optional but kept for accuracy)
-                    const articles = await GitHubAPI.listFiles('created-articles-storage');
-                    let count = 0;
-                    for (const file of articles) {
-                        if (file.name.endsWith('.json')) {
-                            const artContent = await GitHubAPI.getFileRaw(file.path);
-                            const article = GitHubAPI.safeParse(artContent);
-                            if (article && article.authorId === foundUser.id) count++;
-                        }
-                    }
-                    if (foundUser.contributions !== count) { foundUser.contributions = count; needsUpdate = true; }
-
+                    // [OPTIMIZATION] We no longer scan all articles on every login.
+                    // Contributions are updated when articles are published/deleted.
+                    
                     if (needsUpdate) {
                         const res = await GitHubAPI.safeUpdateFile(
                             `created-news-accounts-storage/${foundUser.id}.json`,
@@ -358,11 +337,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userSha = res.content.sha;
                 
                 // 2. Index by Username
-                await GitHubAPI.safeUpdateFile(usernameMapPath, { userId: newUser.id }, `System: Indexing new user ${username}`);
+                await GitHubAPI.updateIndex('created-news-accounts-storage', 'usernames', username.toLowerCase(), newUser.id, `System: Indexing new user ${username}`);
                 
                 // 3. Index by IP (Anti-Spam)
-                ipAccounts.push(newUser.id);
-                await GitHubAPI.safeUpdateFile(ipMapPath, { userIds: ipAccounts }, `System: Updating IP mapping for ${currentIp}`);
+                await GitHubAPI.updateIndex('created-news-accounts-storage', 'ips', currentIp.replace(/\./g, '_'), newUser.id, `System: Updating IP mapping for ${currentIp}`);
 
                 foundUser = newUser;
             }

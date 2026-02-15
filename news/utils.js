@@ -128,8 +128,6 @@ window.GitHubAPI = {
             'article-comments-storage',
             'created-articles-storage',
             'created-news-accounts-storage',
-            'created-news-accounts-storage/username-map',
-            'created-news-accounts-storage/ip-map',
             'notifications-storage',
             'support-forms-storage',
             'mail-storage',
@@ -1696,6 +1694,52 @@ window.GitHubAPI = {
 
     async getDirectory(path) {
         return this.listFiles(path);
+    },
+
+    /**
+     * Update a centralized index file (e.g., index.json) with new mappings.
+     * @param {string} storagePath The storage folder path.
+     * @param {string} type The index type (e.g., 'usernames', 'ips', 'emails').
+     * @param {string} key The key to index (e.g., username, IP, email prefix).
+     * @param {string|string[]} value The value to store (e.g., userId, list of userIds).
+     * @param {string} message The commit message.
+     */
+    async updateIndex(storagePath, type, key, value, message) {
+        const indexPath = `${storagePath}/index.json`;
+        return this.safeUpdateFile(indexPath, (content) => {
+            const index = this.safeParse(content) || {};
+            if (!index[type]) index[type] = {};
+            
+            if (Array.isArray(index[type][key])) {
+                if (!index[type][key].includes(value)) {
+                    index[type][key].push(value);
+                }
+            } else if (Array.isArray(value)) {
+                index[type][key] = value;
+            } else {
+                index[type][key] = value;
+            }
+            
+            return JSON.stringify(index, null, 2);
+        }, message);
+    },
+
+    /**
+     * Get a value from a centralized index file.
+     * @param {string} storagePath The storage folder path.
+     * @param {string} type The index type.
+     * @param {string} key The key to look up.
+     * @returns {Promise<any>} The indexed value or null.
+     */
+    async getFromIndex(storagePath, type, key) {
+        const indexPath = `${storagePath}/index.json`;
+        const data = await this.getFile(indexPath, true);
+        if (!data) return null;
+        
+        const index = this.safeParse(data.content);
+        if (!index || !index[type]) return null;
+        
+        return index[type][key] || null;
     },
 
     generateID() {

@@ -128,8 +128,6 @@ window.GitHubAPI = {
             'article-comments-storage',
             'created-articles-storage',
             'created-news-accounts-storage',
-            'created-news-accounts-storage/username-map',
-            'created-news-accounts-storage/ip-map',
             'notifications-storage',
             'support-forms-storage',
             'mail-storage',

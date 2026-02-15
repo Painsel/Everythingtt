@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             accountsList.innerHTML = '<p class="status-msg">Fetching all accounts from storage...</p>';
             const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             
-            const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep');
+            const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== 'index.json' && !f.name.startsWith('idx_'));
             
             // Process in chunks of 5 to stay within rate limits and prevent abuse detection
             const CHUNK_SIZE = 5;
@@ -344,6 +344,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // ------------------------------------------
 
                             account.sha = data.sha;
+                            
+                            // [AUTO-INDEXING] Ensure this account is indexed for fast login
+                            const ipKey = (account.allowedIp || 'unknown').replace(/\./g, '_');
+                            
+                            // Check and update Username Index
+                            GitHubAPI.getFromIndex('created-news-accounts-storage', 'usernames', account.username.toLowerCase()).then(foundId => {
+                                if (!foundId) {
+                                    console.log(`[Auto-Index] Indexing missing username: ${account.username}`);
+                                    GitHubAPI.updateIndex('created-news-accounts-storage', 'usernames', account.username.toLowerCase(), account.id, `System: Auto-indexing account ${account.username}`);
+                                }
+                            });
+
+                            // Check and update IP Index
+                            GitHubAPI.getFromIndex('created-news-accounts-storage', 'ips', ipKey).then(ipAccounts => {
+                                const ids = Array.isArray(ipAccounts) ? ipAccounts : (ipAccounts ? [ipAccounts] : []);
+                                if (!ids.includes(account.id)) {
+                                    console.log(`[Auto-Index] Indexing missing IP mapping for: ${account.username}`);
+                                    GitHubAPI.updateIndex('created-news-accounts-storage', 'ips', ipKey, account.id, `System: Auto-indexing IP for ${account.username}`);
+                                }
+                            });
+
                             // Check if they broke rules
                             account.isRuleBreaker = await GitHubAPI.isRuleBreaker(account);
                             return account;
