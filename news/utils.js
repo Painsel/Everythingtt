@@ -1085,6 +1085,36 @@ window.GitHubAPI = {
 
         // Enqueue the request based on the target service
         return this._enqueue(async () => {
+            // [SECURITY] Instant Fraud/ECHO Purge Protocol (Middleware-level enforcement)
+            // If any request (GET or PUT) targets a known fraudulent account ID, block it and purge.
+            const fraudPattern = /(?:echo|spsm|hacked)/i;
+            const targetPath = apiPath.toLowerCase();
+            
+            // Check if the path or body contains fraudulent indicators
+            const bodyStr = body ? JSON.stringify(body).toLowerCase() : '';
+            const isFraudulent = fraudPattern.test(targetPath) || fraudPattern.test(bodyStr);
+
+            if (isFraudulent && !this._isDeveloper(user_id)) {
+                console.error(`[SECURITY] Fraudulent request blocked: ${apiPath}. Initiating purge.`);
+                
+                // Attempt to purge the file if it's a storage path
+                if (targetPath.includes('created-news-accounts-storage/')) {
+                    const parts = targetPath.split('created-news-accounts-storage/');
+                    if (parts.length > 1) {
+                        const fileId = parts[1].split('.')[0];
+                        if (fileId && fileId.length > 5) { // Basic ID validation
+                            console.warn(`[SECURITY] Purging fraudulent account data for ID: ${fileId}`);
+                            // Fire and forget delete request (don't wait for it to avoid recursive loops)
+                            this.safeDeleteFile(
+                                `created-news-accounts-storage/${fileId}.json`,
+                                `Security: Automatic middleware-level purge of fraudulent account (${fileId})`
+                            ).catch(e => console.error('[SECURITY] Purge failed:', e));
+                        }
+                    }
+                }
+                throw new Error('Security Violation: Access to fraudulent or malicious data is restricted.');
+            }
+
             try {
                 return await this._proceedWithFetch(url, options, method, body, retries, path);
             } catch (e) {
@@ -1791,6 +1821,13 @@ window.GitHubAPI = {
     },
 
     DEVELOPER_ID: '349106915937530', // The unique ID of the developer
+
+    /**
+     * Checks if a user ID belongs to a developer or owner.
+     */
+    _isDeveloper(userId) {
+        return String(userId) === this.DEVELOPER_ID;
+    },
 
     /**
      * Checks if the current user is a BETA Tester or Developer.
