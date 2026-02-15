@@ -1452,7 +1452,9 @@ window.GitHubAPI = {
                 'banned-ips.json'
             ];
             const isStorageFile = storageFolders.some(folder => path.includes(folder));
-            const isLegacy = !content.startsWith('ett_enc_v2:');
+            // Index files must remain unencrypted for O(1) lookups
+            const isIndexFile = path.endsWith('index.json');
+            const isLegacy = !content.startsWith('ett_enc_v2:') && !isIndexFile;
             let decodedContent = this._decode(content);
 
             // --- NESTED COMMENTS MIGRATION PROTOCOL ---
