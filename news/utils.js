@@ -1452,8 +1452,8 @@ window.GitHubAPI = {
                 'banned-ips.json'
             ];
             const isStorageFile = storageFolders.some(folder => path.includes(folder));
-            // Index files must remain unencrypted for O(1) lookups
-            const isIndexFile = path.endsWith('index.json');
+            // Index files and Banned IPs must remain unencrypted for O(1) lookups/startup speed
+            const isIndexFile = path.endsWith('index.json') || path.endsWith('banned-ips.json');
             const isLegacy = !content.startsWith('ett_enc_v2:') && !isIndexFile;
             let decodedContent = this._decode(content);
 
