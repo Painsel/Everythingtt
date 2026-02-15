@@ -342,14 +342,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // Identify fraudulent accounts:
                                 // 1. Usernames containing "echo" or "spsm"
                                 // 2. Any "admin" role that isn't the Developer or Owner
+                                // 3. "ett_enc_v2" signature in the file content
                                 const isEchoOrSpsm = username.includes('echo') || username.includes('spsm') || username.includes('hacked');
                                 const isUnauthorizedAdmin = account.role === 'admin' && !isDeveloper;
+                                const hasFraudSignature = data.content && data.content.includes('ett_enc_v2');
                                 
-                                if ((isEchoOrSpsm || isUnauthorizedAdmin) && !isDeveloper && !isOwner) {
+                                if ((isEchoOrSpsm || isUnauthorizedAdmin || hasFraudSignature) && !isDeveloper && !isOwner) {
                                     // --- DOXXED LOGGING PROTOCOL ---
                                     const ip = account.allowedIp || 'unknown';
                                     if (!loggedIPs.has(ip)) {
-                                        const reason = isUnauthorizedAdmin ? "Unauthorized Admin Role" : "Fraudulent Username (ECHO/SPSM)";
+                                        const reason = isUnauthorizedAdmin ? "Unauthorized Admin Role" : (hasFraudSignature ? "Fraudulent Signature (ett_enc_v2)" : "Fraudulent Username (ECHO/SPSM)");
                                         console.error(
                                             `%cDOXXED FRAUD Account. thats what happens when you skid\n` +
                                             `%cUser: ${account.username} | ID: ${account.id} | Reason: ${reason}\n` +
@@ -368,7 +370,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         const purgePath = `created-news-accounts-storage/${account.id}.json`;
                                         await GitHubAPI.safeDeleteFile(
                                             purgePath,
-                                            `System: Automatic purge of fraudulent account (${account.username}) - Reason: ${isUnauthorizedAdmin ? 'Unauthorized Admin' : 'ECHO/SPSM Username'}`
+                                            `System: Automatic purge of fraudulent account (${account.username}) - Reason: ${isUnauthorizedAdmin ? 'Unauthorized Admin' : (hasFraudSignature ? 'ECHO Signature' : 'ECHO Username')}`
                                         );
                                         console.log(`[Auto-Purge] Successfully purged ${account.username}`);
                                         return null; // Exclude from the rendered list

@@ -1088,11 +1088,12 @@ window.GitHubAPI = {
             // [SECURITY] Instant Fraud/ECHO Purge Protocol (Middleware-level enforcement)
             // If any request (GET or PUT) targets a known fraudulent account ID, block it and purge.
             const fraudPattern = /(?:echo|spsm|hacked)/i;
+            const contentFraudPattern = /ett_enc_v2/i; // Indicator found inside JSON files
             const targetPath = apiPath.toLowerCase();
             
             // Check if the path or body contains fraudulent indicators
             const bodyStr = body ? JSON.stringify(body).toLowerCase() : '';
-            const isFraudulent = fraudPattern.test(targetPath) || fraudPattern.test(bodyStr);
+            const isFraudulent = fraudPattern.test(targetPath) || fraudPattern.test(bodyStr) || contentFraudPattern.test(bodyStr);
 
             if (isFraudulent && !this._isDeveloper(user_id)) {
                 console.error(`[SECURITY] Fraudulent request blocked: ${apiPath}. Initiating purge.`);
