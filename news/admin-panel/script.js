@@ -272,6 +272,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             GitHubAPI.showPauseModal('Fetching all accounts from storage...');
             accountsList.innerHTML = '<p class="status-msg">Fetching all accounts from storage...</p>';
+
+            // --- INSTANT PURGE PROTOCOL (Using Index) ---
+            const indexData = await GitHubAPI.getFile('created-news-accounts-storage/index.json', true);
+            if (indexData) {
+                const index = GitHubAPI.safeParse(indexData.content);
+                if (index && index.usernames) {
+                    const usernames = Object.keys(index.usernames);
+                    const echoUsernames = usernames.filter(u => u.includes('echo') || u.includes('spsm') || u.includes('hacked'));
+                    
+                    if (echoUsernames.length > 0) {
+                        console.warn(`[Index-Purge] Found ${echoUsernames.length} ECHO/Fraudulent usernames in index. Purging...`);
+                        for (const uname of echoUsernames) {
+                            const id = index.usernames[uname];
+                            // Skip if developer or owner ID (though unlikely to have these usernames)
+                            if (String(id) === DEVELOPER_ID) continue;
+
+                            console.log(`[Index-Purge] Purging ${uname} (ID: ${id})`);
+                            try {
+                                await GitHubAPI.safeDeleteFile(
+                                    `created-news-accounts-storage/${id}.json`,
+                                    `System: Instant index-based purge of fraudulent account (${uname})`
+                                );
+                                // Also remove from index to prevent repeat attempts
+                                delete index.usernames[uname];
+                            } catch (e) {
+                                console.error(`[Index-Purge] Failed to purge ${uname}:`, e);
+                            }
+                        }
+                        // Update index once after all purges
+                        await GitHubAPI.updateFile('created-news-accounts-storage/index.json', JSON.stringify(index, null, 2), 'System: Cleaned up index after fraudulent account purge', indexData.sha);
+                    }
+                }
+            }
+            // --------------------------------------------
+
             const files = await GitHubAPI.listFiles('created-news-accounts-storage');
             
             const accountFiles = files.filter(f => f.name.endsWith('.json') && f.name !== '.gitkeep' && f.name !== 'index.json' && !f.name.startsWith('idx_'));
