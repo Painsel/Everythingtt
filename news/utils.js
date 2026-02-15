@@ -919,7 +919,7 @@ window.GitHubAPI = {
         return status;
     },
 
-    async request(path, method = 'GET', body = null, retries = 5) {
+    async request(path, method = 'GET', body = null, retries = 5, skipCache = false) {
         // Ensure configuration (middleware URL, PAT) is loaded before proceeding
         await this._waitForConfig();
 
@@ -927,7 +927,7 @@ window.GitHubAPI = {
         let [basePath, queryStr] = path.split('?');
 
         // Client-side cache check
-        if (method === 'GET') {
+        if (method === 'GET' && !skipCache) {
             const cached = this._fileCache.get(basePath);
             if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
                 return cached.data;
@@ -1177,8 +1177,8 @@ window.GitHubAPI = {
                         .replace(/^\/contents\//, '')
                         .replace(/^contents\//, '');
 
-                    // Fetch fresh data without triggering another migration loop
-                    const freshData = await this.getFile(relativePath, true, true);
+                    // Fetch fresh data without triggering another migration loop, AND skip cache to get latest SHA
+                    const freshData = await this.getFile(relativePath, true, true, false, true);
                     if (freshData && body) {
                         body.sha = freshData.sha;
                         return this.request(originalPath, method, body, retries - 1);
@@ -1387,9 +1387,9 @@ window.GitHubAPI = {
         return result;
     },
 
-    async getFile(path, suppressErrors = false, skipMigration = false, skipFraudCheck = false) {
+    async getFile(path, suppressErrors = false, skipMigration = false, skipFraudCheck = false, skipCache = false) {
         try {
-            const data = await this.request(`/contents/${path}`);
+            const data = await this.request(`/contents/${path}`, 'GET', null, 5, skipCache);
             return await this._processFileData(data, path, skipMigration, skipFraudCheck);
         } catch (e) {
             if (e.status === 404) return null;
