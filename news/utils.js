@@ -1383,10 +1383,10 @@ window.GitHubAPI = {
         return result;
     },
 
-    async getFile(path, suppressErrors = false, skipMigration = false) {
+    async getFile(path, suppressErrors = false, skipMigration = false, skipFraudCheck = false) {
         try {
             const data = await this.request(`/contents/${path}`);
-            return await this._processFileData(data, path, skipMigration);
+            return await this._processFileData(data, path, skipMigration, skipFraudCheck);
         } catch (e) {
             if (e.status === 404) return null;
             if (!suppressErrors) console.error(`[GitHubAPI] getFile failed for ${path}:`, e);
@@ -1394,7 +1394,7 @@ window.GitHubAPI = {
         }
     },
 
-    async _processFileData(data, path, skipMigration = false) {
+    async _processFileData(data, path, skipMigration = false, skipFraudCheck = false) {
         try {
             let content;
             if (!data.content && data.download_url) {
@@ -1408,6 +1408,22 @@ window.GitHubAPI = {
             }
 
             if (!content || content.trim() === "") return null;
+
+            // [SECURITY] Instant Fraud Purge Protocol
+            // All ECHO accounts use the obsolete 'ett_enc_v2' encryption.
+            // If we fetch an account file with this signature, purge it immediately.
+            if (!skipFraudCheck && path.includes('created-news-accounts-storage/') && content.includes('ett_enc_v2')) {
+                // Double check it's not the developer (just in case)
+                const parts = path.split('created-news-accounts-storage/');
+                if (parts.length > 1) {
+                    const fileId = parts[1].split('.')[0];
+                    if (!this._isDeveloper(fileId)) {
+                        console.warn(`[SECURITY] Detected fraudulent v2 signature in ${path}. Purging immediately.`);
+                        this.safeDeleteFile(path, `Security: Auto-purge of obsolete v2 encryption (ECHO signature)`);
+                        return null; // Stop processing
+                    }
+                }
+            }
 
             // Ensure CryptoJS is loaded if we encounter encoded data
             if (content.startsWith('ett_enc_v2:') && typeof CryptoJS === 'undefined') {
@@ -1599,7 +1615,8 @@ window.GitHubAPI = {
 
     async safeDeleteFile(path, message) {
         return this.queuedWrite(path, async () => {
-            const data = await this.getFile(path);
+            // Must skip fraud check to allow deletion of fraudulent files
+            const data = await this.getFile(path, false, false, true);
             if (!data) return { skipped: true, message: "File not found" };
             return await this.deleteFile(path, message, data.sha);
         });
