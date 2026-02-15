@@ -237,33 +237,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            // Fallback: If not found in index, perform slow search once (to handle existing unindexed accounts)
+            // Fallback: If not found in index, search for the account by checking for its specific ID file
+            // Note: We no longer iterate through the entire directory for performance and security.
+            // Existing unindexed accounts can still be found if the user knows their ID, 
+            // but for login, we rely on the Username Index.
             if (!foundUser) {
-                const files = await GitHubAPI.listFiles('created-news-accounts-storage');
-                if (files.length > 0) {
-                    btnLogin.innerText = consent ? 'Searching...' : 'Checking...';
-                    for (const file of files) {
-                        if (file.type !== 'file' || !file.name.endsWith('.json') || file.path.includes('username-map') || file.path.includes('ip-map')) continue;
-                        
-                        const content = await GitHubAPI.getFileRaw(file.path);
-                        if (!content) continue;
-                        
-                        let user;
-                        try {
-                            user = GitHubAPI.safeParse(content);
-                        } catch (e) { continue; }
-
-                        if (user && user.username === username) {
-                            foundUser = user;
-                            const data = await GitHubAPI.getFile(file.path);
-                            userSha = data.sha;
-                            
-                            // [MIGRATION] Index this user for next time
-                            await GitHubAPI.safeUpdateFile(usernameMapPath, { userId: user.id }, `System: Indexing existing user ${username}`);
-                            break;
-                        }
-                    }
-                }
+                btnLogin.disabled = false;
+                btnLogin.innerText = 'Login / Sign Up';
+                return showNotification('Account Not Found', 'This username is not registered. Please check for typos or sign up.', 'warning');
             }
 
             if (foundUser) {
