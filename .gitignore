@@ -18,5 +18,5 @@ _site/
 Gemfile.lock
 
 # Custom ignores
-vercel/
+.vercel/
 features/
