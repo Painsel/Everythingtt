@@ -3,15 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EverythingTT</title>
+    <title>EverythingTT | Dashboard</title>
+    
     <link rel="stylesheet" href="home-style.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to EverythingTT</h1>
-        <p>This is a simple frontpage for EverythingTT.</p>
-        <button id="clickMe">Click Me</button>
+
+    <div class="dashboard-container">
+        
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>EverythingTT</h2>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="active">
+                    <a href="#">
+                        <i class="fas fa-home"></i> 
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-chart-line"></i> 
+                        <span>Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-users"></i> 
+                        <span>User Base</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i class="fas fa-cog"></i> 
+                        <span>Settings</span>
+                    </a>
+                </li>
+                
+                <li class="logout">
+                    <a href="#">
+                        <i class="fas fa-sign-out-alt"></i> 
+                        <span>Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="main-content">
+            
+            <header class="top-bar">
+                <div class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </div>
+                
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="fas fa-search" style="position: absolute; left: 15px; top: 10px; color: #aaa;"></i>
+                        <input type="text" placeholder="Search for anything...">
+                    </div>
+                    
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4e73df&color=fff" alt="Admin">
+                        <span>Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+                <h1 class="page-title">Dashboard Overview</h1>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Users</h3>
+                            <p class="stat-value">1,254</p>
+                            <span class="stat-change positive">
+                                +5.2% <i class="fas fa-arrow-up"></i>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon revenue">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Revenue</h3>
+                            <p class="stat-value">$12,450</p>
+                            <span class="stat-change positive">
+                                +8.4% <i class="fas fa-arrow-up"></i>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon activity">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Sessions</h3>
+                            <p class="stat-value">342</p>
+                            <span class="stat-change negative">
+                                -2.1% <i class="fas fa-arrow-down"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    
+                    <div class="card recent-activity">
+                        <div class="card-header">
+                            <h3>Recent Activity</h3>
+                            <button class="btn-sm">View All</button>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>John Doe</td>
+                                        <td>Login</td>
+                                        <td>Just now</td>
+                                        <td><span class="status active">Active</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Jane Smith</td>
+                                        <td>Purchase</td>
+                                        <td>5 mins ago</td>
+                                        <td><span class="status completed">Completed</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Mike Ross</td>
+                                        <td>Update Profile</td>
+                                        <td>1 hour ago</td>
+                                        <td><span class="status pending">Pending</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Rachel Green</td>
+                                        <td>Logout</td>
+                                        <td>2 hours ago</td>
+                                        <td><span class="status inactive">Inactive</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card chart-widget">
+                        <div class="card-header">
+                            <h3>Traffic Source</h3>
+                        </div>
+                        <div class="card-body chart-container">
+                            <div class="bar-chart">
+                                <div class="bar-group">
+                                    <div class="bar" style="height: 60%;" title="Direct: 60%"></div>
+                                    <span>Direct</span>
+                                </div>
+                                <div class="bar-group">
+                                    <div class="bar" style="height: 80%;" title="Social: 80%"></div>
+                                    <span>Social</span>
+                                </div>
+                                <div class="bar-group">
+                                    <div class="bar" style="height: 45%;" title="Referral: 45%"></div>
+                                    <span>Ref</span>
+                                </div>
+                                <div class="bar-group">
+                                    <div class="bar" style="height: 90%;" title="Organic: 90%"></div>
+                                    <span>Search</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
     </div>
+
     <script src="home-scripts.js"></script>
 </body>
 </html>
