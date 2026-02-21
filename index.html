@@ -5,80 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EverythingTT | Welcome</title>
     
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="home-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--primary-color)',
+                        'primary-dark': 'var(--primary-dark)',
+                        secondary: 'var(--secondary-color)',
+                        accent: 'var(--accent-color)',
+                        light: 'var(--light-bg)',
+                        dark: 'var(--text-dark)',
+                    },
+                    boxShadow: {
+                        sm: 'var(--shadow-sm)',
+                        DEFAULT: 'var(--shadow)',
+                        lg: 'var(--shadow-lg)',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body>
+<body class="bg-light text-dark font-sans antialiased flex flex-col min-h-screen">
 
-    <header class="top-bar">
-        <div class="container top-bar-content">
-            <div class="logo">
+    <!-- Top Navigation Bar -->
+    <header class="bg-white shadow-sm sticky top-0 z-50 h-[70px] flex items-center">
+        <div class="container mx-auto px-6 flex justify-between items-center w-full">
+            <div class="text-2xl font-extrabold text-primary flex items-center gap-2 uppercase tracking-wide">
                 <i class="fas fa-cubes"></i> EverythingTT
             </div>
             
-            <nav class="top-nav">
-                <a href="#" class="active">Home</a>
-                <a href="#">Features</a>
-                <a href="#">Pricing</a>
-                <a href="#">About</a>
+            <nav class="hidden md:flex gap-8">
+                <a href="#" class="text-gray-600 font-semibold hover:text-primary transition-colors relative active">Home</a>
+                <a href="#" class="text-gray-600 font-semibold hover:text-primary transition-colors">Features</a>
+                <a href="#" class="text-gray-600 font-semibold hover:text-primary transition-colors">Pricing</a>
+                <a href="#" class="text-gray-600 font-semibold hover:text-primary transition-colors">About</a>
             </nav>
             
-            <div class="auth-buttons">
-                <a href="#" class="btn-text">Log In</a>
-                <a href="#" class="btn-primary">Sign Up</a>
+            <div class="flex items-center gap-4">
+                <a href="#" class="text-gray-600 font-semibold hover:text-primary transition-colors hidden sm:block">Log In</a>
+                <a href="#" class="bg-primary text-white px-6 py-2 rounded-full font-bold shadow-md hover:bg-primary-dark hover:-translate-y-0.5 transition-all">Sign Up</a>
             </div>
         </div>
     </header>
 
-    <main>
-        <section class="hero-section">
-            <div class="container hero-content">
-                <div class="greeting-box">
-                    <span class="greeting-time" id="greetingTime">Hello,</span>
-                    <h1 class="hero-title">Welcome to EverythingTT</h1>
-                    <p class="hero-subtitle">
+    <main class="flex-grow">
+        <!-- Hero Section -->
+        <section class="py-20 bg-gradient-to-br from-white to-[#f1f4ff] min-h-[60vh] flex items-center">
+            <div class="container mx-auto px-6 flex flex-col-reverse md:flex-row items-center justify-between gap-12">
+                <div class="flex-1 max-w-xl text-center md:text-left">
+                    <span class="inline-block text-xl text-primary font-bold mb-2 uppercase tracking-widest" id="greetingTime">Hello,</span>
+                    <h1 class="text-5xl md:text-6xl font-bold leading-tight mb-6 text-dark">Welcome to EverythingTT</h1>
+                    <p class="text-lg text-gray-500 mb-10 leading-relaxed">
                         Discover a world of possibilities. Connect, create, and collaborate 
                         with tools designed for modern creators.
                     </p>
-                    <div class="hero-actions">
-                        <button class="btn-lg primary">Get Started Now</button>
-                        <button class="btn-lg secondary">Learn More</button>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                        <button class="bg-primary text-white px-8 py-3 rounded-full text-lg font-bold shadow-lg hover:bg-primary-dark hover:-translate-y-1 transition-all">Get Started Now</button>
+                        <button class="bg-transparent border-2 border-primary text-primary px-8 py-3 rounded-full text-lg font-bold hover:bg-blue-50 transition-all">Learn More</button>
                     </div>
                 </div>
-                <div class="hero-image">
-                    <i class="fas fa-rocket big-icon"></i>
+                <div class="flex-1 flex justify-center items-center">
+                    <i class="fas fa-rocket text-[8rem] md:text-[15rem] text-primary opacity-10 animate-float"></i>
                 </div>
             </div>
         </section>
 
-        <section class="features-preview">
-            <div class="container">
-                <div class="feature-card">
-                    <i class="fas fa-bolt"></i>
-                    <h3>Fast Performance</h3>
-                    <p>Lightning fast execution for all your needs.</p>
+        <!-- Features Preview -->
+        <section class="py-16 bg-white">
+            <div class="container mx-auto px-6 flex flex-wrap justify-center gap-8">
+                <div class="bg-light p-8 rounded-2xl text-center flex-1 min-w-[280px] max-w-sm border border-gray-100 hover:-translate-y-2 hover:shadow-xl hover:bg-white transition-all duration-300">
+                    <i class="fas fa-bolt text-4xl text-primary mb-6"></i>
+                    <h3 class="text-xl font-bold mb-4 text-dark">Fast Performance</h3>
+                    <p class="text-gray-500">Lightning fast execution for all your needs.</p>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-shield-alt"></i>
-                    <h3>Secure & Safe</h3>
-                    <p>Enterprise-grade security for your data.</p>
+                <div class="bg-light p-8 rounded-2xl text-center flex-1 min-w-[280px] max-w-sm border border-gray-100 hover:-translate-y-2 hover:shadow-xl hover:bg-white transition-all duration-300">
+                    <i class="fas fa-shield-alt text-4xl text-primary mb-6"></i>
+                    <h3 class="text-xl font-bold mb-4 text-dark">Secure & Safe</h3>
+                    <p class="text-gray-500">Enterprise-grade security for your data.</p>
                 </div>
-                <div class="feature-card">
-                    <i class="fas fa-magic"></i>
-                    <h3>Smart Automation</h3>
-                    <p>Automate your workflow with AI-powered tools.</p>
+                <div class="bg-light p-8 rounded-2xl text-center flex-1 min-w-[280px] max-w-sm border border-gray-100 hover:-translate-y-2 hover:shadow-xl hover:bg-white transition-all duration-300">
+                    <i class="fas fa-magic text-4xl text-primary mb-6"></i>
+                    <h3 class="text-xl font-bold mb-4 text-dark">Smart Automation</h3>
+                    <p class="text-gray-500">Automate your workflow with AI-powered tools.</p>
                 </div>
             </div>
         </section>
     </main>
 
-    <footer class="site-footer">
-        <div class="container">
+    <footer class="bg-dark text-white py-8 mt-auto">
+        <div class="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <p>&copy; 2024 EverythingTT. All rights reserved.</p>
-            <div class="social-links">
-                <a href="#"><i class="fab fa-twitter"></i></a>
-                <a href="#"><i class="fab fa-github"></i></a>
-                <a href="#"><i class="fab fa-discord"></i></a>
+            <div class="flex gap-6">
+                <a href="#" class="text-gray-300 hover:text-white hover:scale-110 transition-transform text-xl"><i class="fab fa-twitter"></i></a>
+                <a href="#" class="text-gray-300 hover:text-white hover:scale-110 transition-transform text-xl"><i class="fab fa-github"></i></a>
+                <a href="#" class="text-gray-300 hover:text-white hover:scale-110 transition-transform text-xl"><i class="fab fa-discord"></i></a>
             </div>
         </div>
     </footer>
