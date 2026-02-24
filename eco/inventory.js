@@ -1,14 +1,17 @@
 /**
- * Economy Module - Inventory
+ * Inventory Entry Point
  */
-export default {
-    init: (container) => {
-        container.innerHTML = `
-            <h1>Your Inventory</h1>
-            <div class="card">
-                <p>You have no items yet. Visit the Marketplace!</p>
-                <a href="/eco/marketplace" class="btn btn-secondary mt-1" data-link>Go to Shop</a>
-            </div>
-        `;
-    }
-};
+import Auth from '../js/auth.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await Auth.init();
+
+    const container = document.querySelector('main');
+    container.innerHTML = `
+        <h1>Your Inventory</h1>
+        <div class="card">
+            <p>You have no items yet. Visit the Marketplace!</p>
+            <a href="marketplace.html" class="btn btn-secondary mt-1">Go to Shop</a>
+        </div>
+    `;
+});

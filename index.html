@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EverythingTT - Infinite Uptime</title>
     <link rel="stylesheet" href="assets/style.css">
-    <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- OpenGraph tags will be handled by Vercel Proxy -->
 </head>
 <body>
 
@@ -15,10 +13,10 @@
         <div class="logo">EverythingTT</div>
         <nav>
             <ul>
-                <li><a href="/" data-link>Home</a></li>
-                <li><a href="/eco" data-link>Economy</a></li>
-                <li><a href="/tube" data-link>Tube</a></li>
-                <li><a href="/news" data-link>News</a></li>
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="eco/index.html">Economy</a></li>
+                <li><a href="tube/index.html">Tube</a></li>
+                <li><a href="news/index.html">News</a></li>
             </ul>
         </nav>
         <div class="user-panel">
@@ -26,10 +24,32 @@
         </div>
     </header>
 
-    <main id="app-root" class="container">
-        <!-- Dynamic Content Loaded Here -->
-        <div style="text-align:center; margin-top:50px;">
-            <h2>Loading EverythingTT...</h2>
+    <main class="container">
+        <section class="hero">
+            <h1>Welcome to EverythingTT</h1>
+            <p>The infinite platform for trading, watching, and creating.</p>
+            <div class="cta-group">
+                <a href="eco/index.html" class="btn btn-primary">Start Trading</a>
+                <a href="tube/index.html" class="btn btn-secondary">Watch Videos</a>
+            </div>
+        </section>
+
+        <div class="grid">
+            <div class="card">
+                <h3>💰 Economy</h3>
+                <p>Trade ETT Coins & Territorial.io Gold. Play Casino, buy Marketplace items.</p>
+                <a href="eco/index.html" class="mt-1">Go to Economy &rarr;</a>
+            </div>
+            <div class="card">
+                <h3>📺 Tube</h3>
+                <p>Share videos, shorts, and music. Monetize with Memberships.</p>
+                <a href="tube/index.html" class="mt-1">Go to Tube &rarr;</a>
+            </div>
+            <div class="card">
+                <h3>📰 News</h3>
+                <p>Independent journalism platform. Write articles and share your truth.</p>
+                <a href="news/index.html" class="mt-1">Read News &rarr;</a>
+            </div>
         </div>
     </main>
 
