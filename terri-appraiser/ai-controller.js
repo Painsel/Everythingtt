@@ -6,9 +6,9 @@
  */
 
 const AI_CONFIG = {
-    // Using a reliable, OpenAI-compatible endpoint on Hugging Face
+    // Using the new, supported Hugging Face router endpoint
     model: "mistralai/Mistral-7B-Instruct-v0.3", 
-    endpoint: "https://api-inference.huggingface.co/v1/chat/completions",
+    endpoint: "https://router.huggingface.co/v1/chat/completions",
     // NOTE: Replace this with your actual token
     token: "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" 
 };
