@@ -52,6 +52,14 @@
                         Enter your credentials and a target username to fetch real-time data from the Territorial.io API. 
                         The appraiser uses a weighted algorithm to calculate USD value based on gold reserves, clan rankings, and name rarity.
                     </p>
+                    <div class="space-y-2">
+                        <p class="text-[10px] text-amber-400/80 bg-amber-400/5 p-2 rounded-lg border border-amber-400/10">
+                            <strong>Correction Mode:</strong> If the API returns incorrect points, click "Correction Mode" in the results area to manually edit values.
+                        </p>
+                        <p class="text-[10px] text-indigo-400/80 bg-indigo-400/5 p-2 rounded-lg border border-indigo-400/10">
+                            <strong>Global API:</strong> Don't want to use your credentials? Use the shared community account <code>NM972</code>. Please donate gold to this account in-game to keep it active for everyone.
+                        </p>
+                    </div>
                 </section>
 
                 <!-- Section 2 -->
@@ -545,7 +553,25 @@
                     <div id="status-dot" style="width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #475569;"></div>
                 </div>
 
-                <div class="input-group">
+                <!-- Global API Card -->
+                <div id="global-api-banner" style="padding: 1rem; background-color: rgba(99, 102, 241, 0.1); border-radius: 1rem; border: 1px solid rgba(99, 102, 241, 0.2); position: relative; overflow: hidden;">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="label-tiny" style="color: var(--primary-hover); font-size: 8px;">Shared Community API</span>
+                        <div id="global-status" style="font-size: 8px; font-weight: 900; color: #10b981;" class="uppercase">Active</div>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-slate-400" style="font-size: 8px; text-transform: uppercase; font-weight: 700;">Account: <span class="text-white">NM972</span></p>
+                            <h4 id="global-gold-balance" class="text-yellow" style="font-size: 1rem; font-weight: 700;">0 GOLD</h4>
+                        </div>
+                        <button id="use-global-btn" class="btn-text" style="font-size: 9px; background-color: var(--primary); color: white; padding: 4px 10px; border-radius: 6px;">Use Global</button>
+                    </div>
+                    <p class="text-slate-500" style="font-size: 7px; margin-top: 6px; line-height: 1.4;">
+                        Donations required to keep this account active. Send gold to <code>NM972</code> in-game to support the community.
+                    </p>
+                </div>
+
+                <div class="input-group" id="personal-api-fields">
                     <form onsubmit="return false;" class="flex-col gap-3">
                         <div class="flex justify-between items-center" style="margin-bottom: 0.25rem;">
                             <label class="label-tiny" style="color: #94a3b8;">Account Access</label>
@@ -578,6 +604,14 @@
 
                 <!-- Appraisal Results Area -->
                 <div id="appraisal-result" class="hidden result-area">
+                    <div class="flex justify-between items-center" style="margin-bottom: 0.5rem;">
+                        <h3 class="label-tiny" style="color: var(--text-muted);">Appraisal Report</h3>
+                        <button id="correction-mode-btn" class="btn-text" style="font-size: 8px; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            Correction Mode
+                        </button>
+                    </div>
+
                     <div class="flex justify-between items-center" style="align-items: flex-end;">
                         <div style="max-width: 60%; overflow: hidden;">
                             <p class="label-field" style="margin-left: 0;">Game Username</p>
@@ -585,7 +619,10 @@
                         </div>
                         <div style="text-align: right;">
                             <p class="label-field" style="margin-left: 0;">Gold Reserve</p>
-                            <h4 id="res-gold" class="text-yellow" style="font-size: 1.125rem; font-weight: 700;">0</h4>
+                            <div class="flex items-center justify-end gap-1">
+                                <h4 id="res-gold" class="text-yellow" style="font-size: 1.125rem; font-weight: 700;">0</h4>
+                                <input type="number" id="edit-gold" class="input-text hidden" style="width: 80px; text-align: right; padding: 2px 4px;">
+                            </div>
                         </div>
                     </div>
 
@@ -593,19 +630,31 @@
                     <div class="result-grid">
                         <div class="result-card">
                             <div class="label-tiny" style="font-size: 8px; color: #64748b;">Clan Member Rank A</div>
-                            <div id="res-clan-rank" class="text-indigo" style="font-size: 0.75rem; font-weight: 700;">#---</div>
+                            <div class="flex items-center justify-between">
+                                <div id="res-clan-rank" class="text-indigo" style="font-size: 0.75rem; font-weight: 700;">#---</div>
+                                <input type="number" id="edit-clan-rank" class="input-text hidden" style="width: 50px; font-size: 10px; padding: 1px 3px;">
+                            </div>
                         </div>
                         <div class="result-card">
                             <div class="label-tiny" style="font-size: 8px; color: #64748b;">Leader Points</div>
-                            <div id="res-leader-pts" class="text-pink" style="font-size: 0.75rem; font-weight: 700;">0</div>
+                            <div class="flex items-center justify-between">
+                                <div id="res-leader-pts" class="text-pink" style="font-size: 0.75rem; font-weight: 700;">0</div>
+                                <input type="number" id="edit-leader-pts" class="input-text hidden" style="width: 60px; font-size: 10px; padding: 1px 3px;">
+                            </div>
                         </div>
                         <div class="result-card">
                             <div class="label-tiny" style="font-size: 8px; color: #64748b;">Gold Rank</div>
-                            <div id="res-gold-rank-val" class="text-amber" style="font-size: 0.75rem; font-weight: 700;">#---</div>
+                            <div class="flex items-center justify-between">
+                                <div id="res-gold-rank-val" class="text-amber" style="font-size: 0.75rem; font-weight: 700;">#---</div>
+                                <input type="number" id="edit-gold-rank" class="input-text hidden" style="width: 50px; font-size: 10px; padding: 1px 3px;">
+                            </div>
                         </div>
                         <div class="result-card">
                             <div class="label-tiny" style="font-size: 8px; color: #64748b;">Admin Level</div>
-                            <div id="res-admin-rank" class="text-emerald" style="font-size: 0.75rem; font-weight: 700;">#---</div>
+                            <div class="flex items-center justify-between">
+                                <div id="res-admin-rank" class="text-emerald" style="font-size: 0.75rem; font-weight: 700;">#---</div>
+                                <input type="number" id="edit-admin-rank" class="input-text hidden" style="width: 40px; font-size: 10px; padding: 1px 3px;">
+                            </div>
                         </div>
                     </div>
 
@@ -815,6 +864,11 @@
                 const accountAccess = clone.querySelector('.input-group');
                 if (accountAccess) accountAccess.remove();
 
+                // Remove correction mode button and any visible inputs from the report
+                const correctionBtn = clone.querySelector('#correction-mode-btn');
+                if (correctionBtn) correctionBtn.remove();
+                clone.querySelectorAll('[id^="edit-"]').forEach(el => el.remove());
+
                 // PageDrop Cleanup: Remove existing PageDrop widgets if republishing
                 const existingFab = clone.querySelector('#pagedrop-fab-container');
                 const existingExpiry = clone.querySelector('#pagedrop-expiry-popup');
@@ -968,9 +1022,82 @@
             if (loadFromLocalStorage()) {
                 UI.showToast("WELCOME BACK: CREDENTIALS LOADED");
             }
+            fetchGlobalBalance();
         });
 
         let lastApiResponse = null;
+
+        /**
+         * GLOBAL API CONFIGURATION
+         * Shared community account for users who prefer not to use their own credentials.
+         */
+        const GLOBAL_API = {
+            username: "NM972",
+            password: "5eRRoOeT8aH1TuP"
+        };
+        let isGlobalApiActive = false;
+
+        /**
+         * Fetches and displays the gold balance of the global community account.
+         */
+        async function fetchGlobalBalance() {
+            const balanceEl = document.getElementById('global-gold-balance');
+            const statusEl = document.getElementById('global-status');
+            
+            try {
+                const response = await fetch("https://territorial.io/api/account/get", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        account_name: GLOBAL_API.username,
+                        password: GLOBAL_API.password,
+                        target_account_name: GLOBAL_API.username
+                    })
+                });
+                const data = await response.json();
+                if (data.status === "ok") {
+                    const gold = (data.account_data.gold_cents / 100);
+                    balanceEl.innerText = formatNumber(gold) + " GOLD";
+                    statusEl.innerText = "Active";
+                    statusEl.style.color = "#10b981";
+                } else {
+                    throw new Error("API Offline");
+                }
+            } catch (err) {
+                balanceEl.innerText = "OFFLINE";
+                statusEl.innerText = "Locked";
+                statusEl.style.color = "#f43f5e";
+            }
+        }
+
+        /**
+         * Toggles between personal credentials and global API mode.
+         */
+        document.getElementById('use-global-btn').addEventListener('click', () => {
+            const personalFields = document.getElementById('personal-api-fields');
+            const banner = document.getElementById('global-api-banner');
+            const btn = document.getElementById('use-global-btn');
+            
+            isGlobalApiActive = !isGlobalApiActive;
+            
+            if (isGlobalApiActive) {
+                personalFields.style.opacity = "0.3";
+                personalFields.style.pointerEvents = "none";
+                banner.style.backgroundColor = "rgba(99, 102, 241, 0.25)";
+                banner.style.borderColor = "var(--primary)";
+                btn.innerText = "Switch Back";
+                btn.style.backgroundColor = "#1e293b";
+                UI.showToast("GLOBAL API ACTIVE");
+            } else {
+                personalFields.style.opacity = "1";
+                personalFields.style.pointerEvents = "auto";
+                banner.style.backgroundColor = "rgba(99, 102, 241, 0.1)";
+                banner.style.borderColor = "rgba(99, 102, 241, 0.2)";
+                btn.innerText = "Use Global";
+                btn.style.backgroundColor = "var(--primary)";
+                UI.showToast("PERSONAL API ACTIVE");
+            }
+        });
 
         /**
          * UI CONTROLLER
@@ -1171,12 +1298,18 @@
          * Implements the core appraisal algorithm to estimate total worth.
          */
         document.getElementById('fetch-btn').addEventListener('click', async () => {
-            const myAcc = document.getElementById('api-username').value.trim();
-            const myPass = document.getElementById('api-password').value.trim();
+            let myAcc = document.getElementById('api-username').value.trim();
+            let myPass = document.getElementById('api-password').value.trim();
             const target = document.getElementById('target-username').value.trim();
             
+            // Use Global API credentials if active
+            if (isGlobalApiActive) {
+                myAcc = GLOBAL_API.username;
+                myPass = GLOBAL_API.password;
+            }
+
             if (!myAcc || !myPass || !target) {
-                return UI.showToast("CREDENTIALS REQUIRED");
+                return UI.showToast(isGlobalApiActive ? "TARGET USERNAME REQUIRED" : "CREDENTIALS REQUIRED");
             }
 
             const btn = document.getElementById('fetch-btn');
@@ -1217,44 +1350,15 @@
 
                 const acc = data.account_data;
 
-                // APPRAISAL LOGIC
-                const realGold = (acc.gold_cents / 100);
-                const goldInUSD = realGold / GOLD_PER_USD;
-                const clanRankVal = calculateRankWorth(acc.clan_member_rank_a, 1.21, 17.99);
-                const goldRankVal = calculateRankWorth(acc.gold_rank, 0.23, 39.99);
-                const leaderPointsVal = (acc.clan_leader_points || 0) * (121.89 / 121891);
-                const namePrestige = calculateNamePrestige(acc.username);
+                // Populate Correction Inputs with API Data
+                document.getElementById('edit-gold').value = (acc.gold_cents / 100);
+                document.getElementById('edit-clan-rank').value = acc.clan_member_rank_a || 0;
+                document.getElementById('edit-leader-pts').value = acc.clan_leader_points || 0;
+                document.getElementById('edit-gold-rank').value = acc.gold_rank || 0;
+                document.getElementById('edit-admin-rank').value = acc.admin_rank || 0;
 
-                const totalVal = goldInUSD + clanRankVal + goldRankVal + leaderPointsVal + namePrestige.total;
-
-                // UI UPDATE
-                document.getElementById('appraisal-result').classList.remove('hidden');
-                document.getElementById('res-user').innerText = acc.username;
-                document.getElementById('res-gold').innerText = formatNumber(realGold);
-                document.getElementById('res-clan-rank').innerText = `#${acc.clan_member_rank_a || '---'}`;
-                document.getElementById('res-leader-pts').innerText = formatNumber(acc.clan_leader_points || 0);
-                document.getElementById('res-gold-rank-val').innerText = `#${acc.gold_rank || '---'}`;
-                document.getElementById('res-admin-rank').innerText = `#${acc.admin_rank || '---'}`;
-                document.getElementById('res-name-bonus').innerText = `+$${namePrestige.total.toFixed(2)}`;
-                document.getElementById('res-val').innerText = `$${totalVal.toFixed(2)}`;
-
-                const tags = document.getElementById('res-name-tags');
-                tags.innerHTML = '';
-                namePrestige.badges.forEach(b => {
-                    const span = document.createElement('span');
-                    span.style.padding = "0.125rem 0.5rem";
-                    span.style.borderRadius = "0.25rem";
-                    span.style.fontSize = "7px";
-                    span.style.fontWeight = "900";
-                    span.style.textTransform = "uppercase";
-                    span.style.color = b.color;
-                    span.style.backgroundColor = b.bg;
-                    span.innerText = b.text;
-                    tags.appendChild(span);
-                });
-
-                document.getElementById('usd').value = totalVal.toFixed(2);
-                document.getElementById('usd').dispatchEvent(new Event('input'));
+                // Run Valuation
+                runAppraisal(acc.username);
 
                 statusDot.style.backgroundColor = "#10b981"; // success color
                 statusDot.classList.remove('prestige-badge');
@@ -1270,6 +1374,125 @@
                 btn.classList.remove('btn-loading');
                 btnText.innerText = "FETCH API DATA";
             }
+        });
+
+        /**
+         * CORE APPRAISAL ENGINE
+         * 
+         * Calculates account worth based on current input values (either API or manual corrections).
+         * @param {string} username - The game username for linguistic analysis.
+         */
+        function runAppraisal(username) {
+             // 1. Get Values (prioritize manual edits if they are visible/active)
+             const gold = parseFloat(document.getElementById('edit-gold').value) || 0;
+             const clanRank = parseInt(document.getElementById('edit-clan-rank').value) || 0;
+             const leaderPts = parseInt(document.getElementById('edit-leader-pts').value) || 0;
+             const goldRank = parseInt(document.getElementById('edit-gold-rank').value) || 0;
+             const adminRank = parseInt(document.getElementById('edit-admin-rank').value) || 0;
+
+             // Check for overrides vs original API data
+             if (lastApiResponse && lastApiResponse.account_data) {
+                 const original = lastApiResponse.account_data;
+                 const originalGold = original.gold_cents / 100;
+                 const originalClanRank = original.clan_member_rank_a || 0;
+                 const originalLeaderPts = original.clan_leader_points || 0;
+                 const originalGoldRank = original.gold_rank || 0;
+                 const originalAdminRank = original.admin_rank || 0;
+
+                 // Visual indicators for overrides (simple dot)
+                 const showOverride = (current, orig, elId) => {
+                     const el = document.getElementById(elId);
+                     if (current !== orig) {
+                         el.title = `Manually Corrected (Original: ${orig})`;
+                         el.style.textDecoration = "underline dotted var(--accent)";
+                     } else {
+                         el.title = "";
+                         el.style.textDecoration = "none";
+                     }
+                 };
+
+                 showOverride(gold, originalGold, 'res-gold');
+                 showOverride(clanRank, originalClanRank, 'res-clan-rank');
+                 showOverride(leaderPts, originalLeaderPts, 'res-leader-pts');
+                 showOverride(goldRank, originalGoldRank, 'res-gold-rank-val');
+                 showOverride(adminRank, originalAdminRank, 'res-admin-rank');
+             }
+
+            // 2. Perform Calculations
+            const goldInUSD = gold / GOLD_PER_USD;
+            const clanRankVal = calculateRankWorth(clanRank, 1.21, 17.99);
+            const goldRankVal = calculateRankWorth(goldRank, 0.23, 39.99);
+            const leaderPointsVal = leaderPts * (121.89 / 121891);
+            const namePrestige = calculateNamePrestige(username);
+
+            const totalVal = goldInUSD + clanRankVal + goldRankVal + leaderPointsVal + namePrestige.total;
+
+            // 3. Update UI
+            document.getElementById('appraisal-result').classList.remove('hidden');
+            document.getElementById('res-user').innerText = username;
+            document.getElementById('res-gold').innerText = formatNumber(gold);
+            document.getElementById('res-clan-rank').innerText = `#${clanRank || '---'}`;
+            document.getElementById('res-leader-pts').innerText = formatNumber(leaderPts);
+            document.getElementById('res-gold-rank-val').innerText = `#${goldRank || '---'}`;
+            document.getElementById('res-admin-rank').innerText = `#${adminRank || '---'}`;
+            document.getElementById('res-name-bonus').innerText = `+$${namePrestige.total.toFixed(2)}`;
+            document.getElementById('res-val').innerText = `$${totalVal.toFixed(2)}`;
+
+            // Sync the main converter
+            document.getElementById('usd').value = totalVal.toFixed(2);
+            document.getElementById('usd').dispatchEvent(new Event('input'));
+
+            // Badges
+            const tags = document.getElementById('res-name-tags');
+            tags.innerHTML = '';
+            namePrestige.badges.forEach(b => {
+                const span = document.createElement('span');
+                span.style.padding = "0.125rem 0.5rem";
+                span.style.borderRadius = "0.25rem";
+                span.style.fontSize = "7px";
+                span.style.fontWeight = "900";
+                span.style.textTransform = "uppercase";
+                span.style.color = b.color;
+                span.style.backgroundColor = b.bg;
+                span.innerText = b.text;
+                tags.appendChild(span);
+            });
+        }
+
+        /**
+         * CORRECTION MODE TOGGLE
+         */
+        document.getElementById('correction-mode-btn').addEventListener('click', () => {
+            const isEditing = document.getElementById('edit-gold').classList.toggle('hidden') === false;
+            
+            // Toggle all inputs
+            document.querySelectorAll('[id^="edit-"]').forEach(el => el.classList.toggle('hidden'));
+            // Toggle all result labels
+            document.querySelectorAll('[id^="res-"]').forEach(el => {
+                if (el.id !== 'res-val' && el.id !== 'res-user' && el.id !== 'res-name-bonus' && el.id !== 'res-name-tags') {
+                    el.classList.toggle('hidden');
+                }
+            });
+
+            const btn = document.getElementById('correction-mode-btn');
+            if (isEditing) {
+                btn.innerHTML = 'Save Changes';
+                btn.style.backgroundColor = 'var(--primary)';
+                btn.style.color = 'white';
+            } else {
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> Correction Mode';
+                btn.style.backgroundColor = 'transparent';
+                btn.style.color = 'var(--text-muted)';
+                // Re-run appraisal with new values
+                if (lastApiResponse) runAppraisal(lastApiResponse.account_data.username);
+            }
+        });
+
+        // Add real-time listeners to correction inputs
+        document.querySelectorAll('[id^="edit-"]').forEach(input => {
+            input.addEventListener('input', () => {
+                if (lastApiResponse) runAppraisal(lastApiResponse.account_data.username);
+            });
         });
 
         document.getElementById('debug-btn').addEventListener('click', () => {
