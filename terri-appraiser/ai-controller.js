@@ -6,11 +6,10 @@
  */
 
 const AI_CONFIG = {
-    // Using a fast, high-quality open model
-    model: "HuggingFaceH4/zephyr-7b-beta", 
-    endpoint: "https://router.huggingface.co/hf/models/",
-    // NOTE: For a public GitHub site, you can use a free token here.
-    // Visitors will be able to see it, so use a dedicated 'Public' token from HF.
+    // Using a reliable, OpenAI-compatible endpoint on Hugging Face
+    model: "mistralai/Mistral-7B-Instruct-v0.3", 
+    endpoint: "https://api-inference.huggingface.co/v1/chat/completions",
+    // NOTE: Replace this with your actual token
     token: "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" 
 };
 
@@ -76,31 +75,37 @@ const AI = {
             if (currentWorth !== "$0.00") {
                 const user = document.getElementById('res-user').innerText;
                 const gold = document.getElementById('res-gold').innerText;
-                context = `[Context: Analyzing ${user}, Worth ${currentWorth}, Gold ${gold}] `;
+                context = `[Context: Currently analyzing ${user}, Worth ${currentWorth}, Gold ${gold}] `;
             }
 
-            const response = await fetch(AI_CONFIG.endpoint + AI_CONFIG.model, {
+            const response = await fetch(AI_CONFIG.endpoint, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${AI_CONFIG.token}`
                 },
                 body: JSON.stringify({
-                    inputs: `<|system|>\n${APPRAISER_SYSTEM_PROMPT}</s>\n<|user|>\n${context}${text}</s>\n<|assistant|>`,
-                    parameters: { max_new_tokens: 250, temperature: 0.7 }
+                    model: AI_CONFIG.model,
+                    messages: [
+                        { role: "system", content: APPRAISER_SYSTEM_PROMPT },
+                        { role: "user", content: context + text }
+                    ],
+                    max_tokens: 300,
+                    temperature: 0.7
                 })
             });
 
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
+
             const data = await response.json();
-            
-            // Hugging Face returns an array or an error object
-            if (data.error) throw new Error(data.error);
-            
-            let aiResponse = data[0].generated_text.split('<|assistant|>').pop().trim();
+            const aiResponse = data.choices[0].message.content.trim();
             this.addMessage("AI", aiResponse);
 
         } catch (err) {
-            this.addMessage("AI", "The Global Brain is currently busy or requires a valid API token. Error: " + err.message);
+            this.addMessage("AI", "The Global Brain is currently busy or experiencing a connection issue. Error: " + err.message);
             console.error("AI Error:", err);
         }
     }
