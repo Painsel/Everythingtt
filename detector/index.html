@@ -139,6 +139,27 @@
                 </div>
             </section>
 
+            <!-- End-To-End Encryption (E2EE) Module -->
+            <section class="card" id="card-e2ee">
+                <div class="card-header">
+                    <span class="icon">🔐</span>
+                    <h3>E2EE Research</h3>
+                </div>
+                <div class="status" id="status-e2ee">Inactive</div>
+                <div class="description">
+                    <p style="margin-bottom:0.75rem;">Simulate <strong>End-To-End Encryption</strong> to test data privacy and man-in-the-middle resilience.</p>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
+                        <input type="text" id="e2ee-message" placeholder="Message to encrypt..." style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:6px; font-size:0.8rem;">
+                        <input type="password" id="e2ee-key" placeholder="Secret Key (min 8 chars)" style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:6px; font-size:0.8rem;">
+                        <button onclick="runE2EETest()" style="padding:0.5rem; background:var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">Run Security Test</button>
+                    </div>
+                    <div id="e2ee-result" style="display:none; font-size:0.7rem; padding:0.75rem; background:#f1f5f9; border-radius:8px; border:1px solid #cbd5e1;">
+                        <div style="margin-bottom:0.5rem;"><strong>Ciphertext:</strong> <code id="e2ee-cipher" style="word-break:break-all; color:#ef4444;"></code></div>
+                        <div><strong>Decrypted:</strong> <code id="e2ee-plain" style="color:#10b981;"></code></div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Typing Test Card -->
             <section class="card" id="card-typing">
                 <div class="card-header">

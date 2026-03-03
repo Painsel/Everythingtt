@@ -437,6 +437,94 @@ function playStoredVoice() {
     }
 }
 
+// 8.2 End-To-End Encryption (E2EE) Module
+async function runE2EETest() {
+    const msgInput = document.getElementById('e2ee-message');
+    const keyInput = document.getElementById('e2ee-key');
+    const statusE2EE = document.getElementById('status-e2ee');
+    const resultDiv = document.getElementById('e2ee-result');
+    const cipherCode = document.getElementById('e2ee-cipher');
+    const plainCode = document.getElementById('e2ee-plain');
+
+    const message = msgInput.value;
+    const password = keyInput.value;
+
+    if (!message || password.length < 8) {
+        alert('Please enter a message and a secret key (min 8 characters).');
+        return;
+    }
+
+    try {
+        statusE2EE.textContent = 'ENCRYPTING...';
+        statusE2EE.className = 'status neutral';
+
+        // 1. Generate Key from password
+        const enc = new TextEncoder();
+        const keyMaterial = await window.crypto.subtle.importKey(
+            "raw",
+            enc.encode(password),
+            { name: "PBKDF2" },
+            false,
+            ["deriveBits", "deriveKey"]
+        );
+
+        const salt = window.crypto.getRandomValues(new Uint8Array(16));
+        const key = await window.crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: 100000,
+                hash: "SHA-256",
+            },
+            keyMaterial,
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+        );
+
+        // 2. Encrypt
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const encodedMessage = enc.encode(message);
+        const ciphertext = await window.crypto.subtle.encrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            encodedMessage
+        );
+
+        // 3. Convert to base64 for display
+        const cipherArray = new Uint8Array(ciphertext);
+        const combined = new Uint8Array(salt.length + iv.length + cipherArray.length);
+        combined.set(salt);
+        combined.set(iv, salt.length);
+        combined.set(cipherArray, salt.length + iv.length);
+        
+        const base64Cipher = btoa(String.fromCharCode(...combined));
+        cipherCode.textContent = base64Cipher;
+
+        // 4. Decrypt (to prove it works)
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            ciphertext
+        );
+        
+        const dec = new TextDecoder();
+        plainCode.textContent = dec.decode(decrypted);
+
+        // 5. Update UI
+        resultDiv.style.display = 'block';
+        statusE2EE.textContent = 'SECURE';
+        statusE2EE.className = 'status positive';
+        logActivity(`E2EE security test completed. Message encrypted with AES-GCM.`, 'info');
+
+    } catch (e) {
+        console.error('Encryption failed:', e);
+        statusE2EE.textContent = 'FAILED';
+        statusE2EE.className = 'status negative';
+        logActivity('E2EE test failed: Encryption error', 'alert');
+    }
+}
+
 // 9. DOM Injection Detection (MutationObserver)
 function monitorDOMInjections() {
     const statusDOM = document.getElementById('status-dom');
