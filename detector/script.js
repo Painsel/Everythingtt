@@ -392,11 +392,14 @@ function killUserscripts() {
     }
 }
 
-// 11. Hardware-Level Detection
+// 11. Hardware-Level & Sandbox Detection
 async function detectHardware() {
     const statusHardware = document.getElementById('status-hardware');
     const hardwareList = document.getElementById('hardware-list');
+    const statusBypass = document.getElementById('status-bypass');
     hardwareList.innerHTML = '';
+    let isSandbox = false;
+    let sandboxReasons = [];
 
     const addInfo = (label, value) => {
         const li = document.createElement('li');
@@ -405,12 +408,20 @@ async function detectHardware() {
     };
 
     // CPU Cores
-    const cores = navigator.hardwareConcurrency || 'Unknown';
-    addInfo('CPU Cores', cores);
+    const cores = navigator.hardwareConcurrency || 0;
+    addInfo('CPU Cores', cores || 'Unknown');
+    if (cores === 1 || cores === 2) {
+        isSandbox = true;
+        sandboxReasons.push(`Low cores (${cores})`);
+    }
 
-    // RAM (Device Memory) - limited to 8GB by most browsers for privacy
-    const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB+` : 'Unknown';
-    addInfo('RAM (Approx)', ram);
+    // RAM (Device Memory)
+    const ram = navigator.deviceMemory || 0;
+    addInfo('RAM (Approx)', ram ? `${ram} GB+` : 'Unknown');
+    if (ram === 1 || ram === 2) {
+        isSandbox = true;
+        sandboxReasons.push(`Low RAM (${ram}GB)`);
+    }
 
     // GPU Info (WebGL)
     try {
@@ -422,12 +433,22 @@ async function detectHardware() {
             const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown';
             addInfo('GPU Vendor', vendor);
             addInfo('GPU Renderer', renderer);
+            
+            // Heuristic for VMs/Software rendering
+            const lowerRenderer = renderer.toLowerCase();
+            const virtualizationStrings = ['virtualbox', 'vmware', 'software adapter', 'swiftshader', 'mesa', 'llvmpipe', 'parallels'];
+            virtualizationStrings.forEach(v => {
+                if (lowerRenderer.includes(v)) {
+                    isSandbox = true;
+                    sandboxReasons.push(`Virtualized GPU (${v})`);
+                }
+            });
         }
     } catch (e) {
         addInfo('GPU', 'Detection failed');
     }
 
-    // Battery Info
+    // Battery Info (Virtual machines often lack battery or have static values)
     if ('getBattery' in navigator) {
         try {
             const battery = await navigator.getBattery();
@@ -439,12 +460,74 @@ async function detectHardware() {
 
     // Screen Info
     addInfo('Resolution', `${window.screen.width}x${window.screen.height}`);
-    addInfo('Color Depth', `${window.screen.colorDepth}-bit`);
-
+    
     statusHardware.textContent = 'Hardware Profiled';
     statusHardware.className = 'status positive';
-    logActivity('Hardware-level scan complete', 'info');
+
+    // Automation Check (part of bypass detection)
+    let isAutomated = false;
+    let automationReasons = [];
+    if (navigator.webdriver) {
+        isAutomated = true;
+        automationReasons.push('navigator.webdriver=true');
+    }
+    if (window.name && (window.name.includes('cdc_') || window.name.includes('selenium'))) {
+        isAutomated = true;
+        automationReasons.push('Automation window signature');
+    }
+    // Headless detection
+    if (navigator.plugins && navigator.plugins.length === 0) {
+        isAutomated = true;
+        automationReasons.push('No plugins (potential Headless mode)');
+    }
+
+    if (isAutomated || isSandbox) {
+        statusBypass.textContent = isAutomated ? 'AUTOMATION DETECTED' : 'SANDBOX DETECTED';
+        statusBypass.className = 'status negative';
+        const allReasons = [...automationReasons, ...sandboxReasons].join(', ');
+        logActivity(`Bypass heuristic triggered: ${allReasons}`, 'alert');
+    } else {
+        statusBypass.textContent = 'Normal Client';
+        statusBypass.className = 'status positive';
+    }
+
+    logActivity('Hardware and environment scan complete', 'info');
 }
+
+// 12. Input Heuristics (Bot detection)
+let lastMouseX = -1;
+let lastMouseY = -1;
+let straightLineCount = 0;
+let humanLikelihood = 0;
+
+document.addEventListener('mousemove', (e) => {
+    if (lastMouseX !== -1) {
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        
+        // Simple heuristic: bots often move in perfectly straight lines or jumps
+        if (dx === 0 || dy === 0) {
+            straightLineCount++;
+        }
+        
+        // Increment human likelihood on movement
+        humanLikelihood++;
+    }
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+});
+
+// Detect bot-like clicks
+document.addEventListener('mousedown', (e) => {
+    // Check if the click has no pressure (some bot tools lack pressure data)
+    // or if the click happened too quickly after mouse movement stopped
+    if (e.isTrusted === false) {
+        logActivity('Non-trusted click event detected (Bot Tool)', 'alert');
+        const statusBypass = document.getElementById('status-bypass');
+        statusBypass.textContent = 'INPUT AUTOMATION';
+        statusBypass.className = 'status negative';
+    }
+});
 
 // 12. Active Console Killing
 function killConsole() {
