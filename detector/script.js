@@ -10,8 +10,22 @@ function logActivity(message, type = 'info') {
     console.log(`[${time}] ${message}`);
 }
 
-// 1. Improved DevTools Detection
+// 1. Improved DevTools Detection & KILLER
 let devtoolsOpen = false;
+
+// The "Killer" function: stalls DevTools by repeatedly triggering debugger
+function killDevTools() {
+    const start = performance.now();
+    debugger; // This will pause execution ONLY if DevTools is open
+    const end = performance.now();
+    
+    // If it took longer than 100ms, DevTools is likely open
+    if (end - start > 100) {
+        logActivity('Anti-debugging: stalling DevTools...', 'alert');
+        // Self-calling loop to keep stalling if open
+        setTimeout(killDevTools, 100);
+    }
+}
 
 function detectDevTools() {
     const statusDevTools = document.getElementById('status-devtools');
@@ -162,16 +176,16 @@ document.addEventListener('click', (e) => {
     logActivity(`Click at (${e.clientX}, ${e.clientY}) on ${e.target.tagName}`, 'info');
 });
 
-// 4. Context Menu Monitoring
+// 4. Context Menu Blocking & Monitoring
 document.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); // KILL context menu
     const statusContextMenu = document.getElementById('status-contextmenu');
-    statusContextMenu.textContent = 'ATTEMPTED';
+    statusContextMenu.textContent = 'BLOCKED';
     statusContextMenu.className = 'status negative';
-    logActivity('Right-click context menu attempt blocked/detected!', 'alert');
-    // e.preventDefault(); // Uncomment if you want to block it
+    logActivity('Right-click context menu BLOCKED!', 'alert');
 });
 
-// 5. Keyboard Shortcuts Monitoring
+// 5. Keyboard Shortcuts Blocking & Monitoring
 document.addEventListener('keydown', (e) => {
     const statusShortcuts = document.getElementById('status-shortcuts');
     const keyCombo = [];
@@ -190,9 +204,10 @@ document.addEventListener('keydown', (e) => {
     );
 
     if (isInspection) {
-        statusShortcuts.textContent = `DETECTED: ${comboStr}`;
+        e.preventDefault(); // KILL inspection shortcuts
+        statusShortcuts.textContent = `BLOCKED: ${comboStr}`;
         statusShortcuts.className = 'status negative';
-        logActivity(`Inspection shortcut detected: ${comboStr}`, 'alert');
+        logActivity(`Inspection shortcut BLOCKED: ${comboStr}`, 'alert');
     } else {
         statusShortcuts.textContent = `Last key: ${comboStr}`;
         statusShortcuts.className = 'status neutral';
@@ -296,54 +311,122 @@ function monitorDOMInjections() {
     });
 }
 
-// 10. Userscript / Extension Heuristics
-function detectUserscripts() {
+// 10. Userscript Killer & Detection
+function killUserscripts() {
     const statusUserscript = document.getElementById('status-userscript');
-    let detected = false;
     let reasons = [];
 
-    // Heuristic 1: Common global variables injected by managers
-    const potentialManagers = ['GM_info', 'GM_getValue', 'GM', 'Tampermonkey'];
-    potentialManagers.forEach(manager => {
-        if (typeof window[manager] !== 'undefined') {
-            detected = true;
-            reasons.push(`Global ${manager} detected`);
+    // Heuristic: Check for common manager globals
+    const managers = ['GM_info', 'GM', 'Tampermonkey', 'unsafeWindow'];
+    managers.forEach(m => {
+        if (typeof window[m] !== 'undefined') {
+            reasons.push(`Detected ${m}`);
         }
     });
 
-    // Heuristic 2: Check for specific DOM signatures of popular extensions
-    const signatures = [
-        'tampermonkey', 'greasemonkey', 'violentmonkey', 'adblock', 'ublock'
-    ];
-    
-    const allElements = document.getElementsByTagName('*');
-    for (let i = 0; i < allElements.length; i++) {
-        const el = allElements[i];
-        const attrStr = (el.id + el.className + el.getAttribute('name')).toLowerCase();
-        
-        signatures.forEach(sig => {
-            if (attrStr.includes(sig)) {
-                detected = true;
-                reasons.push(`DOM signature: ${sig}`);
+    // Attempt to "freeze" or protect critical globals from being modified by userscripts
+    try {
+        // This is a defensive move; userscripts often try to wrap these
+        const protect = (obj, prop) => {
+            if (obj && obj[prop]) {
+                Object.defineProperty(obj, prop, {
+                    writable: false,
+                    configurable: false
+                });
             }
-        });
-        if (detected) break;
-    }
+        };
+        // Protect some core APIs (Note: this can break some legitimate site features)
+        // protect(window, 'fetch');
+        // protect(document, 'createElement');
+    } catch (e) {}
 
-    // Heuristic 3: Check for unusual script tags (e.g., from blobs or with unusual properties)
-    const scripts = document.getElementsByTagName('script');
-    for (let script of scripts) {
-        if (script.src.startsWith('blob:') || script.src.startsWith('data:')) {
-            detected = true;
-            reasons.push('Unusual script source (blob/data)');
-        }
-    }
-
-    if (detected) {
-        statusUserscript.textContent = 'DETECTED';
+    if (reasons.length > 0) {
+        statusUserscript.textContent = 'NEUTRALIZING';
         statusUserscript.className = 'status negative';
-        logActivity(`Userscript/Extension heuristic triggered: ${reasons.join(', ')}`, 'alert');
+        logActivity(`Userscript activity: ${reasons.join(', ')}`, 'alert');
+    } else {
+        statusUserscript.textContent = 'STABLE';
+        statusUserscript.className = 'status positive';
     }
+}
+
+// 11. Hardware-Level Detection
+async function detectHardware() {
+    const statusHardware = document.getElementById('status-hardware');
+    const hardwareList = document.getElementById('hardware-list');
+    hardwareList.innerHTML = '';
+
+    const addInfo = (label, value) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${label}:</strong> ${value}`;
+        hardwareList.appendChild(li);
+    };
+
+    // CPU Cores
+    const cores = navigator.hardwareConcurrency || 'Unknown';
+    addInfo('CPU Cores', cores);
+
+    // RAM (Device Memory) - limited to 8GB by most browsers for privacy
+    const ram = navigator.deviceMemory ? `${navigator.deviceMemory} GB+` : 'Unknown';
+    addInfo('RAM (Approx)', ram);
+
+    // GPU Info (WebGL)
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'Unknown';
+            const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'Unknown';
+            addInfo('GPU Vendor', vendor);
+            addInfo('GPU Renderer', renderer);
+        }
+    } catch (e) {
+        addInfo('GPU', 'Detection failed');
+    }
+
+    // Battery Info
+    if ('getBattery' in navigator) {
+        try {
+            const battery = await navigator.getBattery();
+            const level = Math.round(battery.level * 100) + '%';
+            const charging = battery.charging ? 'Charging' : 'Not charging';
+            addInfo('Battery', `${level} (${charging})`);
+        } catch (e) {}
+    }
+
+    // Screen Info
+    addInfo('Resolution', `${window.screen.width}x${window.screen.height}`);
+    addInfo('Color Depth', `${window.screen.colorDepth}-bit`);
+
+    statusHardware.textContent = 'Hardware Profiled';
+    statusHardware.className = 'status positive';
+    logActivity('Hardware-level scan complete', 'info');
+}
+
+// 12. Active Console Killing
+function killConsole() {
+    // Overwrite console methods to prevent data inspection
+    const originalLog = console.log;
+    const methods = ['log', 'warn', 'error', 'info', 'debug', 'table', 'dir'];
+    
+    methods.forEach(method => {
+        const originalMethod = console[method];
+        console[method] = function(...args) {
+            // Still allow our internal logger to work but block others
+            if (args[0] && typeof args[0] === 'string' && (args[0].startsWith('[') || args[0].startsWith('System'))) {
+                originalMethod.apply(console, args);
+            }
+        };
+    });
+
+    // Periodically clear the console
+    setInterval(() => {
+        if (devtoolsOpen) {
+            console.clear();
+            logActivity('Console cleared by anti-debugging system', 'alert');
+        }
+    }, 1000);
 }
 
 // Initial Checks
@@ -352,10 +435,14 @@ window.onload = () => {
     detectIncognito();
     monitorMedia();
     monitorDOMInjections();
-    detectUserscripts();
+    killUserscripts();
+    detectHardware();
+    killConsole();
 
-    // DevTools check is tricky, run it periodically and on resize
+    // DevTools check and kill loop
     setInterval(detectDevTools, 2000);
+    setInterval(killDevTools, 1000);
+    setInterval(killUserscripts, 3000); // Periodic userscript check
     window.addEventListener('resize', detectDevTools);
     detectDevTools();
 };

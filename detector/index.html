@@ -20,10 +20,10 @@
             <section class="card" id="card-devtools">
                 <div class="card-header">
                     <span class="icon">🔍</span>
-                    <h3>DevTools / Debugging</h3>
+                    <h3>DevTools Killer</h3>
                 </div>
                 <div class="status" id="status-devtools">Checking...</div>
-                <p class="description">Detects if browser developer tools are open or if debugging is active.</p>
+                <p class="description">Actively stalls and disrupts browser developer tools if they are opened.</p>
             </section>
 
             <section class="card" id="card-incognito">
@@ -108,10 +108,23 @@
             <section class="card" id="card-userscript">
                 <div class="card-header">
                     <span class="icon">📜</span>
-                    <h3>Userscript (Tampermonkey)</h3>
+                    <h3>Userscript Killer</h3>
                 </div>
-                <div class="status" id="status-userscript">Not detected</div>
-                <p class="description">Detects heuristics for active userscripts or extension-based injections.</p>
+                <div class="status" id="status-userscript">Active</div>
+                <p class="description">Neutralizes userscripts by freezing environment globals and blocking injections.</p>
+            </section>
+
+            <section class="card" id="card-hardware">
+                <div class="card-header">
+                    <span class="icon">💻</span>
+                    <h3>Hardware Info</h3>
+                </div>
+                <div class="status" id="status-hardware">Loading...</div>
+                <div class="description">
+                    <ul class="info-list" id="hardware-list">
+                        <!-- Populated by JS -->
+                    </ul>
+                </div>
             </section>
         </main>
 
