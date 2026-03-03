@@ -48,12 +48,12 @@ function triggerLockdown() {
     
     document.body.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#1e293b; color:#ef4444; font-family:sans-serif; text-align:center; padding:20px;">
-            <h1 style="font-size:3rem; margin-bottom:1rem;">SECURITY LOCKDOWN</h1>
-            <p style="font-size:1.2rem; margin-bottom:2rem;">Unauthorized inspection detected. Access to this page has been revoked for security reasons.</p>
+            <h1 style="font-size:3rem; margin-bottom:1rem;">EVERYTHINGTT SECURITY LOCKDOWN</h1>
+            <p style="font-size:1.2rem; margin-bottom:2rem;">Unauthorized inspection detected by the EverythingTT Security System. Access to this page has been revoked for security reasons.</p>
             <button onclick="location.reload()" style="padding:12px 24px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Restart Session</button>
         </div>
     `;
-    logActivity('SYSTEM LOCKDOWN: Access revoked due to persistent debugging', 'alert');
+    logActivity('EVERYTHINGTT SYSTEM LOCKDOWN: Access revoked due to persistent debugging', 'alert');
 }
 
 function detectDevTools() {
@@ -748,7 +748,7 @@ function simulateCrossSiteInjection() {
 
 // Initial Checks
 window.onload = () => {
-    logActivity('Security Dashboard Started', 'system');
+    logActivity('EverythingTT Security Research Center Initialized', 'system');
     detectIncognito();
     monitorMedia();
     monitorDOMInjections();
@@ -781,7 +781,7 @@ function initializeAgentLinks() {
         const o = document.createElement('div');
         o.id = i;
         o.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;text-align:center;padding:10px;font-weight:bold;z-index:999999;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:sans-serif;text-transform:uppercase;';
-        o.innerHTML = '⚠️ SECURITY MONITOR ACTIVE: THIS SITE IS BEING MONITORED BY THE CENTRAL SYSTEM';
+        o.innerHTML = '⚠️ EVERYTHINGTT SECURITY SYSTEM: THIS SITE IS BEING MONITORED BY THE CENTRAL RESEARCH CENTER';
         document.body.prepend(o);
         
         // Report back to C2 periodically
