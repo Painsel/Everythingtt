@@ -10,30 +10,61 @@ function logActivity(message, type = 'info') {
     console.log(`[${time}] ${message}`);
 }
 
-// 1. Improved DevTools Detection & KILLER
+// 1. Aggressive DevTools Killer & Detection
 let devtoolsOpen = false;
+let lockdownActive = false;
+let detectionCount = 0;
 
-// The "Killer" function: stalls DevTools by repeatedly triggering debugger
+// Aggressive "Killer" function: stalls DevTools by repeatedly triggering debugger
+// and using Function constructor to bypass some static analysis.
 function killDevTools() {
+    if (lockdownActive) return;
+
     const start = performance.now();
-    debugger; // This will pause execution ONLY if DevTools is open
+    // Use Function constructor to make it harder to ignore
+    (function() { return false; }['constructor']('debugger')());
     const end = performance.now();
     
-    // If it took longer than 100ms, DevTools is likely open
     if (end - start > 100) {
-        logActivity('Anti-debugging: stalling DevTools...', 'alert');
-        // Self-calling loop to keep stalling if open
-        setTimeout(killDevTools, 100);
+        detectionCount++;
+        logActivity(`Anti-debugging: stall #${detectionCount}`, 'alert');
+        
+        // If detected too many times (e.g., 5 times in a row), trigger lockdown
+        if (detectionCount > 5) {
+            triggerLockdown();
+        } else {
+            // Keep stalling if open
+            setTimeout(killDevTools, 50);
+        }
+    } else {
+        // Reset count if it's closed
+        detectionCount = 0;
     }
 }
 
+function triggerLockdown() {
+    if (lockdownActive) return;
+    lockdownActive = true;
+    
+    document.body.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#1e293b; color:#ef4444; font-family:sans-serif; text-align:center; padding:20px;">
+            <h1 style="font-size:3rem; margin-bottom:1rem;">SECURITY LOCKDOWN</h1>
+            <p style="font-size:1.2rem; margin-bottom:2rem;">Unauthorized inspection detected. Access to this page has been revoked for security reasons.</p>
+            <button onclick="location.reload()" style="padding:12px 24px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Restart Session</button>
+        </div>
+    `;
+    logActivity('SYSTEM LOCKDOWN: Access revoked due to persistent debugging', 'alert');
+}
+
 function detectDevTools() {
+    if (lockdownActive) return;
+    
     const statusDevTools = document.getElementById('status-devtools');
     let detectedThisRound = false;
 
     // Method 1: Timing check (debugger)
     const startTime = performance.now();
-    debugger;
+    (function() { return false; }['constructor']('debugger')());
     if (performance.now() - startTime > 100) {
         detectedThisRound = true;
     }
@@ -44,7 +75,18 @@ function detectDevTools() {
     const heightDiff = window.outerHeight - window.innerHeight;
 
     if (widthDiff > threshold || heightDiff > threshold) {
-        // This is a strong hint if the user isn't just using a very large window border
+        detectedThisRound = true;
+    }
+
+    // Method 3: Trap on function toString (often triggered by DevTools inspection)
+    const func = function() {};
+    let toStringTriggered = false;
+    func.toString = function() {
+        toStringTriggered = true;
+        return 'trap';
+    };
+    // DevTools often calls toString on objects when inspecting
+    if (toStringTriggered) {
         detectedThisRound = true;
     }
 
