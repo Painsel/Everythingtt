@@ -161,10 +161,18 @@
                     <button onclick="openRemoteTarget()" style="flex:1; padding:0.5rem; background:var(--secondary-color); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">1. Open Remote Target</button>
                     <button onclick="simulateCrossSiteInjection()" style="flex:1.5; padding:0.5rem; background:var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">2. Broadcast Monitoring</button>
                 </div>
+                
                 <div class="description" style="margin-top:1rem; padding:0.5rem; background:#f1f5f9; border-radius:6px; font-size:0.75rem;">
-                    <strong>Bookmarklet:</strong> Drag this link to your <u>Bookmarks Bar</u> (not the page):
-                    <a href="javascript:(function(){const m='ATTENTION: THIS SITE IS BEING MONITORED BY THE CENTRAL SECURITY SYSTEM';const i='monitoring-overlay-remote';if(document.getElementById(i))return;const o=document.createElement('div');o.id=i;o.style.cssText='position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;text-align:center;padding:10px;font-weight:bold;z-index:999999;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:sans-serif;text-transform:uppercase;';o.innerHTML='⚠️ SECURITY MONITOR ACTIVE: '+m;document.body.prepend(o);alert('Security Monitoring Agent Injected into '+window.location.hostname);})();void(0);" style="display:inline-block; margin-top:0.5rem; color:var(--primary-color); text-decoration:underline; font-weight:bold; padding:4px 8px; border:1px solid; border-radius:4px; background:white;">[Security Monitor Agent]</a>
-                    <p style="margin-top:0.5rem; opacity:0.8;">Once dragged to the bar, click it while visiting <u>any website</u>.</p>
+                    <strong>Automated Agent (UserScript):</strong> Copy this to Tampermonkey for <u>Auto-Injection</u> on all sites:
+                    <pre id="userscript-code" style="background:#fff; padding:5px; margin-top:5px; border:1px solid #ddd; overflow:x-auto; white-space:pre-wrap; font-size:0.7rem; max-height:100px;">// Use the bookmarklet link below for a quick test or copy the full script from the console.</pre>
+                    <a id="bookmarklet-link" href="#" style="display:inline-block; margin-top:0.5rem; color:var(--primary-color); text-decoration:underline; font-weight:bold; padding:4px 8px; border:1px solid; border-radius:4px; background:white;">[Security Monitor Agent]</a>
+                </div>
+
+                <div class="description" style="margin-top:1rem; padding:0.5rem; background:#fff1f2; border-radius:6px; font-size:0.75rem; border:1px solid #fecaca;">
+                    <strong>Live Monitored Sessions:</strong>
+                    <ul id="live-sessions-list" class="info-list" style="max-height:100px; overflow-y:auto; padding-left:0;">
+                        <li>Waiting for remote sessions...</li>
+                    </ul>
                 </div>
             </section>
         </main>

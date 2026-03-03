@@ -4,8 +4,13 @@ import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 import time
+from datetime import datetime
+
+# Global store for monitored sessions
+MONITORED_SESSIONS = {}
 
 # List of common desktop automation and bypass tools (Java, Python, C#, etc.)
+# ... (same as before)
 AUTOMATION_PROCESSES = [
     "chromedriver.exe", "geckodriver.exe", "msedgedriver.exe", # WebDrivers
     "selenium", "puppeteer", "playwright",                   # Automation Frameworks
@@ -18,6 +23,7 @@ AUTOMATION_PROCESSES = [
 ]
 
 def scan_processes():
+    # ... (same as before)
     detected = []
     for proc in psutil.process_iter(['name', 'exe', 'cmdline']):
         try:
@@ -58,6 +64,40 @@ class ScannerHandler(BaseHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*') # Allow browser access
             self.end_headers()
             self.wfile.write(json.dumps(detected).encode())
+        elif self.path == '/sessions':
+            # Clean up old sessions (inactive for > 30s)
+            now = time.time()
+            to_delete = [sid for sid, data in MONITORED_SESSIONS.items() if now - data['last_seen'] > 30]
+            for sid in to_delete:
+                del MONITORED_SESSIONS[sid]
+                
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(list(MONITORED_SESSIONS.values())).encode())
+        elif self.path.startswith('/report'):
+            # Simple reporting via query params for easy cross-site access
+            from urllib.parse import urlparse, parse_qs
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            
+            sid = params.get('sid', [None])[0]
+            host = params.get('host', ['Unknown'])[0]
+            
+            if sid:
+                MONITORED_SESSIONS[sid] = {
+                    "sid": sid,
+                    "host": host,
+                    "last_seen": time.time(),
+                    "time_str": datetime.now().strftime("%H:%M:%S")
+                }
+            
+            self.send_response(200)
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({"status": "reported"}).encode())
         else:
             self.send_response(404)
             self.end_headers()
@@ -72,7 +112,7 @@ class ScannerHandler(BaseHTTPRequestHandler):
 def run_server():
     server_address = ('', 8001) # Runs on port 8001
     httpd = HTTPServer(server_address, ScannerHandler)
-    print("Desktop Detection Service started on port 8001...")
+    print("Security C2 & Detection Service started on port 8001...")
     httpd.serve_forever()
 
 if __name__ == "__main__":
