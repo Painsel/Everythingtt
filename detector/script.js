@@ -832,35 +832,38 @@ window.onload = () => {
 };
 
 function initializeAgentLinks() {
-    const agentCode = `(function(){
+    const agentCodeRaw = `(function(){
         const sid = Math.random().toString(36).substr(2, 9);
-        const host = window.location.hostname;
+        const host = window.location.hostname || 'local-file';
         const report = () => fetch(\`http://localhost:8001/report?sid=\${sid}&host=\${host}\`).catch(()=>{});
         
-        // Auto-Injection UI
         const i = 'monitoring-overlay-auto';
         if(document.getElementById(i)) return;
+        
         const o = document.createElement('div');
         o.id = i;
         o.style.cssText = 'position:fixed;top:0;left:0;width:100%;background:#ef4444;color:white;text-align:center;padding:10px;font-weight:bold;z-index:999999;box-shadow:0 2px 10px rgba(0,0,0,0.3);font-family:sans-serif;text-transform:uppercase;';
         o.innerHTML = '⚠️ EVERYTHINGTT SECURITY SYSTEM: THIS SITE IS BEING MONITORED BY THE CENTRAL RESEARCH CENTER';
         document.body.prepend(o);
         
-        // Report back to C2 periodically
         report();
         setInterval(report, 10000);
         
-        console.log(\`Security Monitoring Agent Active on \${host} [SID: \${sid}]\`);
+        alert('EverythingTT Security Monitoring Agent Injected into ' + host);
+        console.log('Security Monitoring Agent Active on ' + host + ' [SID: ' + sid + ']');
     })();void(0);`;
+
+    // Minify by removing newlines and excessive spaces
+    const agentCodeMinified = agentCodeRaw.replace(/\n\s*/g, '');
 
     const bookmarkletLink = document.getElementById('bookmarklet-link');
     if (bookmarkletLink) {
-        bookmarkletLink.href = `javascript:${agentCode}`;
+        bookmarkletLink.href = `javascript:${agentCodeMinified}`;
     }
 
     const userscriptPre = document.getElementById('userscript-code');
     if (userscriptPre) {
-        userscriptPre.textContent = `// ==UserScript==\n// @name EverythingTT Security Agent\n// @match *://*/*\n// @grant none\n// ==/UserScript==\n\n${agentCode.replace('void(0);', '')}`;
+        userscriptPre.textContent = `// ==UserScript==\n// @name EverythingTT Security Agent\n// @match *://*/*\n// @grant none\n// ==/UserScript==\n\n${agentCodeRaw.replace('void(0);', '')}`;
     }
 }
 
