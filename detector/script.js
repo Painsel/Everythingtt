@@ -127,85 +127,99 @@ function detectDevTools() {
 
 // 2. Improved Incognito/Private Mode Detection
 async function detectIncognito() {
+    logActivity('Starting Incognito/Private Mode scan...', 'system');
     const statusIncognito = document.getElementById('status-incognito');
     let isIncognito = false;
     let detectionReasons = [];
 
-    // A. Chrome & Chromium-based (Edge, Brave, etc.)
+    // Helper to update status as soon as something is found
+    const setIncognito = (reason) => {
+        if (!isIncognito) {
+            isIncognito = true;
+            statusIncognito.textContent = 'DETECTED';
+            statusIncognito.className = 'status negative';
+        }
+        if (!detectionReasons.includes(reason)) {
+            detectionReasons.push(reason);
+            logActivity(`Private/Incognito mode detected! (Reason: ${reason})`, 'alert');
+        }
+    };
+
+    // A. Chrome & Chromium-based (Edge, Brave, etc.) - Storage Quota Heuristic
     if ('storage' in navigator && 'estimate' in navigator.storage) {
         const { quota } = await navigator.storage.estimate();
         // Chrome Incognito quota is usually much smaller (heuristics)
+        // On many machines, it's around 10% of the disk but limited in incognito
         if (quota < 120000000) {
-            isIncognito = true;
-            detectionReasons.push('Low storage quota');
+            setIncognito('Low storage quota');
         }
     }
 
-    // B. FileSystem API (Legacy but still useful for some browsers)
+    // B. Chrome & Chromium-based - FileSystem API (Legacy check)
     if (window.webkitRequestFileSystem) {
         window.webkitRequestFileSystem(window.TEMPORARY, 1, () => {
             // Success in normal mode
         }, () => {
-            isIncognito = true; // Fails in incognito
-            detectionReasons.push('FileSystem API disabled');
-            updateIncognitoStatus(isIncognito, detectionReasons);
+            setIncognito('FileSystem API restricted');
         });
     }
 
     // C. IndexedDB (Firefox & Safari)
     try {
-        const db = indexedDB.open("test_incognito");
+        const db = indexedDB.open("test_incognito_modern");
         db.onerror = () => {
-            isIncognito = true;
-            detectionReasons.push('IndexedDB access denied');
-            updateIncognitoStatus(isIncognito, detectionReasons);
+            setIncognito('IndexedDB access denied');
         };
         db.onsuccess = () => {
-            // Check if we can actually write
-            updateIncognitoStatus(isIncognito, detectionReasons);
+            // Normal mode
         };
     } catch (e) {
-        isIncognito = true;
-        detectionReasons.push('IndexedDB exception');
-        updateIncognitoStatus(isIncognito, detectionReasons);
+        setIncognito('IndexedDB exception');
     }
 
     // D. Safari specific (Modern)
     if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
         try {
-            localStorage.setItem("test_incognito", "1");
-            localStorage.removeItem("test_incognito");
+            localStorage.setItem("test_incognito_safari", "1");
+            localStorage.removeItem("test_incognito_safari");
         } catch (e) {
-            isIncognito = true;
-            detectionReasons.push('LocalStorage disabled (Safari)');
+            setIncognito('LocalStorage disabled (Safari)');
         }
     }
 
     // E. Service Worker check (Firefox)
     if ('serviceWorker' in navigator) {
-        // In some browsers/versions, Service Workers are disabled in private mode
         try {
-            const registrations = await navigator.serviceWorker.getRegistrations();
+            // Service worker registrations often fail in private mode in older versions
+            await navigator.serviceWorker.getRegistrations();
         } catch (e) {
-            isIncognito = true;
-            detectionReasons.push('ServiceWorker access denied');
+            setIncognito('ServiceWorker access denied');
         }
     }
 
-    updateIncognitoStatus(isIncognito, detectionReasons);
-}
-
-function updateIncognitoStatus(isIncognito, reasons = []) {
-    const statusIncognito = document.getElementById('status-incognito');
-    if (isIncognito) {
-        statusIncognito.textContent = 'DETECTED';
-        statusIncognito.className = 'status negative';
-        const reasonStr = reasons.length > 0 ? ` (Reason: ${reasons.join(', ')})` : '';
-        logActivity(`Private/Incognito mode detected!${reasonStr}`, 'alert');
-    } else {
-        statusIncognito.textContent = 'Normal Mode';
-        statusIncognito.className = 'status positive';
+    // F. StorageManager Persist check
+    if ('storage' in navigator && 'persist' in navigator.storage) {
+        try {
+            const isPersisted = await navigator.storage.persisted();
+            if (!isPersisted) {
+                // Try to persist - this usually fails or is denied in incognito
+                const result = await navigator.storage.persist();
+                if (!result && isIncognito === false) {
+                    // This is not a definitive check on its own, but can be a hint
+                    setIncognito('Storage persistence denied');
+                }
+            }
+        } catch (e) {}
     }
+
+    // G. Final check for "Normal Mode" if nothing was found after a short delay
+    setTimeout(() => {
+        if (!isIncognito && statusIncognito.textContent === 'Checking...') {
+            statusIncognito.textContent = 'Normal Mode';
+            statusIncognito.className = 'status positive';
+            logActivity('Incognito check completed: Normal mode confirmed', 'system');
+        }
+    }, 5000); // Increased to 5s for more reliability
 }
 
 // 3. Click Monitoring
