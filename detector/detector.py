@@ -74,7 +74,7 @@ class ScannerHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, ngrok-skip-browser-warning')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With, ngrok-skip-browser-warning')
         self.end_headers()
 
     def do_GET(self):
@@ -219,13 +219,6 @@ class ScannerHandler(BaseHTTPRequestHandler):
         else:
             self.send_response(404)
             self.end_headers()
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With')
-        self.end_headers()
 
 def run_server():
     server_address = ('', 8001) # Runs on port 8001

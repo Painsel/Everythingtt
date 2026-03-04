@@ -176,7 +176,7 @@
                     <p style="margin-bottom:0.75rem;">Simulate <strong>End-To-End Encryption</strong> to test data privacy and man-in-the-middle resilience.</p>
                     <form onsubmit="event.preventDefault(); runE2EETest();" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;">
                         <input type="text" id="e2ee-message" placeholder="Message to encrypt..." style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:6px; font-size:0.8rem;">
-                        <input type="password" id="e2ee-key" placeholder="Secret Key (min 8 chars)" style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:6px; font-size:0.8rem;">
+                        <input type="password" id="e2ee-key" placeholder="Secret Key (min 8 chars)" autocomplete="current-password" style="padding:0.5rem; border:1px solid #e2e8f0; border-radius:6px; font-size:0.8rem;">
                         <button type="submit" style="padding:0.5rem; background:var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">Run Security Test</button>
                     </form>
                     <div id="e2ee-result" style="display:none; font-size:0.7rem; padding:0.75rem; background:#f1f5f9; border-radius:8px; border:1px solid #cbd5e1;">
