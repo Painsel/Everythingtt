@@ -346,7 +346,7 @@
         </section>
     </div>
 
-    <!-- Custom Context Menu -->
+    <!-- Custom Context Menu for Page -->
     <div id="custom-context-menu" class="custom-menu">
         <ul>
             <li onclick="logActivity('Custom Context: Inspect Element', 'info')">🔍 Inspect Element</li>
@@ -355,6 +355,18 @@
             <li class="separator"></li>
             <li onclick="location.reload()">🔄 Reload Page</li>
             <li onclick="window.print()">🖨️ Print</li>
+        </ul>
+    </div>
+
+    <!-- Custom Context Menu for DevTools -->
+    <div id="dev-context-menu" class="custom-menu dev-menu">
+        <ul>
+            <li onclick="clearDevConsole()">🧹 Clear Console</li>
+            <li onclick="refreshDevElements()">🔄 Refresh DOM Tree</li>
+            <li onclick="copyDevSelectedElement()">📋 Copy Selector</li>
+            <li class="separator"></li>
+            <li onclick="exportNetworkLog()">💾 Export Network Log</li>
+            <li onclick="toggleCustomDevTools()">❌ Close DevTools</li>
         </ul>
     </div>
 

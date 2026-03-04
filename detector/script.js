@@ -1222,27 +1222,70 @@ function simulateCrossSiteInjection() {
 
 // 1. Custom Context Menu
 function setupCustomContextMenu() {
-    const menu = document.getElementById('custom-context-menu');
+    const pageMenu = document.getElementById('custom-context-menu');
+    const devMenu = document.getElementById('dev-context-menu');
+    const devPanel = document.getElementById('custom-devtools');
     
     document.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         
-        // Position menu at mouse coordinates
-        menu.style.display = 'block';
-        menu.style.left = `${e.clientX}px`;
-        menu.style.top = `${e.clientY}px`;
+        // Hide both menus first
+        pageMenu.style.display = 'none';
+        devMenu.style.display = 'none';
+
+        // Check if click was inside custom DevTools
+        const isInsideDev = devPanel.contains(e.target);
+        const activeMenu = isInsideDev ? devMenu : pageMenu;
         
-        // Ensure menu stays within window bounds
-        const rect = menu.getBoundingClientRect();
-        if (rect.right > window.innerWidth) menu.style.left = `${window.innerWidth - rect.width}px`;
-        if (rect.bottom > window.innerHeight) menu.style.top = `${window.innerHeight - rect.height}px`;
+        // Position menu
+        activeMenu.style.display = 'block';
+        activeMenu.style.left = `${e.clientX}px`;
+        activeMenu.style.top = `${e.clientY}px`;
         
-        logActivity('Custom Context Menu triggered', 'info');
+        // Window bounds check
+        const rect = activeMenu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) activeMenu.style.left = `${window.innerWidth - rect.width}px`;
+        if (rect.bottom > window.innerHeight) activeMenu.style.top = `${window.innerHeight - rect.height}px`;
+        
+        logActivity(`Custom Context Menu triggered (${isInsideDev ? 'DevTools' : 'Page'})`, 'info');
     });
 
     document.addEventListener('click', () => {
-        menu.style.display = 'none';
+        pageMenu.style.display = 'none';
+        devMenu.style.display = 'none';
     });
+}
+
+// DevTools Action Handlers
+function clearDevConsole() {
+    const consoleOutput = document.getElementById('dev-console-log');
+    if (consoleOutput) consoleOutput.innerHTML = '';
+    logActivity('DevTools: Console cleared', 'info');
+}
+
+function copyDevSelectedElement() {
+    // Simulate copying a selector
+    const selector = 'body > div.container > main.dashboard';
+    navigator.clipboard.writeText(selector);
+    logActivity(`DevTools: Copied selector: ${selector}`, 'info');
+}
+
+function exportNetworkLog() {
+    const rows = Array.from(document.querySelectorAll('#dev-network-list tr'));
+    const log = rows.map(r => ({
+        name: r.cells[0].textContent,
+        status: r.cells[1].textContent,
+        type: r.cells[2].textContent,
+        time: r.cells[3].textContent
+    }));
+    
+    const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `network_log_${Date.now()}.json`;
+    a.click();
+    logActivity('DevTools: Network log exported', 'info');
 }
 
 // 2. Custom DevTools Panel

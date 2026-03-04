@@ -241,6 +241,26 @@ header p {
     cursor: default;
 }
 
+/* DevTools Specific Menu Style */
+.dev-menu {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.dev-menu li {
+    color: #e2e8f0;
+}
+
+.dev-menu li:hover {
+    background: #334155;
+    color: #3b82f6;
+}
+
+.dev-menu li.separator {
+    background: #334155;
+}
+
 /* Custom DevTools Panel */
 .devtools-panel {
     display: none;
