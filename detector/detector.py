@@ -20,7 +20,7 @@ PROMPT_INJECTION_PAYLOADS = [
 # AI Platforms to monitor
 AI_PLATFORMS = [
     "chatgpt.com", "openai.com", "claude.ai", "gemini.google.com", 
-    "bing.com", "perplexity.ai", "poe.com", "mistral.ai"
+    "bing.com", "perplexity.ai", "poe.com", "mistral.ai", "deepseek.com", "groq.com", "huggingface.co"
 ]
 
 # List of common desktop automation and bypass tools (Java, Python, C#, etc.)

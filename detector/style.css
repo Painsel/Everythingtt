@@ -212,7 +212,7 @@ header p {
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    z-index: 1000000;
+    z-index: 1000002;
     min-width: 200px;
     padding: 5px 0;
 }
