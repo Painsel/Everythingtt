@@ -204,6 +204,173 @@ header p {
 .log-entry.alert { color: #ef4444; font-weight: 600; }
 .log-entry.system { color: #3b82f6; }
 
+/* Custom Context Menu */
+.custom-menu {
+    display: none;
+    position: fixed;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 1000000;
+    min-width: 200px;
+    padding: 5px 0;
+}
+
+.custom-menu ul {
+    list-style: none;
+}
+
+.custom-menu li {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #334155;
+    transition: background 0.2s;
+}
+
+.custom-menu li:hover {
+    background: #f1f5f9;
+    color: var(--primary-color);
+}
+
+.custom-menu li.separator {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 5px 0;
+    cursor: default;
+}
+
+/* Custom DevTools Panel */
+.devtools-panel {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 40%;
+    background: #ffffff;
+    border-top: 2px solid #e2e8f0;
+    z-index: 1000001;
+    flex-direction: column;
+    box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.devtools-header {
+    background: #f8fafc;
+    padding: 0 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    height: 35px;
+}
+
+.devtools-header .tabs {
+    display: flex;
+    gap: 5px;
+    height: 100%;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 0 15px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: #64748b;
+    border-bottom: 2px solid transparent;
+    height: 100%;
+}
+
+.tab-btn:hover {
+    color: var(--text-color);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+.devtools-header .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: #94a3b8;
+}
+
+.devtools-content {
+    flex: 1;
+    overflow-y: auto;
+    background: #ffffff;
+}
+
+.tab-pane {
+    display: none;
+    height: 100%;
+    padding: 1rem;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+.console-output {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: #334155;
+    height: calc(100% - 30px);
+    overflow-y: auto;
+}
+
+.console-input-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 5px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.console-input-line span {
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+#dev-console-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.8rem;
+}
+
+.network-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+
+.network-table th {
+    text-align: left;
+    background: #f8fafc;
+    padding: 8px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #64748b;
+}
+
+.network-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.elements-tree {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: #0e7490;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;

@@ -346,6 +346,61 @@
         </section>
     </div>
 
+    <!-- Custom Context Menu -->
+    <div id="custom-context-menu" class="custom-menu">
+        <ul>
+            <li onclick="logActivity('Custom Context: Inspect Element', 'info')">🔍 Inspect Element</li>
+            <li onclick="logActivity('Custom Context: View Source', 'info')">📄 View Page Source</li>
+            <li onclick="toggleCustomDevTools()">🛠️ Toggle EverythingTT DevTools</li>
+            <li class="separator"></li>
+            <li onclick="location.reload()">🔄 Reload Page</li>
+            <li onclick="window.print()">🖨️ Print</li>
+        </ul>
+    </div>
+
+    <!-- Custom DevTools Panel -->
+    <div id="custom-devtools" class="devtools-panel">
+        <div class="devtools-header">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchDevTab('console')">Console</button>
+                <button class="tab-btn" onclick="switchDevTab('network')">Network</button>
+                <button class="tab-btn" onclick="switchDevTab('elements')">Elements</button>
+                <button class="tab-btn" onclick="switchDevTab('security')">Security</button>
+            </div>
+            <button class="close-btn" onclick="toggleCustomDevTools()">&times;</button>
+        </div>
+        <div class="devtools-content">
+            <div id="dev-tab-console" class="tab-pane active">
+                <div id="dev-console-log" class="console-output"></div>
+                <div class="console-input-line">
+                    <span>&gt;</span>
+                    <input type="text" id="dev-console-input" placeholder="Execute command...">
+                </div>
+            </div>
+            <div id="dev-tab-network" class="tab-pane">
+                <table class="network-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Type</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dev-network-list">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="dev-tab-elements" class="tab-pane">
+                <pre id="dev-elements-tree" class="elements-tree"></pre>
+            </div>
+            <div id="dev-tab-security" class="tab-pane">
+                <div id="dev-security-info"></div>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <!-- Hidden iframe for cross-site demonstration -->
     <iframe id="security-context-iframe" style="display:none;" srcdoc="<html><body><script>window.addEventListener('message', (e) => { if(e.data.type === 'TRIGGER_BROADCAST') { window.parent.postMessage({type: 'SECURITY_MONITOR', message: e.data.message}, '*'); } });</script></body></html>"></iframe>

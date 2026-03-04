@@ -1195,9 +1195,171 @@ function simulateCrossSiteInjection() {
     }, 500);
 }
 
-// Initial Checks
+// --- Custom UI Modules ---
+
+// 1. Custom Context Menu
+function setupCustomContextMenu() {
+    const menu = document.getElementById('custom-context-menu');
+    
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        
+        // Position menu at mouse coordinates
+        menu.style.display = 'block';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+        
+        // Ensure menu stays within window bounds
+        const rect = menu.getBoundingClientRect();
+        if (rect.right > window.innerWidth) menu.style.left = `${window.innerWidth - rect.width}px`;
+        if (rect.bottom > window.innerHeight) menu.style.top = `${window.innerHeight - rect.height}px`;
+        
+        logActivity('Custom Context Menu triggered', 'info');
+    });
+
+    document.addEventListener('click', () => {
+        menu.style.display = 'none';
+    });
+}
+
+// 2. Custom DevTools Panel
+let customDevToolsOpen = false;
+
+function toggleCustomDevTools() {
+    const panel = document.getElementById('custom-devtools');
+    customDevToolsOpen = !customDevToolsOpen;
+    
+    if (customDevToolsOpen) {
+        panel.style.display = 'flex';
+        logActivity('EverythingTT DevTools opened', 'system');
+        refreshDevElements();
+        updateSecurityTab();
+    } else {
+        panel.style.display = 'none';
+    }
+}
+
+function switchDevTab(tabId) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase() === tabId) btn.classList.add('active');
+    });
+    
+    // Update tab panes
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.remove('active');
+    });
+    document.getElementById(`dev-tab-${tabId}`).classList.add('active');
+}
+
+// Custom Console Redirection
+const originalConsole = { ...console };
+function setupCustomConsole() {
+    const consoleOutput = document.getElementById('dev-console-log');
+    const input = document.getElementById('dev-console-input');
+
+    const addToDevConsole = (msg, type = 'info') => {
+        const div = document.createElement('div');
+        div.className = `console-line ${type}`;
+        div.innerHTML = `<span class="time">[${new_time()}]</span> ${msg}`;
+        consoleOutput.appendChild(div);
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    };
+
+    const new_time = () => new Date().toLocaleTimeString();
+
+    // Hook into console methods
+    ['log', 'warn', 'error', 'info'].forEach(method => {
+        console[method] = function(...args) {
+            originalConsole[method].apply(console, args);
+            addToDevConsole(args.join(' '), method);
+        };
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = input.value;
+            addToDevConsole(`> ${cmd}`, 'input');
+            try {
+                const result = eval(cmd);
+                addToDevConsole(String(result), 'result');
+            } catch (err) {
+                addToDevConsole(err.message, 'error');
+            }
+            input.value = '';
+        }
+    });
+}
+
+// Custom Network Monitoring
+function setupCustomNetwork() {
+    const originalFetch = window.fetch;
+    const networkList = document.getElementById('dev-network-list');
+
+    window.fetch = async (...args) => {
+        const url = args[0];
+        const start = performance.now();
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${url.split('/').pop() || url}</td><td>Pending</td><td>Fetch</td><td>-</td>`;
+        networkList.prepend(row);
+
+        try {
+            const response = await originalFetch.apply(window, args);
+            const duration = Math.round(performance.now() - start);
+            row.cells[1].textContent = response.status;
+            row.cells[1].style.color = response.ok ? '#10b981' : '#ef4444';
+            row.cells[3].textContent = `${duration}ms`;
+            return response;
+        } catch (err) {
+            row.cells[1].textContent = 'Failed';
+            row.cells[1].style.color = '#ef4444';
+            throw err;
+        }
+    };
+}
+
+// Custom Elements Tree
+function refreshDevElements() {
+    const tree = document.getElementById('dev-elements-tree');
+    if (!tree) return;
+    
+    // Simplified DOM tree view
+    const serialize = (el, depth = 0) => {
+        let str = "  ".repeat(depth) + `<${el.tagName.toLowerCase()}${el.id ? ' id="' + el.id + '"' : ''}>\n`;
+        Array.from(el.children).forEach(child => {
+            if (depth < 3) str += serialize(child, depth + 1);
+        });
+        return str;
+    };
+    tree.textContent = serialize(document.body);
+}
+
+// Custom Security Tab
+function updateSecurityTab() {
+    const container = document.getElementById('dev-security-info');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div style="padding:10px; background:#f8fafc; border-radius:8px; border-left:4px solid #3b82f6;">
+            <h4 style="margin-bottom:10px;">Security Context</h4>
+            <ul style="font-size:0.8rem; list-style:none;">
+                <li><strong>Lockdown Active:</strong> ${lockdownActive}</li>
+                <li><strong>DevTools Detected:</strong> ${devtoolsOpen}</li>
+                <li><strong>Secure Context:</strong> ${window.isSecureContext}</li>
+                <li><strong>Protocol:</strong> ${window.location.protocol}</li>
+            </ul>
+        </div>
+    `;
+}
+
+// Initialization
 window.onload = () => {
     logActivity('EverythingTT Security Research Center Initialized', 'system');
+    setupCustomContextMenu();
+    setupCustomConsole();
+    setupCustomNetwork();
+    
     detectIncognito();
     monitorMedia();
     monitorDOMInjections();
@@ -1211,8 +1373,10 @@ window.onload = () => {
     
     // Check for existing voice message
     if (localStorage.getItem('everythingtt_last_voice')) {
-        document.getElementById('btn-play-voice').style.display = 'block';
-        document.getElementById('voice-metadata').textContent = 'Last recording found in local storage.';
+        const btnPlay = document.getElementById('btn-play-voice');
+        if (btnPlay) btnPlay.style.display = 'block';
+        const voiceMeta = document.getElementById('voice-metadata');
+        if (voiceMeta) voiceMeta.textContent = 'Last recording found in local storage.';
     }
 
     // DevTools check and kill loop
@@ -1231,6 +1395,14 @@ window.onload = () => {
             closeScriptModal();
         }
     };
+
+    // Keyboard Shortcut for Custom DevTools (Ctrl+Shift+E)
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+            e.preventDefault();
+            toggleCustomDevTools();
+        }
+    });
 };
 
 function initializeAgentLinks() {

@@ -137,6 +137,7 @@
             <li><a href="#hardware">Hardware Profiling</a></li>
             <li><a href="#desktop">Desktop Scanner</a></li>
             <li><a href="#location">Geolocation Profiler</a></li>
+            <li><a href="#custom-ui">Custom UI & DevTools</a></li>
             <li><a href="#ai">AI Research Hub</a></li>
             <li><a href="#e2ee">E2EE Research</a></li>
             <li><a href="#agents">Security Agents</a></li>
@@ -292,6 +293,27 @@ console.log(addr.address.road, addr.address.city);</code></pre>
 
             <h2>Research Impact</h2>
             <p>Location profiling is a critical area of security research, as it can be used for geofencing, physical surveillance simulation, and verifying regional security policies.</p>
+        </section>
+
+        <section id="custom-ui" class="doc-section">
+            <span class="tag">Feature Interception</span>
+            <h1>Custom UI & DevTools</h1>
+            <p>This module demonstrates how a website can intercept and replace native browser features like the context menu and developer tools.</p>
+            
+            <h2>Context Menu Interception</h2>
+            <p>By preventing the default <code>contextmenu</code> event, a site can display its own UI, potentially hiding native inspection options.</p>
+            <pre><code>document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    showCustomMenu(e.clientX, e.clientY);
+});</code></pre>
+
+            <h2>Simulated DevTools</h2>
+            <p>The EverythingTT DevTools panel (Ctrl+Shift+E) provides a simulated environment for monitoring page state without relying on native browser tools.</p>
+            <ul>
+                <li><b>Console Redirection:</b> All <code>console.log</code> calls are captured and displayed in the custom UI.</li>
+                <li><b>Network Hooking:</b> The <code>window.fetch</code> API is wrapped to log all outgoing requests.</li>
+                <li><b>DOM Visualization:</b> A simplified tree view of the current page structure.</li>
+            </ul>
         </section>
 
         <section id="ai" class="doc-section">
