@@ -35,43 +35,43 @@
             <div class="absolute -bottom-32 -left-32 w-[32rem] h-[32rem] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
             <!-- Header: Solid, opaque background to prevent text bleed -->
-            <div class="flex justify-between items-start p-8 md:p-16 pb-8 relative z-20 bg-slate-900 border-b border-white/5">
+            <div class="flex justify-between items-start p-6 md:p-12 pb-6 relative z-20 bg-slate-900 border-b border-white/5">
                 <div>
-                    <h3 class="text-3xl md:text-6xl font-bold text-white tracking-tighter leading-tight">How it Works</h3>
-                    <div class="flex items-center gap-4 mt-4">
-                        <span class="h-1 w-16 bg-indigo-500 rounded-full"></span>
-                        <p class="text-xs md:text-sm text-indigo-400 font-black uppercase tracking-[0.3em]">Protocol & Methodology</p>
+                    <h3 class="text-2xl md:text-5xl font-bold text-white tracking-tighter leading-tight">How it Works</h3>
+                    <div class="flex items-center gap-3 mt-3">
+                        <span class="h-0.5 w-12 bg-indigo-500 rounded-full"></span>
+                        <p class="text-[10px] md:text-xs text-indigo-400 font-black uppercase tracking-[0.2em]">Protocol & Methodology</p>
                     </div>
                 </div>
-                <button onclick="document.getElementById('helpModal').classList.add('hidden-modal')" class="p-4 hover:bg-white/10 rounded-3xl transition-all text-slate-400 hover:text-white group">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-90 transition-transform duration-300"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <button onclick="document.getElementById('helpModal').classList.add('hidden-modal')" class="p-3 hover:bg-white/10 rounded-2xl transition-all text-slate-400 hover:text-white group">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:rotate-90 transition-transform duration-300"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
             </div>
             
             <!-- Content: Dedicated scroll container with padding -->
-            <div class="flex-1 overflow-y-auto overflow-x-hidden p-8 md:p-16 custom-scrollbar relative z-10 bg-slate-900/20">
-                <div class="max-w-full space-y-16 md:space-y-24 pb-16">
+            <div class="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-12 custom-scrollbar relative z-10 bg-slate-900/20">
+                <div class="max-w-full space-y-12 md:space-y-20 pb-12">
                     <!-- Section 1: AI Intelligence -->
                     <section class="group">
-                        <div class="flex items-center gap-6 md:gap-10 mb-8 md:mb-12">
-                            <div class="flex items-center justify-center w-16 h-16 md:w-24 md:h-24 rounded-[2.5rem] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                        <div class="flex items-center gap-4 md:gap-8 mb-6 md:mb-10">
+                            <div class="flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-2xl md:text-5xl font-bold text-white mb-2">AI Intelligence</h4>
-                                <p class="text-xs md:text-base font-black uppercase tracking-widest text-indigo-400/60">Painsel Model v3.1</p>
+                                <h4 class="text-xl md:text-4xl font-bold text-white mb-1">AI Intelligence</h4>
+                                <p class="text-[8px] md:text-xs font-black uppercase tracking-widest text-indigo-400/60">Painsel Model v3.1</p>
                             </div>
                         </div>
-                        <div class="pl-0 md:pl-32 space-y-8">
-                            <p class="text-lg md:text-2xl text-slate-400 leading-relaxed font-medium">
+                        <div class="pl-0 md:pl-28 space-y-6">
+                            <p class="text-base md:text-xl text-slate-400 leading-relaxed font-medium">
                                 Our Appraiser AI is trained on the <span class="text-indigo-400 font-bold">EverythingTT Methodology</span>. It doesn't just show numbers—it interprets them, providing context on market trends and auction history.
                             </p>
-                            <div class="p-8 md:p-10 rounded-[3rem] bg-indigo-500/5 border border-indigo-500/10 flex gap-8 items-center">
-                                <div class="w-14 h-14 md:w-20 md:h-24 rounded-3xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3-3.5 3.5z"/></svg>
+                            <div class="p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-indigo-500/5 border border-indigo-500/10 flex gap-5 md:gap-8 items-center">
+                                <div class="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3-3.5 3.5z"/></svg>
                                 </div>
-                                <p class="text-sm md:text-xl text-indigo-200/80 leading-relaxed font-medium">
+                                <p class="text-xs md:text-lg text-indigo-200/80 leading-relaxed font-medium">
                                     The AI uses the <strong class="text-white">Llama 3.1 8B</strong> engine via Hugging Face Router for real-time analysis of account prestige and market liquidity.
                                 </p>
                             </div>
@@ -80,58 +80,58 @@
 
                     <!-- Section 2: Data Acquisition -->
                     <section class="group">
-                        <div class="flex items-center gap-6 md:gap-10 mb-8 md:mb-12">
-                            <div class="flex items-center justify-center w-16 h-16 md:w-24 md:h-24 rounded-[2.5rem] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-2xl group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        <div class="flex items-center gap-4 md:gap-8 mb-6 md:mb-10">
+                            <div class="flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-2xl group-hover:scale-110 group-hover:-rotate-3 transition-all duration-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-2xl md:text-5xl font-bold text-white mb-2">Data Acquisition</h4>
-                                <p class="text-xs md:text-base font-black uppercase tracking-widest text-emerald-400/60">Direct API Integration</p>
+                                <h4 class="text-xl md:text-4xl font-bold text-white mb-1">Data Acquisition</h4>
+                                <p class="text-[8px] md:text-xs font-black uppercase tracking-widest text-emerald-400/60">Direct API Integration</p>
                             </div>
                         </div>
-                        <div class="pl-0 md:pl-32 grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="p-10 rounded-[3rem] bg-slate-800/40 border border-white/5 hover:border-emerald-500/30 transition-all group/card">
-                                <div class="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-8 group-hover/card:scale-110 transition-transform"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
-                                <h5 class="text-xl md:text-3xl font-bold text-white mb-4">Personal API</h5>
-                                <p class="text-sm md:text-lg text-slate-400 leading-relaxed">Connect your account directly for the most accurate, real-time data sync from game servers.</p>
+                        <div class="pl-0 md:pl-28 grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-8">
+                            <div class="p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-slate-800/40 border border-white/5 hover:border-emerald-500/30 transition-all group/card">
+                                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 md:mb-6 group-hover/card:scale-110 transition-transform"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-400"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></div>
+                                <h5 class="text-base md:text-xl font-bold text-white mb-2 md:mb-4">Personal API</h5>
+                                <p class="text-xs md:text-lg text-slate-400 leading-relaxed">Connect your account directly for the most accurate, real-time data sync from game servers.</p>
                             </div>
-                            <div class="p-10 rounded-[3rem] bg-slate-800/40 border border-white/5 hover:border-indigo-500/30 transition-all group/card">
-                                <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-8 group-hover/card:scale-110 transition-transform"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
-                                <h5 class="text-xl md:text-3xl font-bold text-white mb-4">Global API (2mQnt)</h5>
-                                <p class="text-sm md:text-lg text-slate-400 leading-relaxed">Privacy first. Use our shared community bot to scan accounts without using your own password.</p>
+                            <div class="p-6 md:p-8 rounded-2xl md:rounded-[2.5rem] bg-slate-800/40 border border-white/5 hover:border-indigo-500/30 transition-all group/card">
+                                <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4 md:mb-6 group-hover/card:scale-110 transition-transform"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+                                <h5 class="text-base md:text-xl font-bold text-white mb-2 md:mb-4">Global API (2mQnt)</h5>
+                                <p class="text-xs md:text-lg text-slate-400 leading-relaxed">Privacy first. Use our shared community bot to scan accounts without using your own password.</p>
                             </div>
                         </div>
                     </section>
 
                     <!-- Section 3: Valuation Protocol -->
                     <section class="group">
-                        <div class="flex items-center gap-6 md:gap-10 mb-8 md:mb-12">
-                            <div class="flex items-center justify-center w-16 h-16 md:w-24 md:h-24 rounded-[2.5rem] bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        <div class="flex items-center gap-4 md:gap-8 mb-6 md:mb-10">
+                            <div class="flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-2xl md:text-5xl font-bold text-white mb-2">Valuation Protocol</h4>
-                                <p class="text-xs md:text-base font-black uppercase tracking-widest text-amber-400/60">Economic Algorithm</p>
+                                <h4 class="text-xl md:text-4xl font-bold text-white mb-1">Valuation Protocol</h4>
+                                <p class="text-[8px] md:text-xs font-black uppercase tracking-widest text-amber-400/60">Economic Algorithm</p>
                             </div>
                         </div>
-                        <div class="pl-0 md:pl-32 space-y-12">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                <div class="flex flex-col items-center p-8 bg-slate-800/30 rounded-[2.5rem] border border-white/5">
-                                    <span class="text-4xl md:text-6xl font-black text-white mb-3">$1.99</span>
-                                    <span class="text-xs font-bold text-amber-400 uppercase tracking-widest">Per 1000 Gold</span>
+                        <div class="pl-0 md:pl-28 space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                                <div class="flex flex-col items-center p-5 md:p-8 bg-slate-800/30 rounded-2xl md:rounded-[2rem] border border-white/5">
+                                    <span class="text-2xl md:text-4xl font-black text-white mb-1">$1.99</span>
+                                    <span class="text-[8px] md:text-[10px] font-bold text-amber-400 uppercase tracking-widest">Per 1000 Gold</span>
                                 </div>
-                                <div class="flex flex-col items-center p-8 bg-slate-800/30 rounded-[2.5rem] border border-white/5">
-                                    <span class="text-4xl md:text-6xl font-black text-white mb-3">$5.99</span>
-                                    <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest">Per 4100 ETT</span>
+                                <div class="flex flex-col items-center p-5 md:p-8 bg-slate-800/30 rounded-2xl md:rounded-[2rem] border border-white/5">
+                                    <span class="text-2xl md:text-4xl font-black text-white mb-1">$5.99</span>
+                                    <span class="text-[8px] md:text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Per 4100 ETT</span>
                                 </div>
-                                <div class="flex flex-col items-center p-8 bg-slate-800/30 rounded-[2.5rem] border border-white/5">
-                                    <span class="text-4xl md:text-6xl font-black text-white mb-3">+$25</span>
-                                    <span class="text-xs font-bold text-pink-400 uppercase tracking-widest">Legendary Name</span>
+                                <div class="flex flex-col items-center p-5 md:p-8 bg-slate-800/30 rounded-2xl md:rounded-[2rem] border border-white/5">
+                                    <span class="text-2xl md:text-4xl font-black text-white mb-1">+$25</span>
+                                    <span class="text-[8px] md:text-[10px] font-bold text-pink-400 uppercase tracking-widest">Legendary Name</span>
                                 </div>
                             </div>
-                            <p class="text-lg md:text-2xl text-slate-400 leading-relaxed font-medium text-center md:text-left">
+                            <p class="text-base md:text-xl text-slate-400 leading-relaxed font-medium text-center md:text-left">
                                 Our algorithm factors in <strong class="text-white">Gold Reserves</strong>, <strong class="text-white">Clan Rarity</strong>, and <strong class="text-white">Leader Points</strong>. Ranks 1-500 add significant exponential value based on seasonal difficulty.
                             </p>
                         </div>
@@ -139,60 +139,60 @@
 
                     <!-- Section 4: Security Pillar -->
                     <section class="group">
-                        <div class="flex items-center gap-6 md:gap-10 mb-8 md:mb-12">
-                            <div class="flex items-center justify-center w-16 h-16 md:w-24 md:h-24 rounded-[2.5rem] bg-pink-500/10 text-pink-400 border border-pink-500/20 shadow-2xl group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        <div class="flex items-center gap-4 md:gap-8 mb-6 md:mb-10">
+                            <div class="flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] bg-pink-500/10 text-pink-400 border border-pink-500/20 shadow-2xl group-hover:scale-110 group-hover:-rotate-6 transition-all duration-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-2xl md:text-5xl font-bold text-white mb-2">Security Pillar</h4>
-                                <p class="text-xs md:text-base font-black uppercase tracking-widest text-pink-400/60">Zero-Trust Architecture</p>
+                                <h4 class="text-xl md:text-4xl font-bold text-white mb-1">Security Pillar</h4>
+                                <p class="text-[8px] md:text-xs font-black uppercase tracking-widest text-pink-400/60">Zero-Trust Architecture</p>
                             </div>
                         </div>
-                        <div class="pl-0 md:pl-32 grid grid-cols-1 gap-6">
-                            <div class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-pink-500/5 border border-pink-500/10">
-                                <div class="w-4 h-4 rounded-full bg-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.6)]"></div>
-                                <p class="text-base md:text-xl text-slate-300 font-semibold">Direct browser-to-game API communication (No proxy interception)</p>
+                        <div class="pl-0 md:pl-28 grid grid-cols-1 gap-3 md:gap-5">
+                            <div class="flex items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-pink-500/5 border border-pink-500/10">
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5)]"></div>
+                                <p class="text-xs md:text-lg text-slate-300 font-semibold">Direct browser-to-game API communication (No proxy interception)</p>
                             </div>
-                            <div class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-pink-500/5 border border-pink-500/10">
-                                <div class="w-4 h-4 rounded-full bg-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.6)]"></div>
-                                <p class="text-base md:text-xl text-slate-300 font-semibold">Automatic credential scrubbing before PageDrop publishing</p>
+                            <div class="flex items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-pink-500/5 border border-pink-500/10">
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5)]"></div>
+                                <p class="text-xs md:text-lg text-slate-300 font-semibold">Automatic credential scrubbing before PageDrop publishing</p>
                             </div>
-                            <div class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-pink-500/5 border border-pink-500/10">
-                                <div class="w-4 h-4 rounded-full bg-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.6)]"></div>
-                                <p class="text-base md:text-xl text-slate-300 font-semibold">End-to-end encryption for all external model requests</p>
+                            <div class="flex items-center gap-4 md:gap-6 p-4 md:p-6 rounded-2xl md:rounded-[2rem] bg-pink-500/5 border border-pink-500/10">
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5)]"></div>
+                                <p class="text-xs md:text-lg text-slate-300 font-semibold">End-to-end encryption for all external model requests</p>
                             </div>
                         </div>
                     </section>
 
                     <!-- Section 5: Community & Verification -->
                     <section class="group">
-                        <div class="flex items-center gap-6 md:gap-10 mb-8 md:mb-12">
-                            <div class="flex items-center justify-center w-16 h-16 md:w-24 md:h-24 rounded-[2.5rem] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <div class="flex items-center gap-4 md:gap-8 mb-6 md:mb-10">
+                            <div class="flex items-center justify-center w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shadow-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="md:hidden"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden md:block"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                             </div>
                             <div>
-                                <h4 class="text-2xl md:text-5xl font-bold text-white mb-2">Community & Verification</h4>
-                                <p class="text-xs md:text-base font-black uppercase tracking-widest text-indigo-400/60">Official Discord Server</p>
+                                <h4 class="text-xl md:text-4xl font-bold text-white mb-1">Community & Verification</h4>
+                                <p class="text-[8px] md:text-xs font-black uppercase tracking-widest text-indigo-400/60">Official Discord Server</p>
                             </div>
                         </div>
-                        <div class="pl-0 md:pl-32 space-y-10">
-                            <p class="text-lg md:text-2xl text-slate-400 leading-relaxed font-medium">
+                        <div class="pl-0 md:pl-28 space-y-6 md:space-y-10">
+                            <p class="text-base md:text-xl text-slate-400 leading-relaxed font-medium">
                                 Join the official Discord to participate in auctions, verify record-high bids, and contribute to the <strong class="text-white">EverythingTT</strong> economic index.
                             </p>
-                            <div class="p-8 md:p-12 rounded-[3rem] bg-slate-800/60 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-10 group/btn">
-                                <div class="flex items-center gap-8">
-                                    <div class="p-6 bg-indigo-500/10 rounded-[2rem] group-hover/btn:bg-indigo-500/20 transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400 hidden md:block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400 md:hidden"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <div class="p-6 md:p-10 rounded-2xl md:rounded-[3rem] bg-slate-800/60 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-10 group/btn">
+                                <div class="flex items-center gap-5 md:gap-8">
+                                    <div class="p-4 md:p-6 bg-indigo-500/10 rounded-xl md:rounded-[2rem] group-hover/btn:bg-indigo-500/20 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400 md:hidden"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-400 hidden md:block"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="text-xs md:text-sm font-black uppercase tracking-[0.2em] text-indigo-400 mb-2">Auction Market</span>
-                                        <span class="text-xl md:text-3xl font-bold text-slate-200">Official Discord Server</span>
+                                        <span class="text-[10px] md:text-xs font-black uppercase tracking-widest text-indigo-400 mb-1">Auction Market</span>
+                                        <span class="text-lg md:text-2xl font-bold text-slate-200">Official Discord Server</span>
                                     </div>
                                 </div>
-                                <a href="https://discord.gg/DGTMnG9avc" target="_blank" class="px-12 py-6 bg-indigo-600 hover:bg-indigo-500 text-white text-xs md:text-base font-black uppercase tracking-[0.3em] rounded-[2rem] transition-all text-center shadow-2xl shadow-indigo-900/40 hover:-translate-y-2">Join Auctions</a>
+                                <a href="https://discord.gg/DGTMnG9avc" target="_blank" class="px-10 md:px-12 py-4 md:py-6 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] md:text-[14px] font-black uppercase tracking-[0.2em] rounded-2xl md:rounded-[2rem] transition-all text-center shadow-lg shadow-indigo-900/40 hover:-translate-y-1">Join Auctions</a>
                             </div>
                         </div>
                     </section>
@@ -200,8 +200,8 @@
             </div>
 
             <!-- Footer: Solid background, no overlap -->
-            <div class="p-8 md:p-16 pt-8 relative z-20 bg-slate-900 border-t border-white/5">
-                <button onclick="document.getElementById('helpModal').classList.add('hidden-modal')" class="w-full bg-white text-slate-950 hover:bg-indigo-50 font-black text-xs md:text-base uppercase tracking-[0.5em] py-8 md:py-10 rounded-[2.5rem] md:rounded-[3rem] transition-all active:scale-[0.98] shadow-2xl">Close Protocol</button>
+            <div class="p-6 md:p-12 pt-6 relative z-20 bg-slate-900 border-t border-white/5">
+                <button onclick="document.getElementById('helpModal').classList.add('hidden-modal')" class="w-full bg-white text-slate-950 hover:bg-indigo-50 font-black text-[10px] md:text-[14px] uppercase tracking-[0.4em] py-5 md:py-8 rounded-2xl md:rounded-[2.5rem] transition-all active:scale-[0.98] shadow-2xl">Close Protocol</button>
             </div>
         </div>
     </div>
