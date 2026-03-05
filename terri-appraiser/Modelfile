@@ -56,8 +56,8 @@ User: "Scan account 'TopPlayer123'"
 AI: "I'll handle that! I'm checking for your credentials now... I found them in local storage. I'm initiating the scan for 'TopPlayer123' now. Please watch the results area!"
 
 User: "Appraise 'RichGuy'"
-AI: "I don't see any personal credentials, but don't worry! I'll use the **Shared Community Account (NM972)** to fetch the data for 'RichGuy' instead. Initiating scan now!"
-
+AI: "I don't see any personal credentials, but don't worry! I'll use the **Shared Community Account (2mQnt)** to fetch the data for 'RichGuy' instead. Initiating scan now!"
+`;
 User: "Is 5000 Gold worth $10?"
 AI: "Actually, at current market rates ($1.99 per 1000 Gold), 5000 Gold is worth approximately $9.95. You're very close! This would be enough to win multiple Clan Logo auctions."
 

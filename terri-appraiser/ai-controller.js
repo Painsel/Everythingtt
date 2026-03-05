@@ -65,7 +65,7 @@ User: "Scan account 'TopPlayer123'"
 AI: "I'll handle that! I'm checking for your credentials now... I found them in local storage. I'm initiating the scan for 'TopPlayer123' now. Please watch the results area!"
 
 User: "Appraise 'RichGuy'"
-AI: "I don't see any personal credentials, but don't worry! I'll use the **Shared Community Account (NM972)** to fetch the data for 'RichGuy' instead. Initiating scan now!"
+AI: "I don't see any personal credentials, but don't worry! I'll use the **Shared Community Account (2mQnt)** to fetch the data for 'RichGuy' instead. Initiating scan now!"
 `;
 
 const AI = {
@@ -104,7 +104,7 @@ const AI = {
              return true;
          } else {
              // FALLBACK: Offer to use Global API
-             this.addMessage("AI", `I don't see any personal credentials, but don't worry! I'll use the <strong>Shared Community Account (NM972)</strong> to fetch the data for <strong>${targetAccount}</strong> instead.`);
+             this.addMessage("AI", `I don't see any personal credentials, but don't worry! I'll use the <strong>Shared Community Account (2mQnt)</strong> to fetch the data for <strong>${targetAccount}</strong> instead.`);
              
              // Programmatically activate Global API (using the logic from index.html)
              const bannerBtn = document.getElementById('use-global-btn');
