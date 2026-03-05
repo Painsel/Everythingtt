@@ -22,8 +22,10 @@ CORE KNOWLEDGE:
 1. MARKET RATES:
    - 4100 ETT Tokens = $5.99 USD
    - 1000 Gold = $1.99 USD
+   - 400 Robux = $4.99 USD
    - Gold per USD constant: 502.51
    - ETT per USD constant: 684.47
+   - Robux per USD constant: 80.16
 
 2. AUCTION COSTS (Record High Bids):
    - Clan Logo: 2,500 Gold
@@ -171,7 +173,7 @@ const AI = {
         } else if (action === "Analyze Market") {
             input.value = "Briefly analyze the current market for me.";
         } else if (action === "Explain Rates") {
-            input.value = "How are USD values calculated for Gold/ETT?";
+            input.value = "How are USD values calculated for Gold/ETT/Robux?";
         }
         this.sendMessage();
     },

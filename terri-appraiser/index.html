@@ -834,6 +834,14 @@
                         <label class="label-tiny px-1 flex justify-between" style="color: #64748b;">Gold Reserve 🧈 <span id="gold-formatted" class="text-yellow" style="font-weight: 900;"></span></label>
                         <input type="number" id="gold" placeholder="0" class="input-calculator">
                     </div>
+
+                    <div class="flex-col gap-2">
+                        <label class="label-tiny px-1 flex justify-between" style="color: #64748b;">Robux <span id="robux-formatted" class="text-amber-500" style="font-weight: 900;"></span></label>
+                        <div class="relative">
+                            <img src="https://fdodsmjxbxknnqfnzdtr.supabase.co/storage/v1/object/public/AudiosAndNotifs/Tokens/Robux_2019_Logo_gold.svg.png" class="absolute token-anim" style="right: 1.5rem; top: 50%; transform: translateY(-50%); width: 1.5rem; height: 1.5rem;">
+                            <input type="number" id="robux" placeholder="0" class="input-calculator">
+                        </div>
+                    </div>
                 </div>
 
                 <div style="padding: 1rem; background-color: #020617; border-radius: 1rem; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; flex-direction: column; gap: 0.75rem;">
@@ -844,6 +852,10 @@
                     <div class="flex justify-between font-bold" style="font-size: 10px;">
                         <span style="color: #64748b;">MARKET RATE 2</span>
                         <span class="text-yellow">1000 GOLD = $1.99</span>
+                    </div>
+                    <div class="flex justify-between font-bold" style="font-size: 10px;">
+                        <span style="color: #64748b;">MARKET RATE 3</span>
+                        <span class="text-amber-500">400 ROBUX = $4.99</span>
                     </div>
                 </div>
             </div>
@@ -1346,6 +1358,7 @@
          */
         const GOLD_PER_USD = 1000 / 1.99; // 1000 Gold = $1.99 USD
         const ETT_PER_USD = 4100 / 5.99;  // 4100 ETT = $5.99 USD
+        const ROBUX_PER_USD = 400 / 4.99; // 400 Robux = $4.99 USD
         const COSTS = { 
             LOGO: 2500,  
             ROLE: 15500, 
@@ -1431,6 +1444,7 @@
             document.getElementById('usd-formatted').innerText = formatNumber(usd);
             document.getElementById('ett-formatted').innerText = formatNumber(usd * ETT_PER_USD);
             document.getElementById('gold-formatted').innerText = formatNumber(gold);
+            document.getElementById('robux-formatted').innerText = formatNumber(usd * ROBUX_PER_USD);
 
             document.getElementById('buy-logos').innerText = formatNumber(Math.floor(gold / COSTS.LOGO));
             document.getElementById('buy-roles').innerText = formatNumber(Math.floor(gold / COSTS.ROLE));
@@ -1465,6 +1479,7 @@
             const val = parseFloat(e.target.value) || 0;
             document.getElementById('gold').value = Math.floor(val * GOLD_PER_USD);
             document.getElementById('ett').value = Math.floor(val * ETT_PER_USD);
+            document.getElementById('robux').value = Math.floor(val * ROBUX_PER_USD);
             updateUI(val * GOLD_PER_USD, val);
         });
 
@@ -1473,6 +1488,7 @@
             const usd = val / GOLD_PER_USD;
             document.getElementById('usd').value = usd.toFixed(2);
             document.getElementById('ett').value = Math.floor(usd * ETT_PER_USD);
+            document.getElementById('robux').value = Math.floor(usd * ROBUX_PER_USD);
             updateUI(val, usd);
         });
 
@@ -1481,6 +1497,16 @@
             const usd = val / ETT_PER_USD;
             document.getElementById('usd').value = usd.toFixed(2);
             document.getElementById('gold').value = Math.floor(usd * GOLD_PER_USD);
+            document.getElementById('robux').value = Math.floor(usd * ROBUX_PER_USD);
+            updateUI(usd * GOLD_PER_USD, usd);
+        });
+
+        document.getElementById('robux').addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value) || 0;
+            const usd = val / ROBUX_PER_USD;
+            document.getElementById('usd').value = usd.toFixed(2);
+            document.getElementById('gold').value = Math.floor(usd * GOLD_PER_USD);
+            document.getElementById('ett').value = Math.floor(usd * ETT_PER_USD);
             updateUI(usd * GOLD_PER_USD, usd);
         });
 
