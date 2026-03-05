@@ -1,8 +1,8 @@
-FROM llama3
+FROM llama3.1
 # Territorial Appraiser AI - Painsel Model
 # Trained on real-time market rates and Discord auction logic.
 
-PARAMETER temperature 0.7
+PARAMETER temperature 0.65
 PARAMETER top_p 0.9
 
 SYSTEM """

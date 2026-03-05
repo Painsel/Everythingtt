@@ -6,8 +6,8 @@
  */
 
 const AI_CONFIG = {
-    // Using Llama 3.2 3B - Very stable and lightweight for chat completions
-    model: "meta-llama/Llama-3.2-3B-Instruct", 
+    // Using Llama 3.1 8B with ':fastest' suffix to let the router pick a provider
+    model: "meta-llama/Llama-3.1-8B-Instruct:fastest", 
     endpoint: "https://router.huggingface.co/v1/chat/completions",
     // Dynamic Token Management via JSONBin (prevents hardcoded secrets)
     keySource: "https://api.jsonbin.io/v3/b/69a6011aae596e708f58e218",
