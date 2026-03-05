@@ -28,7 +28,7 @@ CORE KNOWLEDGE:
    - Account Worth = (Gold USD Value) + (Rank Worth) + (Leader Points Worth) + (Name Prestige)
    - Clan Rank 1-500: Worth between $1.21 and $17.99
    - Gold Rank 1-500: Worth between $0.23 and $39.99
-   - Leader Points: Calculated as (Points * 0.001)
+   - Leader Points: Calculated as (Points * 0.01)
 
 4. NAME PRESTIGE:
    - Legendary Short (<= 3 chars): +$75.00

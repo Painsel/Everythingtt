@@ -1575,7 +1575,7 @@
                 // Populate Correction Inputs with API Data
                 document.getElementById('edit-gold').value = (acc.gold_cents / 100);
                 document.getElementById('edit-clan-rank').value = acc.clan_member_rank_a || 0;
-                document.getElementById('edit-leader-pts').value = acc.clan_leader_points || 0;
+                document.getElementById('edit-leader-pts').value = (acc.clan_leader_points / 10) || 0;
                 document.getElementById('edit-gold-rank').value = acc.gold_rank || 0;
                 document.getElementById('edit-admin-rank').value = acc.admin_rank || 0;
 
@@ -1617,7 +1617,7 @@
                  const original = lastApiResponse.account_data;
                  const originalGold = original.gold_cents / 100;
                  const originalClanRank = original.clan_member_rank_a || 0;
-                 const originalLeaderPts = original.clan_leader_points || 0;
+                 const originalLeaderPts = (original.clan_leader_points / 10) || 0;
                  const originalGoldRank = original.gold_rank || 0;
                  const originalAdminRank = original.admin_rank || 0;
 
@@ -1644,7 +1644,7 @@
             const goldInUSD = gold / GOLD_PER_USD;
             const clanRankVal = calculateRankWorth(clanRank, 1.21, 17.99);
             const goldRankVal = calculateRankWorth(goldRank, 0.23, 39.99);
-            const leaderPointsVal = leaderPts * (121.89 / 121891);
+            const leaderPointsVal = leaderPts * 0.01;
             const namePrestige = calculateNamePrestige(username);
 
             const totalVal = goldInUSD + clanRankVal + goldRankVal + leaderPointsVal + namePrestige.total;
