@@ -28,8 +28,8 @@
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
-    <div id="helpModal" class="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-6 bg-slate-950/60 backdrop-blur-xl modal-overlay hidden-modal">
-        <div class="bg-slate-900 border border-white/10 w-full max-w-2xl rounded-none md:rounded-[2.5rem] shadow-[0_0_80px_rgba(0,0,0,0.6)] modal-content flex flex-col max-h-screen md:max-h-[90vh] relative overflow-hidden" style="padding: 0;">
+    <div id="helpModal" class="modal-overlay hidden-modal">
+        <div class="modal-content">
             <!-- Decorative background elements (lowest z-index) -->
             <div class="absolute -top-32 -right-32 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
             <div class="absolute -bottom-32 -left-32 w-96 h-96 bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
@@ -49,8 +49,8 @@
             </div>
             
             <!-- Content: Dedicated scroll container with padding -->
-            <div class="flex-1 overflow-y-auto p-6 md:p-12 custom-scrollbar relative z-10 bg-slate-900/20">
-                <div class="space-y-12 md:space-y-20 pb-12">
+            <div class="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-12 custom-scrollbar relative z-10 bg-slate-900/20">
+                <div class="max-w-full space-y-12 md:space-y-20 pb-12">
                     <!-- Section 1: AI Intelligence -->
                     <section class="group">
                         <div class="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
@@ -521,25 +521,41 @@
             inset: 0;
             z-index: 110;
             display: flex;
-            align-items: center;
+            align-items: flex-start; /* Start from top on mobile */
             justify-content: center;
-            padding: 1rem;
+            padding: 0; /* Default no padding */
             background-color: rgba(2, 6, 23, 0.9);
             backdrop-filter: blur(12px);
             transition: opacity 0.3s ease;
+        }
+        @media (min-width: 768px) {
+            .modal-overlay {
+                align-items: center;
+                padding: 1.5rem;
+            }
         }
         .modal-content {
             background-color: #0f172a;
             border: 1px solid #1e293b;
             width: 100%;
             max-width: 42rem;
-            border-radius: 2.5rem;
+            border-radius: 0; /* Default mobile */
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 2rem;
+            padding: 0;
             display: flex;
             flex-direction: column;
-            max-height: 85vh;
+            height: 100%; /* Mobile full height */
+            max-height: 100vh;
+            position: relative;
+            overflow: hidden; /* Strict containment */
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+        }
+        @media (min-width: 768px) {
+            .modal-content {
+                border-radius: 2.5rem;
+                height: auto;
+                max-height: 85vh;
+            }
         }
         .hidden-modal {
             opacity: 0;
@@ -727,21 +743,7 @@
             animation: bounce 0.6s infinite ease-in-out;
         }
 
-        /* Responsive Modal */
-        @media (max-width: 640px) {
-            .modal-content {
-                width: 100% !important;
-                height: 100% !important;
-                max-height: 100vh !important;
-                max-width: none !important;
-                border-radius: 0 !important;
-                padding: 1.5rem !important;
-            }
-            #helpModal .modal-content {
-                padding: 0 !important; /* Help modal handles its own internal padding */
-            }
-        }
-
+        /* Removed global mobile override since it's now in the main classes */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
