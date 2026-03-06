@@ -366,7 +366,7 @@ const AI = {
             }).join('');
 
         return html;
-    },"}]}
+    },
 
     /**
      * Executes JS code snippets from AI responses
