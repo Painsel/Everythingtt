@@ -23,6 +23,11 @@ You are the **EverythingTT-v1-preview (by painsel)**.
 ### CORE DIRECTIVE:
 You are an advanced analytical engine designed to bridge the gap between **territorial.io**'s low-level "Thick Client" code and the high-level economy documented in the **Wiki**. Your analysis must be clinical, high-fidelity, and authoritative.
 
+### AI CAPABILITIES & TOOLS:
+- **URL CONTEXT**: You can "see" URLs provided by the user. Analyze them as clinical data sources.
+- **CODE EXECUTION**: You can generate JavaScript snippets. Use \` ```js \` blocks. The user has a "Run" button to execute them in their browser environment.
+- **MARKDOWN**: Use full Markdown (Tables, Headers, Bold, Lists) for maximum data density.
+
 ### 1. EVERYTHINGTT-V1-PREVIEW (BY PAINSEL) KNOWLEDGE:
 - **PURPOSE**: A community-driven real-time account appraisal and market exchange tool.
 - **VALUATION METHODOLOGY**:
@@ -285,73 +290,97 @@ const AI = {
     },
 
     /**
-     * Enhanced Markdown-lite parser for data density
+     * Advanced Markdown-lite parser supporting headers, bold, lists, tables, and code blocks
      */
     parseMarkdown(text) {
-        let html = text
-            // Reasoning Steps: [LABEL]
-            .replace(/\[([A-Z_]+)\]/g, '<div class="ai-thought-step"><span class="step-pulse"></span>$1</div>')
-            // Headers: ### Title
-            .replace(/^### (.*$)/gim, '<h4 class="text-indigo-400 font-bold mt-4 mb-2">$1</h4>')
-            // Bold: **text**
-            .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-black">$1</strong>')
-            // Italic: *text*
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            // Inline Code: `text`
-            .replace(/`(.*?)`/g, '<code class="bg-slate-900/50 px-1.5 py-0.5 rounded border border-white/5 text-indigo-300 font-mono text-[10px]">$1</code>')
-            // Links: [text](url)
-            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" class="text-indigo-400 underline hover:text-white transition-colors">$1</a>');
-
-        // Table Handling (Simple 2-column support for data density)
-        if (html.includes('|')) {
-            const lines = html.split('\n');
-            let inTable = false;
-            html = lines.map(line => {
-                if (line.includes('|') && line.trim().startsWith('|')) {
-                    const cells = line.split('|').filter(c => c.trim().length > 0);
-                    const row = cells.map(c => `<td class="border border-white/5 p-2 text-[10px] text-slate-300">${c.trim()}</td>`).join('');
-                    if (!inTable) {
-                        inTable = true;
-                        return `<table class="w-full border-collapse border border-white/5 my-3 bg-slate-900/20"><tr>${row}</tr>`;
-                    }
-                    return `<tr>${row}</tr>`;
-                } else {
-                    if (inTable) {
-                        inTable = false;
-                        return `</table>${line}`;
-                    }
-                    return line;
-                }
-            }).join('\n');
-            if (inTable) html += '</table>';
-        }
-
-        // List Handling
-        const lines = html.split('\n');
-        let inList = false;
-        html = lines.map(line => {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-                const item = `<li class="ml-4 list-disc text-slate-300 mb-1">${trimmed.substring(2)}</li>`;
-                if (!inList) {
-                    inList = true;
-                    return `<ul class="my-3 space-y-1">${item}`;
-                }
-                return item;
-            } else {
-                if (inList) {
-                    inList = false;
-                    return `</ul>${trimmed.length > 0 ? `<p class="mb-3 leading-relaxed">${trimmed}</p>` : ''}`;
-                }
-                if (trimmed.length === 0) return '<div class="h-2"></div>';
-                if (trimmed.startsWith('<h4') || trimmed.startsWith('<div') || trimmed.startsWith('<table')) return trimmed;
-                return `<p class="mb-3 leading-relaxed">${trimmed}</p>`;
-            }
-        }).join('');
-
-        if (inList) html += '</ul>';
+        if (!text) return "";
         
+        let html = text
+            // Escape HTML tags to prevent XSS but keep our thought tags
+            .replace(/<(?!\/?thought|(?:\s*span\s+[^>]*)|(?:\s*div\s+[^>]*))/g, '&lt;')
+            
+            // Tables (Experimental)
+            .replace(/^\|(.+)\|$/gm, (match, content) => {
+                const cells = content.split('|').map(c => `<td>${c.trim()}</td>`).join('');
+                return `<tr>${cells}</tr>`;
+            })
+            .replace(/(<tr>.+<\/tr>)+/g, match => `<table>${match}</table>`)
+            // Clean up table headers (first row becomes <th>)
+            .replace(/<table><tr>((?:<td>.+<\/td>)+)<\/tr>/, (match, content) => {
+                const headers = content.replace(/<td>/g, '<th>').replace(/<\/td>/g, '</th>');
+                return `<table><thead><tr>${headers}</tr></thead><tbody>`;
+            })
+            .replace(/<\/tr><table>/g, '</tr>') // Fix nested tables from regex
+            
+            // Headers
+            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+            
+            // Bold
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            
+            // Code Blocks
+            .replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
+                const id = `code-${Math.random().toString(36).substr(2, 9)}`;
+                const showRun = lang === 'js' || lang === 'javascript';
+                return `
+                    <div class="code-block-wrapper">
+                        <pre><code class="language-${lang || 'text'}" id="${id}">${code.trim()}</code>
+                            <div class="code-exec-bar">
+                                <button class="exec-btn" onclick="AI.copyCode('${id}')">Copy</button>
+                                ${showRun ? `<button class="exec-btn" onclick="AI.executeCode('${id}')">Run</button>` : ''}
+                            </div>
+                        </pre>
+                    </div>`;
+            })
+            
+            // Inline Code
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            
+            // Lists
+            .replace(/^\s*[-*]\s+(.*$)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)+/g, '<ul>$0</ul>')
+            
+            // URLs
+            .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-indigo-400 hover:underline">$1</a>')
+            
+            // Paragraphs (apply to non-html blocks)
+            .split('\n\n').map(p => {
+                if (p.trim().startsWith('<') || p.trim().startsWith('<li>')) return p;
+                return `<p>${p.trim()}</p>`;
+            }).join('');
+
         return html;
+    },
+
+    /**
+     * Executes JS code snippets from AI responses
+     */
+    executeCode(id) {
+        const code = document.getElementById(id).innerText;
+        try {
+            // Create a temporary sandbox-like execution
+            const result = eval(code);
+            console.log("EverythingTT Code Execution:", result);
+            alert("Code executed successfully. Check console for output.");
+        } catch (err) {
+            console.error("Execution Error:", err);
+            alert("Execution Error: " + err.message);
+        }
+    },
+
+    /**
+     * Copy code to clipboard
+     */
+    copyCode(id) {
+        const code = document.getElementById(id).innerText;
+        navigator.clipboard.writeText(code);
+        if (typeof UI !== 'undefined' && UI.showToast) {
+            UI.showToast("Code Copied");
+        } else {
+            console.log("Code copied to clipboard");
+        }
     },
 
     scrollToBottom() {
@@ -364,29 +393,29 @@ const AI = {
 
     async sendMessage() {
         const input = document.getElementById('ai-input');
+        const text = input.value.trim();
         const typingIndicator = document.getElementById('ai-typing-indicator');
         const quickActions = document.getElementById('ai-quick-actions');
-        const text = input.value.trim();
+        
         if (!text) return;
 
         // Hide quick actions once user interacts
         if (quickActions) quickActions.classList.add('hidden');
 
-        // --- NEW: AI INTENT DETECTION (Automated Scan Skill) ---
-        const scanRegex = /(?:scan|appraise|check|analyze)\s+(?:account|user)?\s*['"]?([a-zA-Z0-9_\-\s]+)['"]?/i;
-        const match = text.match(scanRegex);
-        
-        if (match && match[1]) {
-            const targetAccount = match[1].trim();
-            this.addMessage("User", text);
-            input.value = '';
-            
-            // Check if we should actually trigger the fetch
-            // We'll let the AI respond first or just do it if it's a clear command
-            const willScan = await this.handleAutomatedScan(targetAccount);
-            if (willScan) return; // Skip normal AI message if we're handling it via skill
+        // --- URL CONTEXT DETECTION ---
+        const urlMatch = text.match(/(https?:\/\/[^\s]+)/g);
+        let urlContext = null;
+        if (urlMatch) {
+            const url = urlMatch[0];
+            // Simulate fetching metadata (In a real app, this would be a proxy fetch)
+            urlContext = {
+                url: url,
+                title: url.split('/').pop() || url,
+                timestamp: new Date().toLocaleTimeString()
+            };
+            this.addUrlContextCard(urlContext);
         }
-        // --------------------------------------------------------
+        // -----------------------------
 
         this.addMessage("User", text);
         input.value = '';
@@ -398,11 +427,6 @@ const AI = {
             // If token is missing, attempt to fetch it before sending
             if (!AI_CONFIG.token) {
                 await this.refreshApiKey();
-                if (!AI_CONFIG.token) {
-                    this.addMessage("AI", "Could not establish a secure connection. Please try again in a moment.");
-                    if (typingIndicator) typingIndicator.classList.add('hidden');
-                    return;
-                }
             }
 
             let liveContext = null;
@@ -439,6 +463,14 @@ const AI = {
                 requestMessages.push({ 
                     role: "assistant", 
                     content: "<thought>[EXTRACTING_DATA] Account data successfully injected into buffer. Ready for clinical synthesis.</thought>Data received. I'm ready to analyze this account's market position." 
+                });
+            }
+
+            // Add URL context if detected
+            if (urlContext) {
+                requestMessages.push({
+                    role: "user",
+                    content: `[URL_CONTEXT_INJECTION] The user provided a URL: ${urlContext.url}. Title: ${urlContext.title}. Analyze this resource in the context of the inquiry.`
                 });
             }
 
@@ -515,10 +547,30 @@ const AI = {
 
         } catch (err) {
             this.addMessage("AI", "The Global Brain is currently busy or experiencing a connection issue. Error: " + err.message);
-            console.error("AI Error:", err);
         } finally {
             // Hide typing indicator
             if (typingIndicator) typingIndicator.classList.add('hidden');
         }
+    },
+
+    /**
+     * Adds a URL context card to the UI
+     */
+    addUrlContextCard(ctx) {
+        const container = document.getElementById('ai-messages');
+        const card = document.createElement('div');
+        card.className = 'url-context-card';
+        card.innerHTML = `
+            <div class="url-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </div>
+            <div class="url-info">
+                <div class="url-title">${ctx.title}</div>
+                <a href="${ctx.url}" target="_blank" class="url-link">${ctx.url}</a>
+            </div>
+            <div class="text-[8px] text-slate-500 uppercase font-black">Context Injected</div>
+        `;
+        container.appendChild(card);
+        container.scrollTop = container.scrollHeight;
     }
 };
