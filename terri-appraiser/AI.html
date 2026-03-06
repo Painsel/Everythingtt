@@ -465,6 +465,8 @@
                     if (data.success) {
                         this.currentUser.keys.push(data.key);
                         this.updateUI();
+                    } else {
+                        alert(data.error || "Failed to create key.");
                     }
                 } catch (e) { alert("API Offline or unreachable"); }
             },
@@ -476,7 +478,14 @@
                 document.getElementById('user-profile').classList.remove('hidden');
                 document.getElementById('display-username').innerText = this.currentUser.username;
                 document.getElementById('display-balance').innerText = `${this.currentUser.balance} ETT TOKENS`;
-                document.getElementById('gen-key-btn').classList.remove('hidden');
+                
+                // Only show generate button if no keys exist
+                const genBtn = document.getElementById('gen-key-btn');
+                if (this.currentUser.keys.length === 0) {
+                    genBtn.classList.remove('hidden');
+                } else {
+                    genBtn.classList.add('hidden');
+                }
 
                 const container = document.getElementById('keys-container');
                 container.innerHTML = '';

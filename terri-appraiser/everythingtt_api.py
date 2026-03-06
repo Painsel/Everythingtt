@@ -88,7 +88,25 @@ def load_db():
     if not os.path.exists(DB_FILE):
         return {"users": {}, "keys": {}}
     with open(DB_FILE, 'r') as f:
-        return json.load(f)
+        db = json.load(f)
+    
+    # --- PURGE EXTRA KEYS (Enforce 1 FREE API Key Rule) ---
+    modified = False
+    for username, profile in db["users"].items():
+        if len(profile.get("keys", [])) > 1:
+            # Keep only the first key, purge others from global keys map
+            kept_key = profile["keys"][0]
+            purged_keys = profile["keys"][1:]
+            for pk in purged_keys:
+                if pk in db["keys"]:
+                    del db["keys"][pk]
+            profile["keys"] = [kept_key]
+            modified = True
+    
+    if modified:
+        save_db(db)
+        
+    return db
 
 def save_db(data):
     with open(DB_FILE, 'w') as f:
@@ -145,6 +163,10 @@ def create_key():
     user = db["users"].get(username)
     if not user or user["password"] != password:
         return jsonify({"error": "Unauthorized"}), 401
+    
+    # Enforce 1 Key Limit
+    if len(user.get("keys", [])) >= 1:
+        return jsonify({"error": "Limit Reached: Only 1 FREE API Key allowed per identity."}), 403
     
     # Generate key
     new_key = f"ett_free_{secrets.token_hex(16)}"
