@@ -406,18 +406,23 @@ const AI = {
             }
 
             let liveContext = null;
-            const currentWorth = document.getElementById('res-val').innerText;
-            if (currentWorth !== "$0.00") {
-                liveContext = {
-                    user: document.getElementById('res-user').innerText,
-                    worth: currentWorth,
-                    gold: document.getElementById('res-gold').innerText,
-                    clanRank: document.getElementById('res-clan-rank').innerText,
-                    goldRank: document.getElementById('res-gold-rank-val').innerText,
-                    leaderPts: document.getElementById('res-leader-pts').innerText,
-                    adminRank: document.getElementById('res-admin-rank').innerText,
-                    nameBonus: document.getElementById('res-name-bonus').innerText
-                };
+            const resValEl = document.getElementById('res-val');
+            
+            // Only inject context if we are on the main app page with active results
+            if (resValEl) {
+                const currentWorth = resValEl.innerText;
+                if (currentWorth !== "$0.00") {
+                    liveContext = {
+                        user: document.getElementById('res-user')?.innerText || "---",
+                        worth: currentWorth,
+                        gold: document.getElementById('res-gold')?.innerText || "0",
+                        clanRank: document.getElementById('res-clan-rank')?.innerText || "---",
+                        goldRank: document.getElementById('res-gold-rank-val')?.innerText || "---",
+                        leaderPts: document.getElementById('res-leader-pts')?.innerText || "0",
+                        adminRank: document.getElementById('res-admin-rank')?.innerText || "---",
+                        nameBonus: document.getElementById('res-name-bonus')?.innerText || "$0.00"
+                    };
+                }
             }
 
             // Build request payload with history and context
