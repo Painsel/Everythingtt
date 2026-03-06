@@ -354,7 +354,7 @@ const AI = {
             
             // Lists
             .replace(/^\s*[-*]\s+(.*$)/gm, '<li>$1</li>')
-            .replace(/(<li>.*<\/li>)+/g, '<ul>$0</ul>')
+            .replace(/(<li>.*<\/li>(?:\s*<li>.*<\/li>)*)/g, '<ul>$&</ul>')
             
             // URLs
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="text-indigo-400 hover:underline">$1</a>')
