@@ -13,7 +13,8 @@ const AI_CONFIG = {
     fallbackEndpoint: "https://router.huggingface.co/v1/chat/completions",
     // Dynamic Token Management via JSONBin (prevents hardcoded secrets)
     keySource: "https://api.jsonbin.io/v3/b/69a6011aae596e708f58e218",
-    token: "" // Loaded dynamically from keySource
+    token: "", // Loaded dynamically from keySource
+    customKey: null // Set by Auth system in AI.html
 };
 
 const APPRAISER_SYSTEM_PROMPT = `
@@ -146,6 +147,12 @@ const AI = {
 
     toggleChat() {
         const modal = document.getElementById('aiChatModal');
+        // If we are on the main page, navigate to AI.html instead of showing modal
+        if (!modal) {
+            window.location.href = 'AI.html';
+            return;
+        }
+        
         this.isChatOpen = !this.isChatOpen;
         if (this.isChatOpen) {
             modal.classList.remove('hidden-modal');
@@ -444,8 +451,13 @@ const AI = {
                     const isBranded = currentEndpoint === AI_CONFIG.endpoint;
                     
                     const headers = { 'Content-Type': 'application/json' };
-                    // Auth token is only required for the direct fallback endpoint
-                    if (!isBranded) {
+                    // Custom API Key requirement for branded endpoint
+                    if (isBranded) {
+                        if (!AI_CONFIG.customKey) {
+                            throw new Error("Handshake Required: No API Key detected.");
+                        }
+                        headers['X-EverythingTT-Key'] = AI_CONFIG.customKey;
+                    } else {
                         headers['Authorization'] = `Bearer ${AI_CONFIG.token}`;
                     }
                     
@@ -489,6 +501,12 @@ const AI = {
             const data = await response.json();
             const aiResponse = data.choices[0].message.content.trim();
             this.addMessage("AI", aiResponse);
+
+            // Update UI balance if Auth system is present
+            if (typeof Auth !== 'undefined' && Auth.currentUser) {
+                Auth.currentUser.balance -= 1;
+                Auth.updateUI();
+            }
 
         } catch (err) {
             this.addMessage("AI", "The Global Brain is currently busy or experiencing a connection issue. Error: " + err.message);

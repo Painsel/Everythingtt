@@ -3,9 +3,14 @@ from flask_cors import CORS
 import requests
 import json
 import os
+import uuid
+import secrets
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+DB_FILE = "users.json"
 
 # EverythingTT-v1-preview System Prompt (Synchronized with ai-controller.js)
 SYSTEM_PROMPT = """
@@ -78,6 +83,78 @@ def get_api_token():
         print(f"Error fetching token: {e}")
         return None
 
+# --- DATABASE HELPERS ---
+def load_db():
+    if not os.path.exists(DB_FILE):
+        return {"users": {}, "keys": {}}
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
+
+def save_db(data):
+    with open(DB_FILE, 'w') as f:
+        json.dump(data, f, indent=4)
+
+# --- AUTH ROUTES ---
+@app.route('/auth/register', methods=['POST'])
+def register():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    if not username or not password:
+        return jsonify({"error": "Missing fields"}), 400
+    
+    db = load_db()
+    if username in db["users"]:
+        return jsonify({"error": "User already exists"}), 400
+    
+    db["users"][username] = {
+        "password": password,
+        "balance": 100,
+        "keys": [],
+        "last_refill": datetime.now().strftime("%Y-%m-%d")
+    }
+    save_db(db)
+    return jsonify({"success": True, "message": "Identity assigned"}), 201
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    db = load_db()
+    user = db["users"].get(username)
+    if not user or user["password"] != password:
+        return jsonify({"error": "Invalid identity"}), 401
+    
+    return jsonify({
+        "success": True, 
+        "username": username,
+        "balance": user["balance"],
+        "keys": user["keys"]
+    })
+
+@app.route('/auth/create-key', methods=['POST'])
+def create_key():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    
+    db = load_db()
+    user = db["users"].get(username)
+    if not user or user["password"] != password:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    # Generate key
+    new_key = f"ett_free_{secrets.token_hex(16)}"
+    user["keys"].append(new_key)
+    db["keys"][new_key] = username
+    
+    save_db(db)
+    return jsonify({"success": True, "key": new_key})
+
+# --- API ROUTES ---
 @app.route('/status', methods=['GET'])
 def status():
     token_ok = get_api_token() is not None
@@ -86,20 +163,37 @@ def status():
         "model": "painsel/EverythingTT-v1-preview",
         "version": "1.0.0-preview",
         "token_synced": token_ok,
-        "public_access": True,
-        "auth_requirement": "None (Managed Internally)"
+        "public_access": False,
+        "auth_requirement": "Custom API Key (ETT Tokens)"
     }), 200
 
 @app.route('/v1/chat/completions', methods=['POST'])
 def chat_completions():
+    # Validate Custom API Key
+    api_key = request.headers.get('X-EverythingTT-Key')
+    if not api_key:
+        return jsonify({"error": "Missing X-EverythingTT-Key header"}), 401
+    
+    db = load_db()
+    username = db["keys"].get(api_key)
+    if not username:
+        return jsonify({"error": "Invalid API Key"}), 401
+    
+    user = db["users"].get(username)
+    if user["balance"] <= 0:
+        return jsonify({"error": "Insufficient ETT Token balance (Limit: 100/mo)"}), 429
+    
+    # Deduct 1 token
+    user["balance"] -= 1
+    save_db(db)
+    
+    # Proceed with AI request
     data = request.json
     messages = data.get('messages', [])
     
-    # Prepend system prompt if not present
     if not any(m.get('role') == 'system' for m in messages):
         messages.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
     
-    # Forward to Hugging Face
     API_URL = "https://router.huggingface.co/v1/chat/completions"
     token = get_api_token()
     
@@ -122,5 +216,4 @@ def chat_completions():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Running on local port 5000 by default
     app.run(port=5000)
