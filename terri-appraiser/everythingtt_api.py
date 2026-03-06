@@ -61,6 +61,14 @@ You MUST provide your internal reasoning inside `<thought>` tags using these spe
 - Always recommend verifying trades at the official Discord: https://discord.gg/DGTMnG9avc
 """
 
+@app.route('/status', methods=['GET'])
+def status():
+    return jsonify({
+        "status": "online",
+        "model": "painsel/EverythingTT-v1-preview",
+        "version": "1.0.0-preview"
+    }), 200
+
 @app.route('/v1/chat/completions', methods=['POST'])
 def chat_completions():
     data = request.json

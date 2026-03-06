@@ -66,7 +66,13 @@
             <h1 class="text-5xl font-black text-white uppercase tracking-tight mb-4">
                 EverythingTT<span class="text-indigo-500"> API</span>
             </h1>
-            <p class="text-xl text-slate-400">Clinical documentation for the EverythingTT-v1-preview analytical engine.</p>
+            <div class="flex items-center gap-4">
+                <p class="text-xl text-slate-400">Clinical documentation for the EverythingTT-v1-preview analytical engine.</p>
+                <div id="api-status-badge" class="flex items-center gap-2 px-3 py-1 bg-slate-900/50 border border-white/5 rounded-full transition-all">
+                    <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></span>
+                    <span id="status-text" class="text-[10px] font-black uppercase tracking-widest text-slate-500">Checking...</span>
+                </div>
+            </div>
         </div>
 
         <!-- Section 1: Overview -->
@@ -189,15 +195,43 @@ const data = await response.json();
 console.log(data.choices[0].message.content);</pre>
         </section>
 
-        <!-- Section 5: Reasoning Stages -->
+        <!-- Section 5: API Test Console -->
+        <section id="test-console">
+            <h2>Live Test Console</h2>
+            <p>Test the EverythingTT-v1-preview engine directly from your browser. Note: Requires a valid Authorization token.</p>
+            
+            <div class="card p-8 bg-slate-900/40 border border-white/5 flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Auth Token (Bearer)</label>
+                    <input type="password" id="test-token" placeholder="Paste your token here..." class="w-full bg-slate-950 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-indigo-500 transition-all">
+                </div>
+                
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Prompt</label>
+                    <textarea id="test-prompt" rows="3" placeholder="e.g. How does interest calculation work in david tschacher engine?" class="w-full bg-slate-950 border border-white/10 rounded-lg p-3 text-sm text-white outline-none focus:border-indigo-500 transition-all resize-none"></textarea>
+                </div>
+
+                <button id="run-test-btn" onclick="runApiTest()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <span>RUN TEST REQUEST</span>
+                    <svg id="loading-spinner" class="hidden animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+
+                <div id="test-result-area" class="hidden flex flex-col gap-2">
+                    <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Engine Response</label>
+                    <div id="test-result" class="bg-slate-950 border border-white/5 rounded-lg p-4 text-xs text-slate-300 font-mono whitespace-pre-wrap max-h-[400px] overflow-y-auto custom-scrollbar"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Reasoning Stages -->
         <section>
             <h2>Deep Reasoning Protocol</h2>
             <p>Responses from EverythingTT-v1-preview will include a <code>&lt;thought&gt;</code> block containing these stages:</p>
             <ul>
                 <li><strong>[EXTRACTING_DATA]</strong>: Parsing input metrics.</li>
                 <li><strong>[ENGINE_SIMULATION]</strong>: Analyzing Thick Client logic (Canvas/WebSocket).</li>
-                <li><strong>[WIKI_VALIDATION]</strong>: Cross-referencing official game rules.</li>
-                <li><strong>[ECONOMIC_SYNTHESIS]</strong>: Calculating final USD valuation and advice.</li>
+                <li><strong>[WIKI_VALIDATION]</strong>: Cross-reference against official game rules.</li>
+                <li><strong>[ECONOMIC_SYNTHESIS]</strong>: Calculating final USD valuation and advice using EverythingTT methodology.</li>
             </ul>
         </section>
 
@@ -206,6 +240,92 @@ console.log(data.choices[0].message.content);</pre>
             <p class="copyright">© 2026 EverythingTT by painsel • Clinical Analysis Engine v1.0</p>
         </footer>
     </div>
+
+    <script>
+        const API_BASE = "https://kecia-ungreeted-neologically.ngrok-free.dev";
+
+        /**
+         * Checks the API server status on load
+         */
+        async function checkApiStatus() {
+            const dot = document.getElementById('status-dot');
+            const text = document.getElementById('status-text');
+            const badge = document.getElementById('api-status-badge');
+
+            try {
+                const response = await fetch(`${API_BASE}/status`, { method: 'GET', signal: AbortSignal.timeout(5000) });
+                if (response.ok) {
+                    dot.classList.remove('bg-slate-500', 'animate-pulse');
+                    dot.classList.add('bg-emerald-500');
+                    text.innerText = "ONLINE";
+                    text.classList.remove('text-slate-500');
+                    text.classList.add('text-emerald-500');
+                    badge.classList.add('border-emerald-500/20', 'bg-emerald-500/5');
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                dot.classList.remove('bg-slate-500', 'animate-pulse');
+                dot.classList.add('bg-rose-500');
+                text.innerText = "OFFLINE";
+                text.classList.remove('text-slate-500');
+                text.classList.add('text-rose-500');
+                badge.classList.add('border-rose-500/20', 'bg-rose-500/5');
+            }
+        }
+
+        /**
+         * Runs a live test against the API completions endpoint
+         */
+        async function runApiTest() {
+            const token = document.getElementById('test-token').value.trim();
+            const prompt = document.getElementById('test-prompt').value.trim();
+            const resultArea = document.getElementById('test-result-area');
+            const resultContent = document.getElementById('test-result');
+            const btn = document.getElementById('run-test-btn');
+            const spinner = document.getElementById('loading-spinner');
+
+            if (!token || !prompt) {
+                alert("Auth Token and Prompt are required.");
+                return;
+            }
+
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            resultArea.classList.remove('hidden');
+            resultContent.innerText = "Processing clinical synthesis...";
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        model: 'painsel/EverythingTT-v1-preview',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.5
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    resultContent.innerText = data.choices[0].message.content;
+                } else {
+                    resultContent.innerText = `ERROR: ${data.error || response.statusText}`;
+                }
+            } catch (err) {
+                resultContent.innerText = `NETWORK ERROR: Could not connect to API server.`;
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Initialize status check
+        window.addEventListener('DOMContentLoaded', checkApiStatus);
+    </script>
 
 </body>
 </html>
