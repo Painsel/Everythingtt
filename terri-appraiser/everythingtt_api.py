@@ -8,7 +8,12 @@ import secrets
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+# Robust CORS configuration to allow all origins and common ngrok headers
+CORS(app, resources={r"/*": {
+    "origins": "*",
+    "allow_headers": ["Content-Type", "X-EverythingTT-Key", "ngrok-skip-browser-warning"],
+    "methods": ["GET", "POST", "OPTIONS"]
+}})
 
 DB_FILE = "users.json"
 

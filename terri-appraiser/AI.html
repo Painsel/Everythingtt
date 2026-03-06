@@ -444,7 +444,10 @@
                 try {
                     const res = await fetch(`${this.baseUrl}/auth/register`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'ngrok-skip-browser-warning': 'true'
+                        },
                         body: JSON.stringify({ username: u, password: p })
                     });
                     const data = await res.json();
@@ -464,7 +467,10 @@
                 try {
                     const res = await fetch(`${this.baseUrl}/auth/login`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'ngrok-skip-browser-warning': 'true'
+                        },
                         body: JSON.stringify({ username: u, password: p })
                     });
                     const data = await res.json();
@@ -482,7 +488,10 @@
                 try {
                     const res = await fetch(`${this.baseUrl}/auth/create-key`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'ngrok-skip-browser-warning': 'true'
+                        },
                         body: JSON.stringify({ username: this.currentUser.username, password: this.currentUser.password })
                     });
                     const data = await res.json();

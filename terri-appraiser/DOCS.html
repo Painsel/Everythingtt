@@ -155,6 +155,7 @@
 curl https://kecia-ungreeted-neologically.ngrok-free.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
   -H "X-EverythingTT-Key: YOUR_CUSTOM_KEY" \
+  -H "ngrok-skip-browser-warning: true" \
   -d '{
     "model": "painsel/EverythingTT-v1-preview",
     "messages": [
@@ -170,7 +171,8 @@ import requests
 endpoint = "https://kecia-ungreeted-neologically.ngrok-free.dev/v1/chat/completions"
 headers = { 
     "Content-Type": "application/json",
-    "X-EverythingTT-Key": "YOUR_CUSTOM_KEY"
+    "X-EverythingTT-Key": "YOUR_CUSTOM_KEY",
+    "ngrok-skip-browser-warning": "true"
 }
 
 payload = {
@@ -193,7 +195,8 @@ fetch(endpoint, {
     method: 'POST',
     headers: { 
         'Content-Type': 'application/json',
-        'X-EverythingTT-Key': 'YOUR_CUSTOM_KEY'
+        'X-EverythingTT-Key': 'YOUR_CUSTOM_KEY',
+        'ngrok-skip-browser-warning': 'true'
     },
     body: JSON.stringify({
         model: 'painsel/EverythingTT-v1-preview',
@@ -264,7 +267,11 @@ fetch(endpoint, {
             const badge = document.getElementById('api-status-badge');
 
             try {
-                const response = await fetch(`${API_BASE}/status`, { method: 'GET', signal: AbortSignal.timeout(5000) });
+                const response = await fetch(`${API_BASE}/status`, { 
+                    method: 'GET', 
+                    headers: { 'ngrok-skip-browser-warning': 'true' },
+                    signal: AbortSignal.timeout(5000) 
+                });
                 if (response.ok) {
                     dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
                     text.innerText = "ONLINE";
@@ -307,7 +314,8 @@ fetch(endpoint, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'X-EverythingTT-Key': key
+                        'X-EverythingTT-Key': key,
+                        'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({
                         model: 'painsel/EverythingTT-v1-preview',

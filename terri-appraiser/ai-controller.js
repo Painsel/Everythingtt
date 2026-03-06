@@ -501,7 +501,10 @@ const AI = {
                     const currentEndpoint = (retryCount === 0) ? AI_CONFIG.endpoint : AI_CONFIG.fallbackEndpoint;
                     const isBranded = currentEndpoint === AI_CONFIG.endpoint;
                     
-                    const headers = { 'Content-Type': 'application/json' };
+                    const headers = { 
+                        'Content-Type': 'application/json',
+                        'ngrok-skip-browser-warning': 'true' // Bypass ngrok interstitial
+                    };
                     // Custom API Key requirement for branded endpoint
                     if (isBranded) {
                         if (!AI_CONFIG.customKey) {
