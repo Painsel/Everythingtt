@@ -1074,6 +1074,28 @@ footer { margin-top: 5rem; padding-top: 2.5rem; border-top: 1px solid var(--bord
     border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.key-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.key-card.assigned {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+}
+
+.key-value {
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: var(--primary-hover);
+    word-break: break-all;
+}
+
 .model-selector-container {
     display: flex;
     justify-content: center;

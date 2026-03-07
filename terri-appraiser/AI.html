@@ -384,7 +384,7 @@
             <div class="max-w-md">
                 <h2 class="text-3xl font-black text-white uppercase tracking-widest mb-4">Handshake Required</h2>
                 <p class="text-slate-400 text-sm leading-relaxed mb-8">
-                    To communicate with the EverythingTT clinical engine, you must first assign an identity and generate a free API key.
+                    To communicate with the EverythingTT clinical engine, you must assign an identity and **assign one of your API keys to the Chat interface**.
                 </p>
                 <div class="flex justify-center">
                     <div class="w-12 h-1 bg-indigo-500/20 rounded-full animate-pulse"></div>
@@ -681,25 +681,37 @@
                 container.innerHTML = '';
                 
                 if (this.currentUser.keys.length > 0) {
-                    // Hide blocking overlay if at least one key exists
-                    document.getElementById('blocking-overlay').classList.add('hidden');
-                    // Set the first key as active for the controller
-                    this.activeKey = this.currentUser.keys[0];
-                    AI_CONFIG.customKey = this.activeKey;
+                    // Only hide blocking overlay if a key is assigned
+                    if (this.activeKey) {
+                        document.getElementById('blocking-overlay').classList.add('hidden');
+                        AI_CONFIG.customKey = this.activeKey;
+                        AI.refreshApiKey(); // Sync tier
+                    } else {
+                        document.getElementById('blocking-overlay').classList.remove('hidden');
+                    }
 
                     this.currentUser.keys.forEach(key => {
+                        const isAssigned = key === this.activeKey;
+                        const isPro = key.startsWith('ett_pro');
                         const div = document.createElement('div');
-                        div.className = 'key-card';
+                        div.className = `key-card ${isAssigned ? 'assigned' : ''}`;
                         div.innerHTML = `
-                            <div class="flex justify-between items-center">
-                                <span class="badge-free">FREE</span>
-                                <span class="text-[8px] text-slate-500 uppercase">Active</span>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="${isPro ? 'badge-pro' : 'badge-free'}">${isPro ? 'PRO' : 'FREE'}</span>
+                                <span class="text-[8px] text-slate-500 uppercase">${isAssigned ? 'Assigned to Chat' : 'Inactive'}</span>
                             </div>
-                            <code class="key-value">${key}</code>
+                            <code class="key-value mb-3 block truncate">${key}</code>
+                            ${!isAssigned ? `<button onclick="Auth.assignKey('${key}')" class="text-[8px] font-black uppercase tracking-widest text-indigo-400 hover:text-white transition-colors">Assign to Chat</button>` : ''}
                         `;
                         container.appendChild(div);
                     });
                 }
+            },
+
+            assignKey(key) {
+                this.activeKey = key;
+                localStorage.setItem('ett_active_key', key);
+                this.updateUI();
             },
 
             logout() {
@@ -722,11 +734,17 @@
 
             // Restore Identity if exists
             const stored = localStorage.getItem('ett_identity');
+            const storedKey = localStorage.getItem('ett_active_key');
+            
             if (stored) {
                 try {
                     const creds = JSON.parse(stored);
+                    if (storedKey) Auth.activeKey = storedKey;
                     Auth.login(creds);
-                } catch (e) { localStorage.removeItem('ett_identity'); }
+                } catch (e) { 
+                    localStorage.removeItem('ett_identity'); 
+                    localStorage.removeItem('ett_active_key');
+                }
             }
             
             // Subtle entry animation for messages
