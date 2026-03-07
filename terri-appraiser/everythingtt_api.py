@@ -18,6 +18,40 @@ CORS(app, resources={r"/*": {
 DB_FILE = "users.json"
 SOURCE_FILE = "Territorial.io.html"
 TRAINING_LOG = "ai_training_data.jsonl"
+MEMORY_DIR = "user_memory"
+
+if not os.path.exists(MEMORY_DIR):
+    os.makedirs(MEMORY_DIR)
+
+def get_user_memory(username):
+    """Retrieves conversation history for PRO users."""
+    memory_path = os.path.join(MEMORY_DIR, f"{username}.json")
+    if not os.path.exists(memory_path):
+        return []
+    try:
+        with open(memory_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_user_memory(username, messages):
+    """Saves conversation history for PRO users (limit to last 10 exchanges)."""
+    memory_path = os.path.join(MEMORY_DIR, f"{username}.json")
+    try:
+        # Keep only the last 20 messages (10 rounds) to maintain focus and context window
+        history = messages[-20:]
+        with open(memory_path, 'w', encoding='utf-8') as f:
+            json.dump(history, f, indent=4)
+    except Exception as e:
+        print(f"Memory Save Failure: {str(e)}")
+
+PRO_REASONING_DIRECTIVE = """
+### PRO ANALYTICAL PROTOCOL:
+- **DEEP REASONING**: You must engage in multi-step logical deduction before formulating a final answer.
+- **CROSS-CONTEXTUAL MEMORY**: Utilize the provided conversation history to maintain continuity in complex strategies.
+- **CHAIN-OF-THOUGHT**: Break down complex game mechanics into granular algorithmic steps.
+- **CLINICAL PRECISION**: Your outputs must be 20% more detailed and data-dense than standard responses.
+"""
 
 def log_interaction(api_key, username, model, messages, response_text):
     """Logs the interaction for clinical AI model training."""
@@ -321,7 +355,12 @@ def chat_completions():
     
     # Determine system prompt and model based on request
     is_codex = "CODEX" in model
+    is_pro = api_key.startswith("ett_pro_")
+    
     sys_prompt = CODEX_SYSTEM_PROMPT if is_codex else SYSTEM_PROMPT
+    
+    if is_pro:
+        sys_prompt += PRO_REASONING_DIRECTIVE
     
     if is_codex:
         source_context = get_source_context()
@@ -329,8 +368,18 @@ def chat_completions():
     
     underlying_model = "Qwen/Qwen2.5-Coder-32B-Instruct" if is_codex else "meta-llama/Llama-3.3-70B-Instruct"
     
-    if not any(m.get('role') == 'system' for m in messages):
-        messages.insert(0, {"role": "system", "content": sys_prompt})
+    # Handle PRO memory injection
+    final_messages = []
+    if is_pro:
+        memory = get_user_memory(username)
+        # Filter memory to avoid duplicate messages if the frontend sends history
+        # We assume messages passed in are the new ones
+        final_messages.extend(memory)
+    
+    final_messages.extend(messages)
+    
+    if not any(m.get('role') == 'system' for m in final_messages):
+        final_messages.insert(0, {"role": "system", "content": sys_prompt})
     
     API_URL = "https://router.huggingface.co/v1/chat/completions"
     token = get_api_token()
@@ -344,20 +393,25 @@ def chat_completions():
             headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
             json={
                 "model": underlying_model,
-                "messages": messages,
-                "max_tokens": 1000,
-                "temperature": 0.2 if is_codex else 0.5
+                "messages": final_messages,
+                "max_tokens": 2000 if is_pro else 1000,
+                "temperature": (0.2 if is_codex else 0.5) * (0.8 if is_pro else 1.0) # Lower temp for PRO = more clinical
             }
         )
         res_json = response.json()
         
-        # Capture for training before returning
+        # Capture for training and update memory
         if response.status_code == 200:
             ai_content = ""
             if "choices" in res_json and len(res_json["choices"]) > 0:
                 ai_content = res_json["choices"][0].get("message", {}).get("content", "")
             
             log_interaction(api_key, username, model, messages, ai_content)
+            
+            if is_pro:
+                # Add the new exchange to memory
+                new_exchange = messages + [{"role": "assistant", "content": ai_content}]
+                save_user_memory(username, final_messages + [{"role": "assistant", "content": ai_content}])
             
         return jsonify(res_json), response.status_code
     except Exception as e:
