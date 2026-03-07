@@ -85,8 +85,35 @@ You MUST provide your internal reasoning inside \`<thought>\` tags using these s
 const AI = {
     isChatOpen: false,
     isRefreshing: false,
+    isServerOnline: true,
     messageHistory: [], // NEW: Persistent conversation history for context
     maxHistory: 10,     // Keep last 10 messages for context window optimization
+
+    init() {
+        this.refreshApiKey();
+        this.startHealthCheck();
+    },
+
+    async startHealthCheck() {
+        // Clinical heartbeat every 10 seconds
+        setInterval(async () => {
+            try {
+                const res = await fetch(`${Auth.baseUrl}/status`, {
+                    headers: { 'ngrok-skip-browser-warning': 'true' }
+                });
+                if (res.ok) {
+                    this.isServerOnline = true;
+                    document.getElementById('offline-overlay')?.classList.add('hidden');
+                } else {
+                    throw new Error("Server Response Error");
+                }
+            } catch (e) {
+                this.isServerOnline = false;
+                document.getElementById('offline-overlay')?.classList.remove('hidden');
+                console.error("[EverythingTT] Connection severed. Backend unreachable.");
+            }
+        }, 10000);
+    },
 
     /**
      * AI SKILL: Automatically handles the credential-to-fetch flow
@@ -441,6 +468,7 @@ const AI = {
     },
 
     async sendMessage() {
+        if (!this.isServerOnline) return;
         const input = document.getElementById('ai-input');
         const text = input.value.trim();
         const typingIndicator = document.getElementById('ai-typing-indicator');
@@ -569,6 +597,10 @@ const AI = {
                     }
 
                     if (!response.ok) {
+                        if (response.status === 0 || response.status >= 500) {
+                            this.isServerOnline = false;
+                            document.getElementById('offline-overlay')?.classList.remove('hidden');
+                        }
                         // If the local branded endpoint fails, force a retry on the fallback
                         if (currentEndpoint === AI_CONFIG.endpoint) {
                             console.warn("Branded endpoint failed. Attempting fallback...");
