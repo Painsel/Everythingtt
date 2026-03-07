@@ -83,7 +83,14 @@
                 It is designed to bridge the gap between low-level game mechanics and high-level market economics.
             </p>
             <p>
-                Every request to the API is processed through the <strong>Painsel Engine v6.0</strong>, which automatically applies game-specific knowledge including Interest Calculation, Purge Logic, and Wiki-verified economics.
+                The engine operates on two distinct clinical layers:
+            </p>
+            <ul>
+                <li><strong>Community Layer (EverythingTT)</strong>: Appraisal logic, USD/ETT market rates, and prestige analysis.</li>
+                <li><strong>Infrastructure Layer (Territorial.io)</strong>: Direct game engine mechanics, interest curves, and combat simulation.</li>
+            </ul>
+            <p>
+                Every request is processed through the <strong>Painsel Engine v1.2-clinical</strong>, which enforces strict domain separation to ensure high-fidelity synthesis.
             </p>
         </section>
 
@@ -91,30 +98,30 @@
         <section>
             <h2>API Endpoints</h2>
             <div class="card p-8 bg-slate-900/50 border border-white/5 relative overflow-hidden">
-                <!-- Public Access Badge -->
-                <div class="absolute top-0 right-0 px-4 py-1 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest border-b border-l border-emerald-500/20 rounded-bl-xl">
-                    Public Access (No Token Required)
+                <!-- Authentication Required Badge -->
+                <div class="absolute top-0 right-0 px-4 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest border-b border-l border-indigo-500/20 rounded-bl-xl">
+                    Handshake Required (X-EverythingTT-Key)
                 </div>
                 
                 <div class="flex items-center mb-4">
                     <span class="method-badge">POST</span>
                     <code class="text-white font-mono">https://kecia-ungreeted-neologically.ngrok-free.dev/v1/chat/completions</code>
                 </div>
-                <p class="text-sm">The primary entry point for EverythingTT-v1-preview chat completions. Supports OpenAI-compatible message structures.</p>
+                <p class="text-sm">The primary entry point for EverythingTT chat completions. Supports OpenAI-compatible message structures. All requests must include a valid clinical handshake key.</p>
             </div>
         </section>
 
         <!-- Section 3: Request Format -->
         <section>
             <h2>Request Structure</h2>
-            <p>The API is <strong>public</strong> but requires a custom <strong>X-EverythingTT-Key</strong> header for rate-limiting. You can generate a free key in the <a href="AI.html" class="text-indigo-400 underline">Zen Sanctuary</a>.</p>
+            <p>The API requires a custom <strong>X-EverythingTT-Key</strong> header for authentication and rate-limiting. You can generate a clinical key in the <a href="AI.html" class="text-indigo-400 underline">Zen Sanctuary</a>.</p>
             
-            <div class="card p-6 bg-emerald-500/5 border border-emerald-500/20 mb-6">
-                <h4 class="text-emerald-400 font-bold mb-2">ETT Token Economy</h4>
+            <div class="card p-6 bg-indigo-500/5 border border-indigo-500/20 mb-6">
+                <h4 class="text-indigo-400 font-bold mb-2">Clinical Protocol</h4>
                 <ul class="text-sm space-y-1">
-                    <li>1 Prompt = 1 ETT Token.</li>
-                    <li>Free keys start with 100 ETT Tokens.</li>
-                    <li>Balances refill monthly.</li>
+                    <li>All requests must originate from a verified clinical identity.</li>
+                    <li>Developers pay 0 ETT Tokens for all requests.</li>
+                    <li>Identity sessions persist across sessions for authoritative continuity.</li>
                 </ul>
             </div>
 
@@ -130,16 +137,16 @@
                     <tr>
                         <td><code>X-EverythingTT-Key</code></td>
                         <td>Header</td>
-                        <td>Your custom API Key (e.g., <code>ett_free_...</code> or <code>ett_pro_...</code>).</td>
+                        <td>Your clinical handshake key (e.g., <code>ett_free_...</code>, <code>ett_pro_...</code>, or <code>ett_pro_dev_...</code>).</td>
                     </tr>
                     <tr>
                         <td><code>model</code></td>
                         <td>string</td>
-                        <td><strong>For FREE Keys:</strong><br>
+                        <td><strong>Standard Tier:</strong><br>
                             <code>painsel/EverythingTT-v1-preview:free</code><br>
                             <code>painsel/EverythingTT-v1-preview-CODEX:free</code><br>
                             <br>
-                            <strong>For PRO Keys:</strong><br>
+                            <strong>Pro / Developer Tier:</strong><br>
                             <code>painsel/EverythingTT-v1-preview</code><br>
                             <code>painsel/EverythingTT-v1-preview-CODEX</code>
                         </td>
@@ -153,13 +160,13 @@
             </table>
 
             <div class="card p-6 bg-amber-500/5 border border-amber-500/20">
-                <h4 class="text-amber-400 font-bold mb-2">Pro Subscription (10K Gold/mo)</h4>
+                <h4 class="text-amber-400 font-bold mb-2">Pro Subscription (Elite Access)</h4>
                 <ul class="text-sm space-y-1">
-                    <li>Access to specialized CODEX model.</li>
-                    <li><strong>Cross-Contextual Memory</strong>: Persistent conversation history across sessions.</li>
-                    <li><strong>Deep Reasoning</strong>: Enhanced clinical logic and algorithmic chain-of-thought.</li>
-                    <li>1000 ETT Token monthly bonus & weekly refills.</li>
-                    <li>Extended response length (2000 tokens).</li>
+                    <li><strong>Elite Simulation</strong>: Access to deterministic combat and interest outcome prediction tables.</li>
+                    <li><strong>Clinical Risk Profiling</strong>: Automated risk assessment for every trade or strategy.</li>
+                    <li><strong>Cross-Contextual Memory</strong>: Persistent conversation history across all clinical endpoints.</li>
+                    <li><strong>Deep Reasoning</strong>: 30% increase in clinical technical detail and algorithmic density.</li>
+                    <li>1000 ETT Token monthly bonus & extended 2000 token context.</li>
                 </ul>
             </div>
         </section>
@@ -175,7 +182,7 @@ curl https://kecia-ungreeted-neologically.ngrok-free.dev/v1/chat/completions \
   -H "X-EverythingTT-Key: YOUR_CUSTOM_KEY" \
   -H "ngrok-skip-browser-warning: true" \
   -d '{
-    "model": "painsel/EverythingTT-v1-preview",
+    "model": "painsel/EverythingTT-v1-preview:free",
     "messages": [
       {"role": "user", "content": "Analyze a 0-gold account risk."}
     ],
@@ -194,7 +201,7 @@ headers = {
 }
 
 payload = {
-    "model": "painsel/EverythingTT-v1-preview",
+    "model": "painsel/EverythingTT-v1-preview:free",
     "messages": [
         {"role": "user", "content": "What are the market rates for ETT?"}
     ],
@@ -217,7 +224,7 @@ fetch(endpoint, {
         'ngrok-skip-browser-warning': 'true'
     },
     body: JSON.stringify({
-        model: 'painsel/EverythingTT-v1-preview',
+        model: 'painsel/EverythingTT-v1-preview:free',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.5
     })
@@ -258,12 +265,13 @@ fetch(endpoint, {
         <!-- Section 6: Reasoning Stages -->
         <section>
             <h2>Deep Reasoning Protocol</h2>
-            <p>Responses from EverythingTT-v1-preview will include a <code>&lt;thought&gt;</code> block containing these stages:</p>
+            <p>Responses from EverythingTT will include a <code>&lt;thought&gt;</code> block containing these stages:</p>
             <ul>
-                <li><strong>[EXTRACTING_DATA]</strong>: Parsing input metrics.</li>
-                <li><strong>[ENGINE_SIMULATION]</strong>: Analyzing Thick Client logic (Canvas/WebSocket).</li>
-                <li><strong>[WIKI_VALIDATION]</strong>: Cross-reference against official game rules.</li>
-                <li><strong>[ECONOMIC_SYNTHESIS]</strong>: Calculating final USD valuation and advice using EverythingTT methodology.</li>
+                <li><strong>[EXTRACTING_DATA]</strong>: Parsing input metrics and user intent.</li>
+                <li><strong>[DOMAIN_MAPPING]</strong>: Explicitly identifying Community vs Infrastructure layer relevance.</li>
+                <li><strong>[ENGINE_SIMULATION]</strong>: Analyzing Thick Client logic (Canvas/WebSocket/Interest Curves).</li>
+                <li><strong>[WIKI_VALIDATION]</strong>: Cross-referencing against official game rules and economic data.</li>
+                <li><strong>[ECONOMIC_SYNTHESIS]</strong>: Calculating final USD/ETT valuations and formulating advice.</li>
             </ul>
         </section>
 
@@ -336,7 +344,7 @@ fetch(endpoint, {
                         'ngrok-skip-browser-warning': 'true'
                     },
                     body: JSON.stringify({
-                        model: 'painsel/EverythingTT-v1-preview',
+                        model: key.startsWith('ett_pro') ? 'painsel/EverythingTT-v1-preview' : 'painsel/EverythingTT-v1-preview:free',
                         messages: [{ role: 'user', content: prompt }],
                         temperature: 0.5
                     })
