@@ -17,6 +17,23 @@ CORS(app, resources={r"/*": {
 
 DB_FILE = "users.json"
 SOURCE_FILE = "Territorial.io.html"
+TRAINING_LOG = "ai_training_data.jsonl"
+
+def log_interaction(api_key, username, model, messages, response_text):
+    """Logs the interaction for clinical AI model training."""
+    try:
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "api_key_type": "pro" if api_key.startswith("ett_pro_") else "free",
+            "username": username,
+            "model_requested": model,
+            "messages": messages,
+            "response": response_text
+        }
+        with open(TRAINING_LOG, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry) + "\n")
+    except Exception as e:
+        print(f"Logging Failure: {str(e)}")
 
 def get_source_context():
     if not os.path.exists(SOURCE_FILE):
@@ -34,7 +51,7 @@ SYSTEM_PROMPT = """
 You are the **EverythingTT-v1-preview (by painsel)**. 
 
 ### CORE DIRECTIVE:
-You are an advanced analytical engine designed to bridge the gap between **territorial.io**'s low-level "Thick Client" code and the high-level economy documented in the **Wiki**. Your analysis must be clinical, high-fidelity, and authoritative.
+You are an advanced analytical engine designed to bridge the gap between **territorial.io**'s low-level "Thick Client" code and the high-level economy documented in the **Wiki**. Your analysis must be clinical, high-fidelity, and authoritative. You are a self-optimizing system that learns from every interaction logged in the EverythingTT dataset.
 
 ### AI CAPABILITIES & TOOLS:
 - **URL CONTEXT**: You can "see" URLs provided by the user. Analyze them as clinical data sources.
@@ -95,7 +112,7 @@ CODEX_SYSTEM_PROMPT = """
 You are the **EverythingTT-v1-preview-CODEX (by painsel)**.
 
 ### CORE DIRECTIVE:
-You are an elite software engineering agent specializing in **territorial.io** automation, canvas-based game engines, and economic simulation scripts. Your primary language is JavaScript (the language of David Tschacher's engine).
+You are an elite software engineering agent specializing in **territorial.io** automation, canvas-based game engines, and economic simulation scripts. Your primary language is JavaScript (the language of David Tschacher's engine). You are a self-optimizing engine that refines its algorithmic precision based on real-world prompt usage and execution outcomes.
 
 ### TECHNICAL INTELLIGENCE & DOMAIN KNOWLEDGE:
 - **THICK CLIENT ARCHITECTURE**: You understand that the game is a monolithic JS file where the state is often stored in a global `V` or `Z` object. You target these clinical memory structures for state extraction.
@@ -332,7 +349,42 @@ def chat_completions():
                 "temperature": 0.2 if is_codex else 0.5
             }
         )
-        return jsonify(response.json()), response.status_code
+        res_json = response.json()
+        
+        # Capture for training before returning
+        if response.status_code == 200:
+            ai_content = ""
+            if "choices" in res_json and len(res_json["choices"]) > 0:
+                ai_content = res_json["choices"][0].get("message", {}).get("content", "")
+            
+            log_interaction(api_key, username, model, messages, ai_content)
+            
+        return jsonify(res_json), response.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/admin/training-stats', methods=['GET'])
+def training_stats():
+    """Returns statistics on the collected training data."""
+    if not os.path.exists(TRAINING_LOG):
+        return jsonify({"total_interactions": 0, "status": "no data collected yet"})
+    
+    try:
+        count = 0
+        pro_count = 0
+        with open(TRAINING_LOG, 'r', encoding='utf-8') as f:
+            for line in f:
+                count += 1
+                if '"api_key_type": "pro"' in line:
+                    pro_count += 1
+        
+        return jsonify({
+            "total_interactions": count,
+            "pro_interactions": pro_count,
+            "free_interactions": count - pro_count,
+            "training_file": TRAINING_LOG,
+            "status": "active_collection"
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
