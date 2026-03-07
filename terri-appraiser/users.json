@@ -1,0 +1,21 @@
+{
+    "users": {
+        "Painsel": {
+            "password": "S2SiuKOk2sN5Hay",
+            "balance": 999999,
+            "is_pro": true,
+            "is_dev": true,
+            "keys": [
+                "ett_pro_dev_painsel_master_key",
+                "ett_free_d2e449b6df3d40d5cdd2a58d6bdc8cde",
+                "ett_pro_d564e189d487be6dd09f8e437e35b790"
+            ],
+            "last_refill": "2026-03-06"
+        }
+    },
+    "keys": {
+        "ett_pro_dev_painsel_master_key": "Painsel",
+        "ett_free_d2e449b6df3d40d5cdd2a58d6bdc8cde": "Painsel",
+        "ett_pro_d564e189d487be6dd09f8e437e35b790": "Painsel"
+    }
+}
