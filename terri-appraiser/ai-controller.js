@@ -13,12 +13,8 @@ const AI_CONFIG = {
     
     // Branded EverythingTT-v1-preview Endpoint (Local -> Ngrok Ephemeral)
     endpoint: "https://kecia-ungreeted-neologically.ngrok-free.dev/v1/chat/completions",
-    // Fallback to Global Brain if local is offline
-    fallbackEndpoint: "https://router.huggingface.co/v1/chat/completions",
-    // Dynamic Token Management via JSONBin (prevents hardcoded secrets)
-    keySource: "https://api.jsonbin.io/v3/b/69a6011aae596e708f58e218",
-    token: "", // Loaded dynamically from keySource
-    customKey: null // Set by Auth system in AI.html
+    // Handshake Key (Mandatory - Set by Auth system in AI.html)
+    customKey: null
 };
 
 const APPRAISER_SYSTEM_PROMPT = `
@@ -178,24 +174,6 @@ const AI = {
             AI_CONFIG.currentModel = isCodex ? AI_CONFIG.codexModel : AI_CONFIG.languageModel;
             
             console.log(`[EverythingTT] Engine mapping updated for ${isPro ? 'PRO' : 'FREE'} key.`);
-            return; // Use the custom key set by Auth system
-        }
-
-        if (this.isRefreshing) return;
-        this.isRefreshing = true;
-        try {
-            const response = await fetch(AI_CONFIG.keySource, {
-                headers: { "X-Bin-Meta": "false" }
-            });
-            const data = await response.json();
-            if (data.api_key) {
-                AI_CONFIG.token = data.api_key;
-                console.log("AI: Token Refreshed Successfully");
-            }
-        } catch (err) {
-            console.error("AI: Token Refresh Failed", err);
-        } finally {
-            this.isRefreshing = false;
         }
     },
 
@@ -467,171 +445,85 @@ const AI = {
 
     async sendMessage() {
         if (!this.isServerOnline) return;
+        if (!AI_CONFIG.customKey) {
+            console.error("[EverythingTT] Interaction blocked: No API Key provided.");
+            return;
+        }
+
         const input = document.getElementById('ai-input');
         const text = input.value.trim();
-        const typingIndicator = document.getElementById('ai-typing-indicator');
-        const quickActions = document.getElementById('ai-quick-actions');
-        
         if (!text) return;
 
-        // Hide quick actions once user interacts
-        if (quickActions) quickActions.classList.add('hidden');
-
-        // --- URL CONTEXT DETECTION ---
-        const urlMatch = text.match(/(https?:\/\/[^\s]+)/g);
-        let urlContext = null;
-        if (urlMatch) {
-            const url = urlMatch[0];
-            // Simulate fetching metadata (In a real app, this would be a proxy fetch)
-            urlContext = {
-                url: url,
-                title: url.split('/').pop() || url,
-                timestamp: new Date().toLocaleTimeString()
-            };
-            this.addUrlContextCard(urlContext);
-        }
-        // -----------------------------
-
-        this.addMessage("User", text);
+        // Reset input and focus
         input.value = '';
+        input.focus();
+
+        // Add user message to UI and history
+        this.addMessage('User', text);
+        this.messageHistory.push({ role: 'user', content: text });
+        if (this.messageHistory.length > this.maxHistory) this.messageHistory.shift();
 
         // Show typing indicator
-        if (typingIndicator) typingIndicator.classList.remove('hidden');
+        document.getElementById('ai-typing-indicator')?.classList.remove('hidden');
+        this.scrollToBottom();
 
         try {
-            // If token is missing, attempt to fetch it before sending
-            if (!AI_CONFIG.token) {
-                await this.refreshApiKey();
-            }
-
-            let liveContext = null;
-            const resValEl = document.getElementById('res-val');
-            
-            // Only inject context if we are on the main app page with active results
-            if (resValEl) {
-                const currentWorth = resValEl.innerText;
-                if (currentWorth !== "$0.00") {
-                    liveContext = {
-                        user: document.getElementById('res-user')?.innerText || "---",
-                        worth: currentWorth,
-                        gold: document.getElementById('res-gold')?.innerText || "0",
-                        clanRank: document.getElementById('res-clan-rank')?.innerText || "---",
-                        goldRank: document.getElementById('res-gold-rank-val')?.innerText || "---",
-                        leaderPts: document.getElementById('res-leader-pts')?.innerText || "0",
-                        adminRank: document.getElementById('res-admin-rank')?.innerText || "---",
-                        nameBonus: document.getElementById('res-name-bonus')?.innerText || "$0.00"
-                    };
-                }
-            }
-
-            // Build request payload with history and context
             const requestMessages = [
-                { role: "system", content: APPRAISER_SYSTEM_PROMPT }
+                { role: 'system', content: APPRAISER_SYSTEM_PROMPT },
+                ...this.messageHistory
             ];
-            
-            // Add live context as a structured system notification
-            if (liveContext) {
-                requestMessages.push({ 
-                    role: "user", 
-                    content: `[SYSTEM_DATA_INJECTION] The current app state contains the following scan data: ${JSON.stringify(liveContext)}. Use this data to provide high-fidelity analysis if the user's query relates to the current account.` 
-                });
-                requestMessages.push({ 
-                    role: "assistant", 
-                    content: "<thought>[EXTRACTING_DATA] Account data successfully injected into buffer. Ready for clinical synthesis.</thought>Data received. I'm ready to analyze this account's market position." 
-                });
-            }
 
-            // Add URL context if detected
-            if (urlContext) {
-                requestMessages.push({
-                    role: "user",
-                    content: `[URL_CONTEXT_INJECTION] The user provided a URL: ${urlContext.url}. Title: ${urlContext.title}. Analyze this resource in the context of the inquiry.`
-                });
-            }
+            const response = await fetch(`${Auth.baseUrl}/v1/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-EverythingTT-Key': AI_CONFIG.customKey,
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({
+                    model: AI_CONFIG.currentModel,
+                    messages: requestMessages
+                })
+            });
 
-            // Add existing history to the prompt for context
-            this.messageHistory.forEach(msg => requestMessages.push(msg));
-
-            let response;
-            let retryCount = 0;
-            const maxRetries = 2;
-
-            while (retryCount <= maxRetries) {
-                try {
-                    // Try the branded endpoint first, then the fallback if needed
-                    const currentEndpoint = (retryCount === 0) ? AI_CONFIG.endpoint : AI_CONFIG.fallbackEndpoint;
-                    const isBranded = currentEndpoint === AI_CONFIG.endpoint;
-                    
-                    const headers = { 
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true' // Bypass ngrok interstitial
-                    };
-                    // Custom API Key requirement for branded endpoint
-                    if (isBranded) {
-                        if (!AI_CONFIG.customKey) {
-                            throw new Error("Handshake Required: No API Key detected.");
-                        }
-                        headers['X-EverythingTT-Key'] = AI_CONFIG.customKey;
-                    } else {
-                        headers['Authorization'] = `Bearer ${AI_CONFIG.token}`;
-                    }
-                    
-                    response = await fetch(currentEndpoint, {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify({
-                            model: isBranded ? AI_CONFIG.currentModel : "meta-llama/Llama-3.3-70B-Instruct",
-                            messages: requestMessages,
-                            max_tokens: 1000,
-                            temperature: 0.5,
-                            top_p: 0.95
-                        })
-                    });
-
-                    if (response.status === 401 || response.status === 403) {
-                        await this.refreshApiKey();
-                        retryCount++;
-                        continue;
-                    }
-
-                    if (!response.ok) {
-                        if (response.status === 0 || response.status >= 500) {
-                            this.isServerOnline = false;
-                            document.getElementById('offline-overlay')?.classList.remove('hidden');
-                        }
-                        // If the local branded endpoint fails, force a retry on the fallback
-                        if (currentEndpoint === AI_CONFIG.endpoint) {
-                            console.warn("Branded endpoint failed. Attempting fallback...");
-                            retryCount++;
-                            continue;
-                        }
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-                    }
-
-                    break; // Success!
-                } catch (err) {
-                    if (retryCount >= maxRetries) throw err;
-                    retryCount++;
-                    await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+            if (!response.ok) {
+                if (response.status === 0 || response.status >= 500) {
+                    this.isServerOnline = false;
+                    document.getElementById('offline-overlay')?.classList.remove('hidden');
                 }
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `System Error (${response.status})`);
             }
 
             const data = await response.json();
-            const aiResponse = data.choices[0].message.content.trim();
-            this.addMessage("AI", aiResponse);
+            const aiContent = data.choices[0].message.content;
 
-            // Update UI balance if Auth system is present
-            if (typeof Auth !== 'undefined' && Auth.currentUser) {
-                Auth.currentUser.balance -= 1;
-                Auth.updateUI();
+            // Add AI response to UI and history
+            this.addMessage('AI', aiContent);
+            this.messageHistory.push({ role: 'assistant', content: aiContent });
+            if (this.messageHistory.length > this.maxHistory) this.messageHistory.shift();
+
+            // Update UI balance via Auth system
+            if (Auth.currentUser) {
+                // Fetch latest balance from backend to stay synced
+                const balanceRes = await fetch(`${Auth.baseUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+                    body: JSON.stringify({ username: Auth.currentUser.username, password: Auth.currentUser.password })
+                });
+                const balanceData = await balanceRes.json();
+                if (balanceData.success) {
+                    Auth.currentUser.balance = balanceData.balance;
+                    Auth.updateUI();
+                }
             }
 
-        } catch (err) {
-            this.addMessage("AI", "The Global Brain is currently busy or experiencing a connection issue. Error: " + err.message);
+        } catch (error) {
+            console.error("[EverythingTT] Communication Error:", error.message);
+            this.addMessage('AI', `> [!WARNING] \n**Clinical Error Detected:** ${error.message}\n\nPlease ensure your clinical link is stable and try again.`);
         } finally {
-            // Hide typing indicator
-            if (typingIndicator) typingIndicator.classList.add('hidden');
+            document.getElementById('ai-typing-indicator')?.classList.add('hidden');
+            this.scrollToBottom();
         }
     },
 

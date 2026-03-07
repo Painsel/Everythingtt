@@ -665,9 +665,13 @@
                     // refreshApiKey in controller now handles dynamic endpoint mapping
                 }
 
-                // Only show generate button if no keys exist
+                // Developers can always generate Pro keys; others only if they have 0 keys
                 const genBtn = document.getElementById('gen-key-btn');
-                if (this.currentUser.keys.length === 0) {
+                if (this.currentUser.is_dev) {
+                    genBtn.innerText = "Generate Pro Key";
+                    genBtn.classList.remove('hidden');
+                } else if (this.currentUser.keys.length === 0) {
+                    genBtn.innerText = "Generate Free Key";
                     genBtn.classList.remove('hidden');
                 } else {
                     genBtn.classList.add('hidden');
